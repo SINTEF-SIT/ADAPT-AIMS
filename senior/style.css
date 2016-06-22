@@ -1,0 +1,269 @@
+/***************************
+** Global
+***************************/
+body {
+	text-align: center;
+}
+
+.pageMainElement {
+  position: absolute;
+  width: 100%;
+  max-width: 700px;
+  padding-left: 20px;
+  padding-right: 20px;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+}
+
+.well {
+    height: 100%;
+	width: 100%;
+	padding: 2px !important;
+	margin: 0 !important;
+}
+
+[data-role=page]{height: 100% !important; position:relative !important;}
+[data-role=footer]{bottom:0; position:absolute !important; top: auto !important; width:100%;}
+
+
+
+/***************************
+** Mobility Index Image
+***************************/
+#MIImgOuterWrapper {
+	height: 40%;
+	top: 2%;
+}
+
+#MIImgWell {
+	background-image: -webkit-linear-gradient(top,#DAE6F2 0,#D5E0EB 100%) !important;
+    background-image: -o-linear-gradient(top,#DAE6F2 0,#D5E0EB 100%) !important;
+    background-image: -webkit-gradient(linear,left top,left bottom,from(#DAE6F2),to(#D5E0EB)) !important;
+    background-image: linear-gradient(to bottom,#DAE6F2 0,#D5E0EB 100%) !important;
+}
+
+#MIImgHeader {
+	font-size: 4vh;
+	width: 100%;
+	text-align: center;
+	height: 15%;
+	top: 1%;
+	margin: 0;
+	font-family: "Myriad Pro", Arial, Helvetica, sans-serif !important;
+	font-weight: bold;
+}
+
+#MIimgInnerWrapper {
+	display: inline-block;
+	overflow:hidden;
+	height: 85%;
+	width: 100%;
+    vertical-align: middle;
+    padding: 10px 0;
+}
+
+.verticalAlignHelper {
+    display: inline-block;
+    height: 100%;
+    vertical-align: middle;
+}
+
+#MIImg {
+	vertical-align: middle;
+    max-height: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+
+
+/***************************
+** Activity Chart 
+***************************/
+
+#chartContainer {
+	height:25%;
+    top: 47%;
+}
+
+#chartWell {
+	background-image: -webkit-linear-gradient(top,#EBF1F5 0,#DAE6F2 100%) !important;
+    background-image: -o-linear-gradient(top,#EBF1F5 0,#DAE6F2 100%) !important;
+    background-image: -webkit-gradient(linear,left top,left bottom,from(#EBF1F5),to(#DAE6F2)) !important;
+    background-image: linear-gradient(to bottom,#EBF1F5 0,#DAE6F2 100%) !important;
+}
+
+#chart {
+	margin: 0 auto;
+	height: 100%;
+	width: 100%;
+    max-width: 1000px;
+    padding: 0 20px !important;
+}
+
+.highcharts-container{width:100% !important; height:100% !important;}
+
+
+
+/***************************
+** Motivating message
+***************************/
+#messageWrapper {
+	max-height: 20%; /*leaves 2% margin on the bottom*/
+	top: 75%;
+	font-size: 18px;
+}
+
+#messageWrapper .alert {
+	padding-bottom: 1%;
+}
+
+#messageWrapper * {
+	margin-bottom: 0;
+}
+
+
+/***************************
+** Footer
+***************************/
+
+.footer {
+	height: 60px;
+}
+
+.footer p {
+	position: relative;
+	top: 50%;
+	transform: translateY(-50%);
+    font-weight: 100;
+    text-align: left;
+    padding-left: 10px;
+}
+
+#lastUpdatedValue {
+	font-style: italic;
+}
+
+#settingsBtn {
+	position: fixed;
+    bottom: 0;
+    right: 0;
+}
+
+
+/***************************
+** Settings page
+***************************/
+#settingsHeader {
+	height: 60px;
+}
+
+#settingsHeader h1 {
+	position: relative;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 1.5em !important;
+	font-weight: bold;
+}
+
+/*#backBtnHeader {
+	position: fixed;
+    top: 0;
+    left: 0;
+}*/
+
+#MIImgSelectionHeader {
+	font-size: 28px;
+}
+
+#MIImgSelectionGroup {
+	width: 100%;
+	margin-bottom: 30px;
+}
+
+#MIImgSelectionGroup img {
+	width: 30%;
+	max-width: 300px;
+	cursor: pointer;
+	border: 2px solid black;
+	margin: 5px;
+	transition: all .2s ease-in-out;
+}
+
+#MIImgSelectionGroup img:hover {
+	transform: scale(0.9);
+}
+
+.MIImgSelected {
+	border: 8px solid #474747 !important;
+	transform: scale(0.9);
+}
+
+#settingsBtnGroup {
+	max-width: 300px;
+	margin: 0 auto;
+}
+
+#backBtn {
+	display: block;
+}
+
+#saveBtn {
+	display: none;
+}
+
+#cancelBtn {
+	display: none;
+}
+
+#logoutBtn {
+	margin-top: 50px;
+}
+
+
+.greyBtn {
+	background-color: #C4C4C4 !important;
+	border-color: #CCCCCC !important;
+	color: #000000 !important;
+	text-shadow: 0 1px 0 #eeeeee !important;
+}
+
+.greyBtn:hover {
+	background-color: #D9D7D7 !important;
+	border-color: #CCCCCC !important;
+	color: #000000 !important;
+	text-shadow: 0 1px 0 #eeeeee !important;
+}
+
+.greenBtn {
+	background-color: #009245 !important;
+	border-color: #54cc60 !important;
+	color: #ffffff !important;
+	text-shadow: 0 1px 0 #444444 !important;
+}
+
+.greenBtn:hover {
+	background-color: #45a74f !important;
+	border-color: #60e96e !important;
+	color: #ffffff !important;
+	text-shadow: 0 1px 0 #444444 !important;
+}
+
+.redBtn {
+	background-color: #ab3d41 !important;
+	border-color: #8A2F32 !important;
+	color: #ffffff !important;
+	text-shadow: 0 1px 0 #444444 !important;
+}
+
+.redBtn:hover {
+	background-color: #c4464a !important;
+	border-color: #8A2F32 !important;
+	color: #ffffff !important;
+	text-shadow: 0 1px 0 #444444 !important;
+}
+
+#hiddenBackBtn {
+	display: none;
+}
