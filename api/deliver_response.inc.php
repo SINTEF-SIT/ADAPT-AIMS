@@ -4,6 +4,8 @@
 		
 		// Todo: remove after development phase:
 		header('Access-Control-Allow-Origin: http://localhost');
+		//header('Content-type: text/plain; charset=utf-8');
+		header("Content-Type:application/json");
 		
 		$response['status'] = $status;
 		$response['status_message'] = $status_message;

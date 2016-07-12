@@ -32,7 +32,7 @@ body {
 ** Mobility Index Image
 ***************************/
 #MIImgOuterWrapper {
-	height: 40%;
+	height: 25%;
 	top: 2%;
 }
 
@@ -43,7 +43,7 @@ body {
     background-image: linear-gradient(to bottom,#DAE6F2 0,#D5E0EB 100%) !important;
 }
 
-#MIImgHeader {
+/*#MIImgHeader {
 	font-size: 4vh;
 	width: 100%;
 	text-align: center;
@@ -52,12 +52,13 @@ body {
 	margin: 0;
 	font-family: "Myriad Pro", Arial, Helvetica, sans-serif !important;
 	font-weight: bold;
-}
+}*/
 
 #MIimgInnerWrapper {
 	display: inline-block;
 	overflow:hidden;
-	height: 85%;
+	/*height: 85%;*/
+	height: 100%;
 	width: 100%;
     vertical-align: middle;
     padding: 10px 0;
@@ -79,22 +80,17 @@ body {
 
 
 /***************************
-** Activity Chart 
+** Charts (general)
 ***************************/
 
-#chartContainer {
-	height:25%;
-    top: 47%;
-}
-
-#chartWell {
+.chartWell {
 	background-image: -webkit-linear-gradient(top,#EBF1F5 0,#DAE6F2 100%) !important;
     background-image: -o-linear-gradient(top,#EBF1F5 0,#DAE6F2 100%) !important;
     background-image: -webkit-gradient(linear,left top,left bottom,from(#EBF1F5),to(#DAE6F2)) !important;
     background-image: linear-gradient(to bottom,#EBF1F5 0,#DAE6F2 100%) !important;
 }
 
-#chart {
+#balanceChart, #activityChart {
 	margin: 0 auto;
 	height: 100%;
 	width: 100%;
@@ -102,7 +98,30 @@ body {
     padding: 0 20px !important;
 }
 
+#balanceChartContainer, #activityChartContainer {
+	height: 22%;
+}
+
 .highcharts-container{width:100% !important; height:100% !important;}
+
+
+
+/***************************
+** Balance chart
+***************************/
+
+#balanceChartContainer {
+    top: 32%;
+}
+
+
+/***************************
+** Activity chart
+***************************/
+
+#activityChartContainer {
+    top: 58%;
+}
 
 
 
@@ -110,8 +129,8 @@ body {
 ** Motivating message
 ***************************/
 #messageWrapper {
-	max-height: 20%; /*leaves 2% margin on the bottom*/
-	top: 75%;
+	max-height: 10%;
+	top: 82%;
 	font-size: 18px;
 }
 

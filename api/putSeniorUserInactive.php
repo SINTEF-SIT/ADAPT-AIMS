@@ -1,5 +1,6 @@
 <?php
 	include('deliver_response.inc.php');
+	include('../inc/jwt.inc.php');
 
 	function deleteFromDB($userID) {
 		include('../inc/db.inc.php');
@@ -15,17 +16,21 @@
 		$conn->close();
 	}
 
-	header("Content-Type:application/json");
+	$validToken = validateToken();
 
-	if (!empty($_GET["seniorUserID"])) {
-		$dbWriteSuccess = deleteFromDB($_GET["seniorUserID"]);
-		
-		if ($dbWriteSuccess) {
-			deliver_response(200, "Brukeren ble satt som inaktiv.", true);
+	if ($validToken == true) {
+		if (isset($_GET["seniorUserID"])) {
+			$dbWriteSuccess = deleteFromDB($_GET["seniorUserID"]);
+			
+			if ($dbWriteSuccess) {
+				deliver_response(200, "Brukeren ble satt som inaktiv.", true);
+			} else {
+				deliver_response(200, "Det ble ikke opprettet forbindelse med databasen.", false);
+			}
 		} else {
-			deliver_response(200, "Det ble ikke opprettet forbindelse med databasen.", false);
+			deliver_response(400, "Ugyldig foresp\u00f8rsel.", NULL);
 		}
 	} else {
-		deliver_response(400, "Ugyldig foresp\u00f8rsel.", NULL);
+		deliver_response(401, "Autentisering feilet.", NULL);
 	}
 ?>

@@ -5,7 +5,7 @@
 	function readDB($seniorUserID) {
 		include('../inc/db.inc.php');
 
-		if ($stmt = $conn->prepare("SELECT value, timeDataCollected, timeCalculated FROM MobilityIndexes WHERE userID = ? ORDER BY timeDataCollected ASC;")) {
+		if ($stmt = $conn->prepare("SELECT value, timeDataCollected, timeCalculated FROM BalanceIndexes WHERE userID = ? ORDER BY timeDataCollected ASC;")) {
 			$stmt->bind_param("i", $seniorUserID);
 			$stmt->execute();
 			$result = $stmt->get_result();
@@ -37,7 +37,7 @@
 			if (empty($mobilityIndexes)) {
 				deliver_response(200, "Ingen data er registrert ennå.", NULL);
 			} else {
-				deliver_response(200, "Mobility index funnet.", $mobilityIndexes);
+				deliver_response(200, "Balance index funnet.", $mobilityIndexes);
 			}
 		} else {
 			deliver_response(400, "Ugyldig forespørsel.", NULL);

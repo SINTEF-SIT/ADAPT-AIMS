@@ -1,20 +1,26 @@
 [data-role=page]{height: 100% !important; position:relative !important;}
 [data-role=footer]{bottom:0; position:absolute !important; top: auto !important; width:100%;} 
 
+#usersTableContainer {
+	width: 100%;
+	height: 400px;
+	overflow: auto;
+}
+
 #usersTable td, #userDetailsTable td {
-    border-left: 1px solid #d6d6d6;
-    border-right: 1px solid #d6d6d6;
+	border-left: 1px solid #d6d6d6;
+	border-right: 1px solid #d6d6d6;
 }
 
 #usersTable tr td:first-child,
 #usersTable tr th:first-child,
 #userDetailsTable tr td:first-child  {
-    border-left: 0;
+	border-left: 0;
 }
 #usersTable tr td:last-child,
 #usersTable tr th:last-child,
 #userDetailsTable tr td:last-child {
-    border-right: 0;
+	border-right: 0;
 }
 
 #usersTable tbody tr:hover {
@@ -39,8 +45,8 @@
 
 #userDetailsTable {
 	table-layout: fixed;
-    max-width: 450px;
-    /*/margin: 0 auto;*/
+	max-width: 450px;
+	/*/margin: 0 auto;*/
 }
 
 #userDetailsTable>tbody {
@@ -58,27 +64,27 @@
 
 #containerInfoAndBtns {
 	display: block;
-    float: left;
-    width: 100%;
-    margin-bottom: 30px;
+	float: left;
+	width: 100%;
+	margin-bottom: 30px;
 }
 
 .inner {
 	width: 90%;
-    margin: 0 auto;
-    text-align: center;
+	margin: 0 auto;
+	text-align: center;
 }
 
 .inner > * {
-    vertical-align:middle;
+	vertical-align:middle;
 }
 
 .floatItem {
 	display:        inline-block;
-    margin:         0 20px;
-    text-align:     center;
-    position:       relative;
-    /* float:          left; */
+	margin:         0 20px;
+	text-align:     center;
+	position:       relative;
+	/* float:          left; */
 }
 
 #chartContainer {
@@ -88,4 +94,44 @@
 
 #editUserDataForm label {
 	font-weight: bold;
+}
+
+.toast {
+	display: none;
+	width: 50%;
+	height: auto;
+	position: absolute;
+	left: 0;
+	right: 0;
+	margin: 0 auto;
+	bottom: 30px;
+	color: #F0F0F0;
+	font-family: Calibri, sans-serif;
+	/*font-weight: bold;*/
+	font-size: 24px;
+	padding: 10px;
+	text-align:center;
+	border-radius: 10px;
+	-webkit-box-shadow: 0px 0px 24px -1px rgba(56, 56, 56, 1);
+	-moz-box-shadow: 0px 0px 24px -1px rgba(56, 56, 56, 1);
+	box-shadow: 0px 0px 24px -1px rgba(56, 56, 56, 1);
+}
+
+.toast-content {
+	display: flex;
+	justify-content: center; /* align horizontal */
+    align-items: center; /* align vertical */
+}
+
+.toast-success {
+	background-color: #29BF0B;
+}
+
+.toast-error {
+	background-color: #BF1D1D;
+}
+
+.toast-icon {
+	height: 0.9em;
+	margin-right: 10px;
 }

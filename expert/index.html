@@ -1,11 +1,11 @@
-<?php
-	include('../inc/session.inc.php');
-?>
 <html>
 	
 	<head>
 		<title>AIMS - Ekspertvisning</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<!-- jQuery -->
+		<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
 
 		<!-- CSS -->
 		<link rel="stylesheet" href="style.css">
@@ -14,17 +14,6 @@
 		<link rel="stylesheet" href="../jquery-custom-theme/theme.css" />
   		<link rel="stylesheet" href="../jquery-custom-theme/jquery.mobile.icons.min.css" />
 		
-
-		<!-- jQuery -->
-		<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
-
-		<!-- Default jQuery mobile transition -->
-		<script>
-			$(document).bind("mobileinit", function(){
-				$.mobile.defaultPageTransition = "slidefade";
-			});
-		</script>
-
 		<!-- jQuery Mobile -->
 		<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile.structure-1.4.5.min.css" />
 		<!--<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">-->
@@ -36,6 +25,9 @@
 		<!-- moment.js -->
 		<script src="http://momentjs.com/downloads/moment.min.js"></script>
 		<script src="http://momentjs.com/downloads/moment-timezone-with-data-2010-2020.min.js"></script>
+
+		<!-- jQuery-CSV -->
+		<script src="lib/jquery-csv/jquery.csv.min.js"></script>
 
 		<!-- JS -->
 		<script src="script.js" async></script>
@@ -56,67 +48,27 @@
 			</div><!-- /header -->
 
 			<div data-role="content" data-theme="a">
-				<?php
-					/*function console_log($data){
-						echo '<script>';
-						echo 'console.log('. json_encode( $data ) .')';
-						echo '</script>';
-					}*/
-
-					$jsonurl = "http://vavit.no/adapt-staging/api/getSeniorUserOverview.php?expertUserID=" . $_SESSION['userid'];
-					$json = file_get_contents($jsonurl);
-					$response = json_decode($json);
-					$data = $response->data;
-
-					if ($data == null) {
-						echo "Det finnes ingen registrerte brukere.";
-					} else {
-					
-				?>
-
 				<form>
 					<input id="filterTable-input" data-type="search">
 				</form>
-				<table data-role="table" data-mode="columntoggle" data-column-btn-text="Velg synlige kolonner" data-filter="true" data-input="#filterTable-input" class="ui-responsive table-stripe ui-shadow" id="usersTable">
-					<thead>
-						<tr>
-							<th data-priority="4">Bruker-ID</th>
-							<th>Etternavn</th>
-							<th data-priority="1">Fornavn</th>
-							<th data-priority="3">Alder</th>
-							<th data-priority="2">Mobility index</th>
-							<!--<th>Detaljer</th>-->
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-							$now = new DateTime();
-							foreach ((array) $data as $seniorUser) {
-								$userID = $seniorUser->userID;
+				<div id="usersTableContainer">
+					<table data-role="table" data-mode="columntoggle" data-column-btn-text="Velg synlige kolonner" data-filter="true" data-input="#filterTable-input" class="ui-responsive table-stripe ui-shadow" id="usersTable">
+						<thead>
+							<tr>
+								<th data-priority="4">Bruker-ID</th>
+								<th >Etternavn</th>
+								<th data-priority="1">Fornavn</th>
+								<th data-priority="3">Alder</th>
+								<th data-priority="2">Mobility index</th>
+								<!--<th>Detaljer</th>-->
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
 
-								if ($seniorUser->birthDate != null && $seniorUser->birthDate != "0000-00-00") {
-									$birthDate = new DateTime($seniorUser->birthDate);
-									$diff = $birthDate->diff($now);
-									$age = $diff->y;
-								} else {
-									$age = "";
-								}
-
-						    	echo "<tr>";
-						    	echo "<td><a onclick='setActiveUser(" . $userID . ",true);'>" . $userID . "</a></td>";
-						    	echo "<td><a onclick='setActiveUser(" . $userID . ",true);'>" . $seniorUser->lastName . "</a></td>";
-						    	echo "<td><a onclick='setActiveUser(" . $userID . ",true);'>" . $seniorUser->firstName . "</a></td>";
-						    	echo "<td><a onclick='setActiveUser(" . $userID . ",true);'>" . $age . "</a></td>";
-						    	echo "<td><a onclick='setActiveUser(" . $userID . ",true);'>" . $seniorUser->mobilityIdx . "</a></td>";
-						    	echo "</tr>";
-					    	}
-						?>
-					</tbody>
-				</table>
-				<?php
-					}
-				?>
-				<a onclick="$.mobile.changePage('index.php#new-user-page');" data-role="button" data-icon="plus">Registrer ny bruker</a>
+				<a onclick="$.mobile.changePage('index.html#new-user-page');" data-role="button" data-icon="plus">Registrer ny bruker</a>
 			</div><!-- /content -->
 
 			<!--<div data-role="footer">
@@ -183,14 +135,14 @@
 										<td>Høyde</td>
 										<td id="cellHeight"></td>
 									</tr>
-									<!--<tr>
-										<td>Antall fall siste 6 mnd</td>
+									<tr>
+										<td>Antall fall 6 mnd. før start</td>
 										<td id="cellFalls6"></td>
 									</tr>
 									<tr>
-										<td>Antall fall siste 12 mnd</td>
+										<td>Antall fall 12 mnd. før start</td>
 										<td id="cellFall12"></td>
-									</tr>-->
+									</tr>
 									<tr>
 										<td>Bruker ganghjelpemiddel</td>
 										<td id="cellWalkingAid"></td>
@@ -204,12 +156,14 @@
 						</div>
 
 						<div id="btnGroupUserDetails" class="floatItem">
-							<a onclick="$.mobile.changePage('index.php#register-data-page');" data-role="button" data-icon="plus">Registrer ny mobility idx</a>
-							<a onclick="$.mobile.changePage('index.php#register-feedback-page');" data-role="button" data-icon="comment">Skriv/rediger anbefaling</a>
-							<a onclick="$.mobile.changePage('index.php#edit-data-page');" data-role="button" data-icon="edit">Rediger opplysninger</a>
+							<a onclick="$.mobile.changePage('index.html#register-mi-page');" data-role="button" data-icon="plus">Registrer ny mobility idx</a>
+							<a onclick="$.mobile.changePage('index.html#register-bi-page');" data-role="button" data-icon="plus">Registrer ny balance idx</a>
+							<a onclick="$.mobile.changePage('index.html#register-ai-page');" data-role="button" data-icon="plus">Registrer ny activity idx</a>
+							<!--<a onclick="$.mobile.changePage('index.html#register-feedback-page');" data-role="button" data-icon="comment">Skriv/rediger anbefaling</a>-->
+							<a onclick="$.mobile.changePage('index.html#edit-data-page');" data-role="button" data-icon="edit">Rediger opplysninger</a>
 							<!--<a onclick="" data-role="button">Se brukerens visning</a>
 							<a onclick="" data-role="button">Administrer sensorenheter</a>-->
-							<a href="index.php#confirm-delete-user-dialog" data-role="button" data-transition="pop" data-icon="delete">Slett bruker</a>
+							<a href="index.html#confirm-delete-user-dialog" data-role="button" data-transition="pop" data-icon="delete">Slett bruker</a>
 						</div>
 					</div>
 				</div>
@@ -234,11 +188,11 @@
 
 
 		<!-- ******************************************************* -->
-		<!-- ***************** REGISTER DATA PAGE ****************** -->
+		<!-- ************* REGISTER MOBILITY IDX PAGE ************** -->
 		<!-- ******************************************************* -->
-		<div data-role="page" id="register-data-page">
+		<div data-role="page" id="register-mi-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
-				<h1 id="headerTitleRegisterDataView">Registrer data</h1>
+				<h1 id="headerTitleRegisterDataView">Registrer MI</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
 					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
@@ -247,17 +201,160 @@
 
 			<div data-role="content" data-theme="a">
 				<form id="mobilityIdxForm" method="post">
-					<label for="mobilityIdxInputField">Mobility index (1-5):</label>
-					<input type="number" name="mobilityIdx" id="mobilityIdxInputField" min="1" max="5" required>
+					<label for="mobilityIdxDatePicker">Dato:</label>
+					<input type="date" name="timeDataCollected" id="mobilityIdxDatePicker" required>
+
+					<label for="mobilityIdxInputField">Mobility index (0-1):</label>
+					<input type="number" name="mobilityIdx" id="mobilityIdxInputField" min="0" max="1" step="0.1" required>
 					<input type="hidden" name="userID" value="" id="mobilityIdxFormUserID">
 					
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 
-					<h3 id="notificationMobilityIdxForm"></h3>
+					<div id='toastMobilityIdxForm' class="toast">
+						<div class="toast-content">
+							<img id="toastMobilityIdxFormImg" class="toast-icon" src="//:0"/> <span id="toastMobilityIdxFormText"></span>
+						</div>
+					</div>
 					
 				</form>
+
 			</div><!-- /content -->
-		</div><!-- /register-data-page -->
+		</div><!-- /register-mi-page -->
+
+		<!-- ******************************************************* -->
+		<!-- ************* REGISTER BALANCE IDX PAGE ************** -->
+		<!-- ******************************************************* -->
+		<div data-role="page" id="register-bi-page">
+			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
+				<h1 id="headerTitleRegisterDataView">Registrer BI</h1>
+				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
+					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
+					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
+				</div>
+			</div><!-- /header -->
+
+			<div data-role="content" data-theme="a">
+				<div id="balanceIdxFileInputContainer">
+					<input type="file" id="csvFileInputBI"/>
+					<a onclick="readCSVFile(false)" data-role="button" data-icon="check">Lagre</a>
+				</div>
+
+				<div id='toastBalanceIdxFileUpload' class="toast">
+					<div class="toast-content">
+						<img id="toastBalanceIdxFileUploadImg" class="toast-icon" src="//:0"/> <span id="toastBalanceIdxFileUploadText"></span>
+					</div>
+				</div>
+
+				<a onclick="$.mobile.changePage('index.html#register-bi-manual-page');" data-role="button" data-inline="true">Skriv inn manuelt</a>
+
+			</div><!-- /content -->
+		</div><!-- /register-bi-page -->
+
+
+		<!-- ******************************************************* -->
+		<!-- ********** REGISTER BALANCE IDX MANUAL PAGE ********** -->
+		<!-- ******************************************************* -->
+		<div data-role="page" id="register-bi-manual-page">
+			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
+				<h1 id="headerTitleRegisterDataView">Registrer BI</h1>
+				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
+					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
+					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
+				</div>
+			</div><!-- /header -->
+
+			<div data-role="content" data-theme="a">
+
+				<form id="balanceIdxForm" method="post">
+					
+					<label for="balanceIdxDatePicker">Dato:</label>
+					<input type="date" name="timeDataCollected" id="balanceIdxDatePicker" required>
+
+					<label for="balanceIdxInputField">Balance index:</label>
+					<input type="number" name="balanceIdx" id="balanceIdxInputField" min="0" required>
+					
+					<input type="hidden" name="userID" value="" id="balanceIdxFormUserID">
+					
+					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
+
+					<div id='toastBalanceIdxManualForm' class="toast">
+						<div class="toast-content">
+							<img id="toastBalanceIdxManualFormImg" class="toast-icon" src="//:0"/> <span id="toastBalanceIdxManualFormText"></span>
+						</div>
+					</div>
+					
+				</form>
+
+			</div><!-- /content -->
+		</div><!-- /register-bi-manual-page -->
+
+
+		<!-- ******************************************************* -->
+		<!-- ************* REGISTER ACTIVITY IDX PAGE ************** -->
+		<!-- ******************************************************* -->
+		<div data-role="page" id="register-ai-page">
+			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
+				<h1 id="headerTitleRegisterDataView">Registrer AI</h1>
+				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
+					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
+					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
+				</div>
+			</div><!-- /header -->
+
+			<div data-role="content" data-theme="a">
+				<div id="activityIdxFileInputContainer">
+					<input type="file" id="csvFileInputAI"/>
+					<a onclick="readCSVFile(true)" data-role="button" data-icon="check">Lagre</a>
+				</div>
+
+				<div id='toastActivityIdxFileUpload' class="toast">
+					<div class="toast-content">
+						<img id="toastActivityIdxFileUploadImg" class="toast-icon" src="//:0"/> <span id="toastActivityIdxFileUploadText"></span>
+					</div>
+				</div>
+
+				<a onclick="$.mobile.changePage('index.html#register-ai-manual-page');" data-role="button" data-inline="true">Skriv inn manuelt</a>
+
+			</div><!-- /content -->
+		</div><!-- /register-ai-page -->
+
+
+		<!-- ******************************************************* -->
+		<!-- ********** REGISTER ACTIVITY IDX MANUAL PAGE ********** -->
+		<!-- ******************************************************* -->
+		<div data-role="page" id="register-ai-manual-page">
+			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
+				<h1 id="headerTitleRegisterDataView">Registrer AI</h1>
+				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
+					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
+					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
+				</div>
+			</div><!-- /header -->
+
+			<div data-role="content" data-theme="a">
+
+				<form id="activityIdxForm" method="post">
+					
+					<label for="activityIdxDatePicker">Dato:</label>
+					<input type="date" name="timeDataCollected" id="activityIdxDatePicker" required>
+
+					<label for="activityIdxInputField">Activity index:</label>
+					<input type="number" name="activityIdx" id="activityIdxInputField" min="0" required>
+					
+					<input type="hidden" name="userID" value="" id="activityIdxFormUserID">
+					
+					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
+
+					<div id='toastActivityIdxManualForm' class="toast">
+						<div class="toast-content">
+							<img id="toastActivityIdxManualFormImg" class="toast-icon" src="//:0"/> <span id="toastActivityIdxManualFormText"></span>
+						</div>
+					</div>
+					
+				</form>
+
+			</div><!-- /content -->
+		</div><!-- /register-ai-manual-page -->
 
 
 		<!-- ******************************************************* -->
@@ -300,11 +397,15 @@
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 					<a onclick="$.mobile.back()" data-role="button" data-icon="back">Avbryt</a>
 
-					<h3 id="notificationFeedbackForm"></h3>
+					<div id='toastFeedbackForm' class="toast">
+						<div class="toast-content">
+							<img id="toastFeedbackFormImg" class="toast-icon" src="//:0"/> <span id="toastFeedbackFormText"></span>
+						</div>
+					</div>
 					
 				</form>
 			</div><!-- /content -->
-		</div><!-- /register-data-page -->
+		</div><!-- /register-feedback-page -->
 
 
 		<!-- ******************************************************* -->
@@ -323,12 +424,17 @@
 				<form id="editUserDataForm" method="post">
 					<div class="ui-field-contain">
 						<label for="inputFieldEditFirstName">Fornavn:</label>
-						<input type="text" name="firstName" id="inputFieldEditFirstName">
+						<input type="text" name="firstName" id="inputFieldEditFirstName" required>
 					</div>
 					
 					<div class="ui-field-contain">
 						<label for="inputFieldEditLastName">Etternavn:</label>
-						<input type="text" name="lastName" id="inputFieldEditLastName">
+						<input type="text" name="lastName" id="inputFieldEditLastName" required>
+					</div>
+					
+					<div class="ui-field-contain">
+						<label for="inputFieldEditEmail">E-post:</label>
+						<input type="email" name="email" id="inputFieldEditEmail" required>
 					</div>
 					
 					<div class="ui-field-contain">
@@ -361,17 +467,15 @@
 						<input type="number" name="height" id="inputFieldEditHeight" min="1" max="250">
 					</div>
 					
-					<!--
 					<div class="ui-field-contain">
-						<label for="inputFieldEditNumFalls6Mths">Antall fall siste 6 mnd:</label>
-						<input type="number" name="falls6Mths" id="inputFieldEditNumFalls6Mths">
+						<label for="inputFieldEditNumFalls6Mths">Antall fall 6 mnd. før start:</label>
+						<input type="number" name="falls6Mths" id="inputFieldEditNumFalls6Mths" min="0">
 					</div>
 					
 					<div class="ui-field-contain">
-						<label for="inputFieldEditNumFalls12Mths">Antall fall siste 12 mnd:</label>
-						<input type="number" name="falls12Mths" id="inputFieldEditNumFalls12Mths">
+						<label for="inputFieldEditNumFalls12Mths">Antall fall 12 mnd. før start:</label>
+						<input type="number" name="falls12Mths" id="inputFieldEditNumFalls12Mths" min="0">
 					</div>
-					-->
 
 					<label for="inputFieldEditUsesWalkingAid">Bruker ganghjelpemiddel</label>
 					<input type="checkbox" name="walkingAid" id="inputFieldEditUsesWalkingAid" value="walkingAid">
@@ -383,7 +487,11 @@
 
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 
-					<h3 id="notificationEditUserDataForm"></h3>
+					<div id='toastEditUserDataForm' class="toast">
+						<div class="toast-content">
+							<img id="toastEditUserDataFormImg" class="toast-icon" src="//:0"/> <span id="toastEditUserDataFormText"></span>
+						</div>
+					</div>
 				</form>
 			</div><!-- /content -->
 		</div><!-- /edit-user-data-page -->
@@ -411,7 +519,7 @@
 		<!-- ******************************************************* -->
 		<div data-role="page" id="new-user-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
-				<h1 id="headerTitleEditDataView">Rediger opplysninger</h1>
+				<h1 id="headerTitleEditDataView">Registrer ny bruker</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
 					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
@@ -485,17 +593,15 @@
 						<input type="number" name="height" id="inputFieldNewHeight" min="1" max="250">
 					</div>
 					
-					<!--
 					<div class="ui-field-contain">
-						<label for="inputFieldNewNumFalls6Mths">Antall fall siste 6 mnd:</label>
-						<input type="number" name="falls6Mths" id="inputFieldNewNumFalls6Mths">
+						<label for="inputFieldNewNumFalls6Mths">Antall fall 6 mnd. før start:</label>
+						<input type="number" name="falls6Mths" id="inputFieldNewNumFalls6Mths" min="0">
 					</div>
 					
 					<div class="ui-field-contain">
-						<label for="inputFieldNewNumFalls12Mths">Antall fall siste 12 mnd:</label>
-						<input type="number" name="falls12Mths" id="inputFieldNewNumFalls12Mths">
+						<label for="inputFieldNewNumFalls12Mths">Antall fall 12 mnd. før start:</label>
+						<input type="number" name="falls12Mths" id="inputFieldNewNumFalls12Mths" min="0">
 					</div>
-					-->
 
 					<label for="inputFieldNewUsesWalkingAid">Bruker ganghjelpemiddel</label>
 					<input type="checkbox" name="walkingAid" id="inputFieldNewUsesWalkingAid" value="walkingAid">
@@ -503,12 +609,11 @@
 					<label for="inputFieldNewLivingIndependently">Bor for seg selv</label>
 					<input type="checkbox" name="livingIndependently" id="inputFieldNewLivingIndependently" value="livingIndependently">
 
-					<input type="hidden" name="expertUserID" value="<?php echo $_SESSION['userid'] ?>">
+					<input id="newUserFormExpertUserID" type="hidden" name="expertUserID" value="">
 
-					<input type="button" value="Lagre (ikke aktiv ennå)" data-icon="check" data-iconpos="right" data-theme="b">
-					<!--<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">-->
+					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 
-					<h3 id="notificationNewUserForm"></h3>
+					<h3 id="toastNewUserForm"></h3>
 				</form>
 			</div><!-- /content -->
 		</div><!-- /new user page -->
