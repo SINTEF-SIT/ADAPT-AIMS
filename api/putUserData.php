@@ -20,12 +20,14 @@
 		if ($stmt = $conn->prepare("UPDATE Users AS u, SeniorUsers AS su SET u.firstName=?, u.lastName=?, u.email=?, su.address=?, su.zipCode=?, su.city=?, su.phoneNumber=?, su.weight=?, su.height=?, su.usesWalkingAid=?, su.livingIndependently=?, su.numFalls6Mths=?, su.numFalls12Mths=? WHERE su.userID = u.userID AND u.userID = ?;")) {
 			$stmt->bind_param("sssssssiiiiiii", encrypt($_POST["firstName"]), encrypt($_POST["lastName"]), encrypt($_POST["email"]), $address, $zipCode, $city, $phone, $weight, $height, $usesWalkingAid, $livingIndependently, $falls6Mths, $falls12Mths, $_POST["userID"]);
 			$stmt->execute();
+			$stmt->close();
+			$conn->close();
 			return true;
 		} else {
+			$stmt->close();
+			$conn->close();
 			return false;
 		}
-
-		$conn->close();
 	}
 
 	$validToken = validateToken();

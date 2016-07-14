@@ -125,6 +125,7 @@ $(document).bind("mobileinit", function(){
 	$.mobile.defaultPageTransition = "slidefade";
 });
 
+
 $(document).ready(function() {
 
 	if (localStorage.token) {
@@ -139,7 +140,6 @@ $(document).ready(function() {
 	expertEmail = localStorage.email;
 
 	$('#newUserFormExpertUserID').val(expertUserID);
-
 	$('#mobilityIdxDatePicker').val(new Date().toDateInputValue());
 
 	getUserOverview();
@@ -151,6 +151,7 @@ $(document).ready(function() {
 
 	// Submit form for storing new mobility index
 	$("#mobilityIdxForm").submit(function(e){
+		showLoader();
 
 		$userIDValue = $("#mobilityIdxFormUserID").val();
 		$mobilityIdxValue = $('#mobilityIdxInputField').val();
@@ -165,10 +166,9 @@ $(document).ready(function() {
 				            request.setRequestHeader("Authorization", "Bearer " + token);
 				        },
 						url: "http://vavit.no/adapt-staging/api/postMobilityIdx.php",
-						/*contentType: "application/json; charset=utf-8",
-					    dataType: "json",*/
 						data: formData,
 						success: function(data, status) {
+							hideLoader();
 							if (data.data) {
 								showToast("#toastMobilityIdxForm", true, data.status_message);
 							} else {
@@ -188,6 +188,7 @@ $(document).ready(function() {
 							drawChart($userIDValue);
 						},
 						error: function(data, status) {
+							hideLoader();
 							showToast("#toastMobilityIdxForm", false, data.status_message);
 						}
 					});
@@ -208,6 +209,7 @@ $(document).ready(function() {
 
 	// Submit form for storing new balance index
 	$("#balanceIdxForm").submit(function(e){
+		showLoader();
 
 		$balanceIdxValue = $('#balanceIdxInputField').val();
 
@@ -222,9 +224,11 @@ $(document).ready(function() {
 		    dataType: "json",*/
 			data: formData,
 			success: function(data, status) {
+				hideLoader();
 				showToast("#toastBalanceIdxManualForm", true, data.status_message);
 			},
 			error: function(data, status) {
+				hideLoader();
 				showToast("#toastBalanceIdxManualForm", false, data.status_message);
 			}
 		});
@@ -242,6 +246,7 @@ $(document).ready(function() {
 
 	// Submit form for storing new activity index
 	$("#activityIdxForm").submit(function(e){
+		showLoader();
 
 		$activityIdxValue = $('#activityIdxInputField').val();
 
@@ -256,9 +261,11 @@ $(document).ready(function() {
 		    dataType: "json",*/
 			data: formData,
 			success: function(data, status) {
+				hideLoader();
 				showToast("#toastActivityIdxManualForm", true, data.status_message);
 			},
 			error: function(data, status) {
+				hideLoader();
 				showToast("#toastActivityIdxManualForm", false, data.status_message);
 			}
 		});
@@ -276,7 +283,8 @@ $(document).ready(function() {
 
 
 	// Submit form for storing new custom feedback message
-	$("#registerFeedbackForm").submit(function(e){
+	/*$("#registerFeedbackForm").submit(function(e){
+		showLoader();
 
 		$feedbackText = $('#textarea-feedback').val();
 
@@ -288,13 +296,13 @@ $(document).ready(function() {
 		            request.setRequestHeader("Authorization", "Bearer " + token);
 		        },
 				url: "http://vavit.no/adapt-staging/api/postFeedbackMsgCustom.php",
-				/*contentType: "application/json; charset=utf-8",
-			    dataType: "json",*/
 				data: formData,
 				success: function(data, status) {
+					hideLoader();
 					showToast("#toastFeedbackForm", true, data.status_message);
 				},
 				error: function(data, status) {
+					hideLoader();
 					showToast("#toastFeedbackForm", false, data.status_message);
 				}
 			});
@@ -305,10 +313,81 @@ $(document).ready(function() {
 		$('#textarea-feedback').val("");
 
 		return false;
+	});*/
+	
+	// Submit form for storing new custom AI feedback message
+	$("#registerAIFeedbackForm").submit(function(e){
+		showLoader();
+
+		$feedbackText = $('#textarea-ai-feedback').val();
+		$userID = $('#registerAIFeedbackFormUserID').val();
+
+		if ($feedbackText != null && $feedbackText != "" && $userID != null && $userID != "") {
+			formData = $("#registerAIFeedbackForm").serialize();
+			$.ajax({
+				type: "POST",
+				beforeSend: function (request) {
+		            request.setRequestHeader("Authorization", "Bearer " + token);
+		        },
+				url: "http://vavit.no/adapt-staging/api/postFeedbackMsgCustom.php",
+				data: formData,
+				success: function(data, status) {
+					hideLoader();
+					getFeedbackMsgs($activeUserData.userID);
+					showToast("#toastAIFeedbackForm", true, data.status_message);
+				},
+				error: function(data, status) {
+					hideLoader();
+					showToast("#toastAIFeedbackForm", false, data.status_message);
+				}
+			});
+		} else {
+			showToast("#toastAIFeedbackForm", false, "Feil: Du må skrive inn en tekst.");
+		}
+
+		$('#textarea-ai-feedback').val("");
+		return false;
 	});
+	
+	// Submit form for storing new custom BI feedback message
+	$("#registerBIFeedbackForm").submit(function(e){
+		showLoader();
+
+		$feedbackText = $('#textarea-bi-feedback').val();
+		$userID = $('#registerBIFeedbackFormUserID').val();
+
+		if ($feedbackText != null && $feedbackText != "" && $userID != null && $userID != "") {
+			formData = $("#registerBIFeedbackForm").serialize();
+			$.ajax({
+				type: "POST",
+				beforeSend: function (request) {
+		            request.setRequestHeader("Authorization", "Bearer " + token);
+		        },
+				url: "http://vavit.no/adapt-staging/api/postFeedbackMsgCustom.php",
+				data: formData,
+				success: function(data, status) {
+					hideLoader();
+					getFeedbackMsgs($activeUserData.userID);
+					showToast("#toastBIFeedbackForm", true, data.status_message);
+				},
+				error: function(data, status) {
+					hideLoader();
+					showToast("#toastBIFeedbackForm", false, data.status_message);
+				}
+			});
+		} else {
+			showToast("#toastBIFeedbackForm", false, "Feil: Du må skrive inn en tekst.");
+		}
+
+		$('#textarea-bi-feedback').val("");
+		return false;
+	});
+
+
 
 	// Submit form for updating user data
 	$("#editUserDataForm").submit(function(e){
+		showLoader();
 		
 		formData = $("#editUserDataForm").serialize();
 		$.ajax({
@@ -321,6 +400,7 @@ $(document).ready(function() {
 		    dataType: "json",*/
 			data: formData,
 			success: function(data, status) {
+				hideLoader();
 				if (data.data) {
 					showToast("#toastEditUserDataForm", true, data.status_message);
 				} else {
@@ -332,6 +412,7 @@ $(document).ready(function() {
 				updateDOM();
 			},
 			error: function(data, status) {
+				hideLoader();
 				showToast("#toastEditUserDataForm", false, data.status_message);
 			}
 		});
@@ -342,6 +423,7 @@ $(document).ready(function() {
 
 	// Submit form for adding new senior user
 	$("#newUserForm").submit(function(e){
+		showLoader();
 		
 		formData = $("#newUserForm").serialize();
 		$.ajax({
@@ -354,11 +436,13 @@ $(document).ready(function() {
 		    dataType: "json",*/
 			data: formData,
 			success: function(data, status) {
+				hideLoader();
 				$.mobile.back();
 				getUserOverview();
 				clearNewUserForm();
 			},
 			error: function(data, status) {
+				hideLoader();
 				showToast("#toastNewUserForm", false, data.status_message);
 			}
 		});
@@ -368,6 +452,7 @@ $(document).ready(function() {
 });
 
 function getUserOverview() {
+	showLoader();
 	$.ajax({
 		url: "http://vavit.no/adapt-staging/api/getSeniorUserOverview.php?expertUserID=" + expertUserID,
 		type: 'GET',
@@ -377,9 +462,11 @@ function getUserOverview() {
 		/*contentType: "application/json; charset=utf-8",
 	    dataType: "json",*/
 		error : function(data, status) {
+			hideLoader();
 			console.log("Error fetching data from API getSeniorUserOverview.");
 		},
 		success: function(data, status) {
+			hideLoader();
 			var userData = data.data;
 
 			if (userData != null) {
@@ -410,6 +497,7 @@ function getUserOverview() {
 }
 
 function getNewestMobilityIdx(userID) {
+	showLoader();
 	$.ajax({
 		url: "http://vavit.no/adapt-staging/api/getNewestMobilityIdx.php?seniorUserID=" + userID,
 		type: 'GET',
@@ -419,10 +507,12 @@ function getNewestMobilityIdx(userID) {
 		/*contentType: "application/json; charset=utf-8",
 	    dataType: "json",*/
 		error : function(data, status) {
+			hideLoader();
 			console.log("Error fetching data from API getNewestMobilityIdx.");
 			return null;
 		},
 		success: function(data, status) {
+			hideLoader();
 			if (data.data) {
 				return data.data.value;
 				console.log("successfully fetched MI for userID=" + userID + ". Data=" + data.data.value);
@@ -434,8 +524,13 @@ function getNewestMobilityIdx(userID) {
 }
 
 function setActiveUser(userID, changePage) {
+	showLoader();
 	clearUserDetailsTable();
 	clearEditUserForm();
+	$('#tableAIFeedbackMsgs tbody tr').remove();
+	$('#tableBIFeedbackMsgs tbody tr').remove();
+	$('#AIFeedbackMsgsContainer').hide();
+	$('#BIFeedbackMsgsContainer').hide();
 
 	if (changePage) {
 		$.mobile.changePage("index.html#user-detail-page");
@@ -450,17 +545,22 @@ function setActiveUser(userID, changePage) {
 		/*contentType: "application/json; charset=utf-8",
 	    dataType: "json",*/
 		error : function(data, status) {
+			hideLoader();
 			console.log("Error getting the user details. Msg from API: " + status);
 		}, 
 		success: function(data, status) {
+			hideLoader();
 			$activeUserData = data.data[0];
 			updateDOM();
+			getFeedbackMsgs(userID);
 
 			$('#mobilityIdxFormUserID').val(userID);
 			$('#activityIdxFormUserID').val(userID);
 			$('#balanceIdxFormUserID').val(userID);
 			$('#editUserDataFormUserID').val(userID);
 			$('#registerFeedbackFormUserID').val(userID);
+			$('#registerAIFeedbackFormUserID').val(userID);
+			$('#registerBIFeedbackFormUserID').val(userID);
 
 			if ($activeUserData.mobilityIdx != null) {
 				drawChart(userID);
@@ -472,6 +572,7 @@ function setActiveUser(userID, changePage) {
 }
 
 function deleteUser() {
+	showLoader();
 	userID = $activeUserData.userID;
 	$.ajax({
 		url: "http://vavit.no/adapt-staging/api/putSeniorUserInactive.php?seniorUserID=" + userID,
@@ -481,8 +582,12 @@ function deleteUser() {
         },
 		/*contentType: "application/json; charset=utf-8",
 	    dataType: "json",*/
-		error : function(data, status) { }, 
+		error : function(data, status) {
+			hideLoader();
+			console.log("Error writing to db through API putSeniorUserInactive.php with parameter seniorUserID=" + userID);
+		}, 
 		success: function(data, status) {
+			hideLoader();
 			$('table tr').each(function(){
 				if ($(this).find('td').eq(0).text() == userID){
 					$(this).remove();
@@ -492,6 +597,69 @@ function deleteUser() {
 			getUserOverview();
 
 			$.mobile.back();
+		}
+	});
+}
+
+function getFeedbackMsgs(userID) {
+	$.ajax({
+		url: "http://vavit.no/adapt-staging/api/getFeedbackMsgs.php?userID=" + userID,
+		type: 'GET',
+		beforeSend: function (request) {
+            request.setRequestHeader("Authorization", "Bearer " + token);
+        },
+		error : function(data, status) {
+			console.log("Error fetching data from API getFeedbackMsgs.");
+		},
+		success: function(data, status) {
+			var feedbackData = data.data;
+
+			if (feedbackData != null) {
+
+				var AIFeedbackMsgs = [];
+				var BIFeedbackMsgs = [];
+				for (var i=0; i<feedbackData.length; i++) {
+					if (feedbackData[i].category == '0') { // category 0 = AI
+						AIFeedbackMsgs.push(feedbackData[i]);
+					} else { // category 1 = BI
+						BIFeedbackMsgs.push(feedbackData[i]);
+					}
+				}
+
+				if (AIFeedbackMsgs.length > 0) {
+					var htmlAI = '';
+					for (var i=0; i<AIFeedbackMsgs.length; i++) {
+						var timeCreated = moment(AIFeedbackMsgs[i].timeCreated + "Z");
+						timeCreated.tz('Europe/Oslo');
+
+						htmlAI += "<tr>"
+						+ "<td>" + timeCreated.format('YYYY-MM-DD HH:mm') + "</td>"
+						+ "<td>" + AIFeedbackMsgs[i].feedbackText + "</td>"
+						+ "</tr>";
+					}
+					$('#tableAIFeedbackMsgs tbody tr').remove();
+					$('#tableAIFeedbackMsgs tbody').append(htmlAI);
+					$('#AIFeedbackMsgsContainer').show();
+				}
+				
+				if (BIFeedbackMsgs.length > 0) {
+					var htmlBI = '';
+					for (var i=0; i<BIFeedbackMsgs.length; i++) {
+						var timeCreated = moment(BIFeedbackMsgs[i].timeCreated + "Z");
+						
+						htmlBI += "<tr>"
+						+ "<td>" + timeCreated.format('YYYY-MM-DD HH:mm') + "</td>"
+						+ "<td>" + BIFeedbackMsgs[i].feedbackText + "</td>"
+						+ "</tr>";
+					}
+					$('#tableBIFeedbackMsgs tbody tr').remove();
+					$('#tableBIFeedbackMsgs tbody').append(htmlBI);
+					$('#BIFeedbackMsgsContainer').show();
+				}
+			} else {
+				console.log("No feedback data returned from API.");
+				// todo: show text saying 'no feedback registered yet'
+			}
 		}
 	});
 }
@@ -555,7 +723,7 @@ function drawChart(userID) {
         }
     });
 
-
+    showLoader();
     $.ajax({
 		url: "http://vavit.no/adapt-staging/api/getMobilityIdxs.php?seniorUserID=" + userID,
 		type: 'GET',
@@ -563,9 +731,11 @@ function drawChart(userID) {
             request.setRequestHeader("Authorization", "Bearer " + token);
         },
 		error : function(data, status) {
+			hideLoader();
 			console.log("Error attempting to call API getMobilityIdxs.php with parameter seniorUserID=" + userID);
 		}, 
 		success: function(data, status) {
+			hideLoader();
 			var chartDataJSON = data.data;
 
 	        if (data.data != null) {
@@ -669,6 +839,8 @@ function handleBIFileSelect(evt) {
 }
 
 function readCSVFile(isAI) {
+	showLoader();
+
 	var file = null;
 	if (isAI) {
 		if (CSVFileAI != null) {
@@ -758,6 +930,8 @@ function showNotificationActivityIdxFileUpload(successCounter, errorCounter, isA
 		toastID = "#toastBalanceIdxFileUpload";
 	}
 
+	hideLoader();
+
 	if (errorCounter > 0) {
 		var total = errorCounter + successCounter;
 		var plural = (total > 1) ? "er" : "";
@@ -786,6 +960,20 @@ function showToast(formID, success, msg) {
 	$(formID).stop().fadeIn(400).delay(3000).fadeOut(400); //fade out after 3 seconds
 }
 
+
+function showLoader() {
+	$.mobile.loading( "show", {
+		text: '',
+		textVisible: false,
+		theme: 'a',
+		textonly: false,
+		html: ''
+    });
+}
+
+function hideLoader() {
+	$.mobile.loading( "hide" );
+}
 
 
 function parseDate(input) {

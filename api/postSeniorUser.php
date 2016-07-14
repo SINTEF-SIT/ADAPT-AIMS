@@ -33,19 +33,24 @@
 				if ($stmt = $conn->prepare("INSERT INTO ExpertSeniorLink (expertUserID, seniorUserID) VALUES (?,?)")) {
 					$stmt->bind_param("ii", $_POST["expertUserID"], $seniorUserID);
 					$stmt->execute();
+					$stmt->close();
+					$conn->close();
 					return true;
 				} else {
+					$stmt->close();
+					$conn->close();
 					return false;
 				}
 				
 			} else {
+				$stmt->close();
+				$conn->close();
 				return false;
 			}
 		} else {
+			$conn->close();
 			return false;
 		}
-
-		$conn->close();
 	}
 
 	$validToken = validateToken();

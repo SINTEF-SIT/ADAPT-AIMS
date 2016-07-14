@@ -2,11 +2,11 @@
 	include('deliver_response.inc.php');
 	include('../inc/jwt.inc.php');
 
-	function readDB($seniorUserID) {
+	function readDB($userID) {
 		include('../inc/db.inc.php');
 
-		if ($stmt = $conn->prepare("SELECT value, timeDataCollected, timeCalculated FROM BalanceIndexes WHERE userID = ? ORDER BY timeDataCollected ASC;")) {
-			$stmt->bind_param("i", $seniorUserID);
+		if ($stmt = $conn->prepare("SELECT feedbackText, timeCreated, category FROM FeedbackMsgCustom WHERE userID=? ORDER BY timeCreated DESC;")) {
+			$stmt->bind_param("i", $userID);
 			$stmt->execute();
 			$result = $stmt->get_result();
 			$stmt->close();
@@ -14,7 +14,8 @@
 
 			if (mysqli_num_rows($result) > 0) {
 				$rows = array();
-				while($r = mysqli_fetch_assoc($result)) {
+				while ($r = mysqli_fetch_assoc($result)) {
+					$r["feedbackText"] = decrypt($r["feedbackText"]);
 					$rows[] = $r;
 				}
 				return $rows;
@@ -30,15 +31,15 @@
 	$validToken = validateToken();
 
 	if ($validToken == true) {
-		if (isset($_GET["seniorUserID"])) {
-			$seniorUserID = $_GET["seniorUserID"];
+		if (isset($_GET["userID"])) {
+			$userID = $_GET["userID"];
 
-			$mobilityIndexes = readDB($seniorUserID);
+			$res = readDB($userID);
 
-			if (empty($mobilityIndexes)) {
-				deliver_response(200, "Ingen data er registrert ennå.", NULL);
+			if (empty($res)) {
+				deliver_response(200, "Ingen feedback-meldinger funnet for bruker-ID = " . $userID, NULL);
 			} else {
-				deliver_response(200, "Balance index funnet.", $mobilityIndexes);
+				deliver_response(200, "Feedback funnet.", $res);
 			}
 		} else {
 			deliver_response(400, "Ugyldig forespørsel.", NULL);
@@ -46,4 +47,5 @@
 	} else {
 		deliver_response(401, "Autentisering feilet.", NULL);
 	}
+		
 ?>

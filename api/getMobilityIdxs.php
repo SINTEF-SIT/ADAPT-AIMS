@@ -9,6 +9,8 @@
 			$stmt->bind_param("i", $seniorUserID);
 			$stmt->execute();
 			$result = $stmt->get_result();
+			$stmt->close();
+			$conn->close();
 
 			if (mysqli_num_rows($result) > 0) {
 				$rows = array();
@@ -20,10 +22,9 @@
 				return NULL;
 			}
 		} else {
+			$conn->close();
 			return NULL;
 		}
-
-		$conn->close();
 	}
 
 	$validToken = validateToken();

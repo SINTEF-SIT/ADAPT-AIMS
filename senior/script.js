@@ -21,6 +21,7 @@ $currentActivityIdx = null;
 ** General
 ***************************/
 $(document).ready(function() {
+	showLoader();
 
 	if (localStorage.token) {
 		token = localStorage.token;
@@ -33,8 +34,6 @@ $(document).ready(function() {
 	seniorLastName = localStorage.lastname;
 	seniorEmail = localStorage.email;
 	
-
-
 	$("#messageWrapper").hide();
 
 	$("#userFullName").text(seniorFirstName + " " + seniorLastName);
@@ -58,7 +57,7 @@ $(document).ready(function() {
 				readCookieMIImg();
 				drawBalanceChart();
 			} else {
-				$("#MIImgHeader").html("Det er ikke registrert noen mobilitetsindeks ennå.");
+				$("#MIImgHeader").html("<h3>Det er ikke registrert noen mobilitetsindeks ennå.</h3>");
 				$("#MIImgInnerWrapper").hide();
 				$("#balanceChartContainer").hide();
 				$("#messageWrapper").hide();
@@ -82,8 +81,50 @@ $(document).ready(function() {
 				//$("#activityChart").html("<h3>Det er ikke registrert noen aktivitetsdata ennå.</h3>");
 			}
 		}
+	}), $.ajax({
+		url: "http://vavit.no/adapt-staging/api/getFeedbackMsg.php?seniorUserID=" + seniorUserID + "&category=0", // Get newest AI feedback msg
+		type: 'GET',
+		beforeSend: function (request) {
+            request.setRequestHeader("Authorization", "Bearer " + token);
+        },
+		error : function(data, status) {
+			console.log("Error attempting to call API getFeedbackMsg.php with parameters seniorUserID=" + seniorUserID + " and category=0");
+		}, 
+		success: function(data, status) {
+			if (data.data) {
+				$("#feedbackMsg").html("<b>Aktivitetsråd:</b> " + data.data.feedbackText);
+				$("#messageWrapper").show();
+			} else {
+				console.log(data.status_message);
+			}
+		}
 	})).then(function(data, textStatus, jqXHR) {
-		if ($currentMobilityIdx && $currentActivityIdx) {
+		$.ajax({
+			url: "http://vavit.no/adapt-staging/api/getFeedbackMsg.php?seniorUserID=" + seniorUserID + "&category=1", // Get newest BI feedback msg
+			type: 'GET',
+			beforeSend: function (request) {
+	            request.setRequestHeader("Authorization", "Bearer " + token);
+	        },
+			error : function(data, status) {
+				hideLoader();
+				console.log("Error attempting to call API getFeedbackMsg.php with parameters seniorUserID=" + seniorUserID + " and category=1");
+			}, 
+			success: function(data, status) {
+				hideLoader();
+				if (data.data) {
+					var newline = "";
+					if ($("#feedbackMsg").html() != "") {
+						newline = "<br>";
+					}
+					$("#feedbackMsg").append(newline + "<b>Balanseråd:</b> " + data.data.feedbackText);
+					$("#messageWrapper").show();
+				} else {
+					console.log(data.status_message);
+				}
+			}
+		});
+
+		/*if ($currentMobilityIdx && $currentActivityIdx) {
 			$.ajax({
 				url: 'http://vavit.no/adapt-staging/api/getFeedbackMsg.php?mi=' + $currentMobilityIdx + '&ai=' + $currentActivityIdx,
 				type: 'GET',
@@ -91,9 +132,11 @@ $(document).ready(function() {
 	                request.setRequestHeader("Authorization", "Bearer " + token);
 	            },
 				error : function(data, status) {
+					hideLoader();
 					console.log("Error attempting to call API getFeedbackMsg.php with parameters mi=" + $currentMobilityIdx + ", ai=" + $currentActivityIdx);
 				}, 
 				success: function(data, status) {
+					hideLoader();
 					if (data.data) {
 						$("#feedbackMsg").html(data.data.feedbackText);
 						$("#messageWrapper").show();
@@ -102,7 +145,7 @@ $(document).ready(function() {
 					}
 				}
 			});
-		}
+		}*/
 	});
 
 	Highcharts.setOptions({
@@ -148,11 +191,16 @@ function drawBalanceChart() {
 				//text: 'Mobilitetsindeks'
 				enabled: false
 			},
-			max: 1,
+			//max: 1,
 			min: 0,
             endOnTick: false,
 			alternateGridColor: '#DEE0E3',
 			tickInterval: 0.1
+		},
+		plotOptions: {
+			series: {
+	            pointWidth: 40
+	        }
 		},
 		legend: {
 			enabled: false
@@ -183,56 +231,61 @@ function drawBalanceChart() {
 	};
 
 	$.ajax({
-		url: "http://vavit.no/adapt-staging/api/getMobilityIdxs.php?seniorUserID=" + seniorUserID,
+		url: "http://vavit.no/adapt-staging/api/getBalanceIdxs.php?seniorUserID=" + seniorUserID,
 		type: 'GET',
 		beforeSend: function (request) {
             request.setRequestHeader("Authorization", "Bearer " + token);
         },
 		error : function(data, status) {
-			console.log("Error attempting to call API getMobilityIdxs.php with parameter seniorUserID=" + seniorUserID);
+			console.log("Error attempting to call API getBalanceIdxs.php with parameter seniorUserID=" + seniorUserID);
 		}, 
 		success: function(data, status) {
 			var balanceChartDataJSON = data.data;
 			var balanceChartData = [];
 
-			var maxMI = 0;
-			for (var i=0; i<balanceChartDataJSON.length; i++) {
-				if (i != 0) {
-					var dataPointPre = [];
-					var datePre = new Date(balanceChartDataJSON[i].timeDataCollected);
-					datePre.setSeconds(datePre.getSeconds() - 1);
-					dataPointPre.push(datePre.getTime());
-					dataPointPre.push(parseFloat(balanceChartDataJSON[i-1].value));
-					balanceChartData.push(dataPointPre);
+			if (balanceChartDataJSON != null) {
+				var maxMI = 0;
+				for (var i=0; i<balanceChartDataJSON.length; i++) {
+					if (i != 0) {
+						var dataPointPre = [];
+						var datePre = new Date(balanceChartDataJSON[i].timeDataCollected);
+						datePre.setSeconds(datePre.getSeconds() - 1);
+						dataPointPre.push(datePre.getTime());
+						dataPointPre.push(parseFloat(balanceChartDataJSON[i-1].value));
+						balanceChartData.push(dataPointPre);
+					}
+
+					var mi = parseFloat(balanceChartDataJSON[i].value);
+					if (mi > maxMI) maxMI = mi;
+
+					var dataPoint = [];
+					var date = Date.parse(balanceChartDataJSON[i].timeDataCollected);
+					dataPoint.push(date);
+					dataPoint.push(mi);
+					balanceChartData.push(dataPoint);
+
+					// If last data point from db, add a final data point at the current datetime
+					if (i+1 == balanceChartDataJSON.length) {
+						var dataPointFinal = [];
+						dataPointFinal.push(new Date().getTime());
+						dataPointFinal.push(parseFloat(balanceChartDataJSON[i].value));
+						balanceChartData.push(dataPointFinal);
+					}
 				}
 
-				var mi = parseFloat(balanceChartDataJSON[i].value);
-				if (mi > maxMI) maxMI = mi;
+				colorMaxMI = getMIChartData($currentMobilityIdx).color; // todo: define correlation between BI and MI
+				colorMidMI = getMIChartData($currentMobilityIdx/2).color;
 
-				var dataPoint = [];
-				var date = Date.parse(balanceChartDataJSON[i].timeDataCollected);
-				dataPoint.push(date);
-				dataPoint.push(mi);
-				balanceChartData.push(dataPoint);
+				balanceChartOptions.series[0].color.stops[0][1] = "#" + colorMaxMI;
+				balanceChartOptions.series[0].color.stops[1][1] = "#" + colorMidMI;
 
-				// If last data point from db, add a final data point at the current datetime
-				if (i+1 == balanceChartDataJSON.length) {
-					var dataPointFinal = [];
-					dataPointFinal.push(new Date().getTime());
-					dataPointFinal.push(parseFloat(balanceChartDataJSON[i].value));
-					balanceChartData.push(dataPointFinal);
-				}
+				balanceChartOptions.series[0].data = balanceChartData;
+
+				balanceChart = new Highcharts.Chart(balanceChartOptions);
+			} else {
+				$("#balanceChartContainer").hide();
+				//$("#balanceChart").html("<h3>Det er ikke registrert noen data om din balanse ennå.</h3>");
 			}
-
-			colorMaxMI = getMIChartData(maxMI).color;
-			colorMidMI = getMIChartData(maxMI/2).color;
-
-			balanceChartOptions.series[0].color.stops[0][1] = "#" + colorMaxMI;
-			balanceChartOptions.series[0].color.stops[1][1] = "#" + colorMidMI;
-
-			balanceChartOptions.series[0].data = balanceChartData;
-
-			balanceChart = new Highcharts.Chart(balanceChartOptions);
 		}
 	});
 }
@@ -407,7 +460,7 @@ function setMMImg() {
     	var img = document.getElementById("MIImg");
 		img.src = imgPath;
 	} else {
-		$("#MIImgHeader").html("Det oppstod en feil.");
+		$("#MIImgHeader").html("<h3>Det oppstod en feil.</h3>");
 		$("#MIImgInnerWrapper").hide();
 	}
 
@@ -619,4 +672,19 @@ function getColorBetween(color1, color2) {
 	var b = Math.ceil(parseInt(color1.substring(4,6), 16) * ratio + parseInt(color2.substring(4,6), 16) * (1-ratio));
 
 	return hex(r) + hex(g) + hex(b);
+}
+
+
+function showLoader() {
+	$.mobile.loading( "show", {
+		text: '',
+		textVisible: false,
+		theme: 'a',
+		textonly: false,
+		html: ''
+    });
+}
+
+function hideLoader() {
+	$.mobile.loading( "hide" );
 }

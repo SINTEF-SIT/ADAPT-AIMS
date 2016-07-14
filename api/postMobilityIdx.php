@@ -8,8 +8,12 @@
 		if ($stmt = $conn->prepare("INSERT INTO MobilityIndexes (userID, timeCalculated, timeDataCollected, value) VALUES (?, NOW(), ?, ?);")) {
 			$stmt->bind_param("isd", $seniorUserID, $timeDataCollected, $mobilityIdx);
 			$stmt->execute();
+
+			$stmt->close();
+			$conn->close();
 			return true;
 		} else {
+			$conn->close();
 			return false;
 		}
 

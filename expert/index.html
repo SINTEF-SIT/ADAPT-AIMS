@@ -159,7 +159,7 @@
 							<a onclick="$.mobile.changePage('index.html#register-mi-page');" data-role="button" data-icon="plus">Registrer ny mobility idx</a>
 							<a onclick="$.mobile.changePage('index.html#register-bi-page');" data-role="button" data-icon="plus">Registrer ny balance idx</a>
 							<a onclick="$.mobile.changePage('index.html#register-ai-page');" data-role="button" data-icon="plus">Registrer ny activity idx</a>
-							<!--<a onclick="$.mobile.changePage('index.html#register-feedback-page');" data-role="button" data-icon="comment">Skriv/rediger anbefaling</a>-->
+							<a onclick="$.mobile.changePage('index.html#feedback-overview-page');" data-role="button" data-icon="comment">Skriv/rediger anbefaling</a>
 							<a onclick="$.mobile.changePage('index.html#edit-data-page');" data-role="button" data-icon="edit">Rediger opplysninger</a>
 							<!--<a onclick="" data-role="button">Se brukerens visning</a>
 							<a onclick="" data-role="button">Administrer sensorenheter</a>-->
@@ -358,9 +358,9 @@
 
 
 		<!-- ******************************************************* -->
-		<!-- *************** REGISTER FEEDBACK PAGE **************** -->
+		<!-- *************** FEEDBACK OVERVIEW PAGE **************** -->
 		<!-- ******************************************************* -->
-		<div data-role="page" id="register-feedback-page">
+		<div data-role="page" id="feedback-overview-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
 				<h1 id="headerTitleRegisterDataView">Registrer anbefaling til brukeren</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
@@ -370,13 +370,99 @@
 			</div><!-- /header -->
 
 			<div data-role="content" data-theme="a">
+
+				<h2>Råd knyttet til aktivitetsindeks (AI):</h2>
+				<div id="AIFeedbackMsgsContainer" class="feedbackMsgsContainer">
+					<table id="tableAIFeedbackMsgs" data-role="table" class="ui-responsive table-stripe ui-shadow">
+						<thead>
+							<th>Dato</th>
+							<th>Tekst</th>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
+
+				<br>
+
+				<form id="registerAIFeedbackForm" method="post">
+					<div class="ui-field-contain">
+						<label for="textarea-ai-feedback">Nytt AI-råd:</label>
+						<input type="text" name="feedbackText" id="textarea-ai-feedback" required></input>
+					</div>
+
+					<input type="hidden" name="userID" id="registerAIFeedbackFormUserID">
+					<input type="hidden" name="category" value="0">
+
+					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
+
+					<div id='toastAIFeedbackForm' class="toast">
+						<div class="toast-content">
+							<img id="toastAIFeedbackFormImg" class="toast-icon" src="//:0"/> <span id="toastAIFeedbackFormText"></span>
+						</div>
+					</div>
+				</form>
+
+				<br><br>
+				<hr>
+				<br><br>
+
+				<h2>Råd knyttet til balanseindeks (BI):</h2>
+				<div id="BIFeedbackMsgsContainer" class="feedbackMsgsContainer">
+					<table id="tableBIFeedbackMsgs" data-role="table" class="ui-responsive table-stripe ui-shadow">
+						<thead>
+							<th>Dato</th>
+							<th>Tekst</th>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
+
+				<br>
+
+				<form id="registerBIFeedbackForm" method="post">
+					<div class="ui-field-contain">
+						<label for="textarea-bi-feedback">Nytt BI-råd:</label>
+						<input type="text" name="feedbackText" id="textarea-bi-feedback" required></input>
+					</div>
+
+					<input type="hidden" name="userID" id="registerBIFeedbackFormUserID">
+					<input type="hidden" name="category" value="1">
+
+					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
+
+					<div id='toastBIFeedbackForm' class="toast">
+						<div class="toast-content">
+							<img id="toastBIFeedbackFormImg" class="toast-icon" src="//:0"/> <span id="toastBIFeedbackFormText"></span>
+						</div>
+					</div>
+					
+				</form>
+			</div><!-- /content -->
+		</div><!-- /feedback-overview-page -->
+
+
+		<!-- ******************************************************* -->
+		<!-- *************** REGISTER FEEDBACK PAGE **************** -->
+		<!-- ******************************************************* -->
+		<!--
+		<div data-role="page" id="register-feedback-page">
+			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
+				<h1 id="headerTitleRegisterDataView">Registrer anbefaling til brukeren</h1>
+				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
+					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
+				</div>
+			</div>
+
+			<div data-role="content" data-theme="a">
 				<form id="registerFeedbackForm" method="post">
 
 					<label for="textarea-feedback">Anbefaling / tilbakemelding:</label>
 					<textarea name="feedbackText" id="textarea-feedback" required></textarea>
 					<br>
 
-					<!--<fieldset data-role="controlgroup">
+					<fieldset data-role="controlgroup">
 						<legend>Velg farge/alvorlighetsgrad:</legend>
 							<input type="radio" name="radio-feedback-color" id="radio-feedback-green" value="alert-success" />
 							<label for="radio-feedback-green">Grønn (positiv)</label>
@@ -389,7 +475,7 @@
 
 							<input type="radio" name="radio-feedback-color" id="radio-feedback-red" value="alert-danger" />
 							<label for="radio-feedback-red">Rød (alvorlig)</label>
-					</fieldset>-->
+					</fieldset>
 					<br>
 
 					<input type="hidden" name="userID" id="registerFeedbackFormUserID">
@@ -404,8 +490,9 @@
 					</div>
 					
 				</form>
-			</div><!-- /content -->
-		</div><!-- /register-feedback-page -->
+			</div>
+		</div>
+		-->
 
 
 		<!-- ******************************************************* -->

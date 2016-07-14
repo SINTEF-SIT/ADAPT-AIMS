@@ -13,6 +13,7 @@
 			$stmt->bind_param("ss", $emailEncrypted, $passwordHashed);
 			$stmt->execute();
 			$result = $stmt->get_result();
+			$stmt->close();
 			$row = mysqli_fetch_assoc($result);
 			$userID = $row['userID'];
 			$row["firstName"] = decrypt($row["firstName"]);
@@ -26,6 +27,9 @@
 					$stmtExpert->execute();
 					$stmtExpert->store_result();
 					$countExpertUsers = $stmtExpert->num_rows;
+					
+					$stmtExpert->close();
+					$conn->close();
 					
 					if ($countExpertUsers > 0) {
 						$row["isExpert"] = true;

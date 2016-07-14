@@ -8,12 +8,14 @@
 		if ($stmt = $conn->prepare("UPDATE SeniorUsers SET active = b'0' WHERE userID = ?")) {
 			$stmt->bind_param("i", $userID);
 			$stmt->execute();
+			$stmt->close();
+			$conn->close();
 			return true;
 		} else {
+			$stmt->close();
+			$conn->close();
 			return false;
 		}
-
-		$conn->close();
 	}
 
 	$validToken = validateToken();

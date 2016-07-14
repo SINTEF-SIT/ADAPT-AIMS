@@ -9,6 +9,7 @@
 			$stmt->bind_param("i", $seniorUserID);
 			$stmt->execute();
 			$result = $stmt->get_result();
+			$stmt->close();
 
 			if (mysqli_num_rows($result) > 0) {
 				$rows = array();
@@ -29,6 +30,8 @@
 						$stmt2->bind_param("i", $userID);
 						$stmt2->execute();
 						$mobilityIdxResult = $stmt2->get_result();
+						
+						$stmt2->close();
 
 						if (mysqli_num_rows($mobilityIdxResult) > 0) {
 							$rowMI = mysqli_fetch_assoc($mobilityIdxResult);
@@ -44,15 +47,16 @@
 					
 					$rows[] = $r;
 				}
+				$conn->close();
 				return $rows;
 			} else {
+				$conn->close();
 				return NULL;
 			}
 		} else {
+			$conn->close();
 			return NULL;
 		}
-
-		$conn->close();
 	}
 
 	$validToken = validateToken();

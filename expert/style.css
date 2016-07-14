@@ -135,3 +135,13 @@
 	height: 0.9em;
 	margin-right: 10px;
 }
+
+.feedbackMsgsContainer {
+	max-height: 300px;
+	overflow: auto;
+}
+
+.feedbackMsgsContainer table tbody tr:first-child {
+	/*font-weight: bold;*/
+	background-color: #BDEBB7;
+}

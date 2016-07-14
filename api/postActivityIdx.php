@@ -8,12 +8,14 @@
 		if ($stmt = $conn->prepare("INSERT INTO ActivityIndexes (userID, timeCalculated, timeDataCollected, value) VALUES (?, NOW(), ?, ?);")) {
 			$stmt->bind_param("isi", $_POST["userID"], $_POST["timeDataCollected"], $_POST["activityIdx"]);
 			$stmt->execute();
+
+			$stmt->close();
+			$conn->close();
 			return true;
 		} else {
+			$conn->close();
 			return false;
 		}
-
-		$conn->close();
 	}
 
 	$validToken = validateToken();
