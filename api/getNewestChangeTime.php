@@ -5,8 +5,12 @@
 	function readDB($seniorUserID) {
 		include('../inc/db.inc.php');
 
-		if ($stmt = $conn->prepare("SELECT value, timeDataCollected, timeCalculated FROM ActivityIndexes WHERE userID=? ORDER BY timeDataCollected DESC LIMIT 1;")) {
-			$stmt->bind_param("i", $seniorUserID);
+		if ($stmt = $conn->prepare("SELECT timeCalculated FROM MobilityIndexes WHERE userID = ?
+				UNION SELECT timeCalculated FROM ActivityIndexes WHERE userID = ?
+				UNION SELECT timeCalculated FROM BalanceIndexes WHERE userID = ?
+				UNION SELECT timeCreated FROM FeedbackMsgCustom WHERE userID = ?
+				ORDER BY timeCalculated DESC LIMIT 1;")) {
+			$stmt->bind_param("iiii", $seniorUserID, $seniorUserID, $seniorUserID, $seniorUserID);
 			$stmt->execute();
 			$result = $stmt->get_result();
 			$stmt->close();
@@ -29,12 +33,12 @@
 		if (isset($_GET["seniorUserID"])) {
 			$seniorUserID = $_GET["seniorUserID"];
 
-			$mobilityIndex = readDB($seniorUserID);
+			$time = readDB($seniorUserID);
 
-			if (empty($mobilityIndex)) {
+			if (empty($time)) {
 				deliver_response(200, "Ingen data er registrert ennå.", NULL);
 			} else {
-				deliver_response(200, "Activity index funnet.", $mobilityIndex);
+				deliver_response(200, "Timestamp funnet.", $time);
 			}
 		} else {
 			deliver_response(400, "Ugyldig forespørsel.", NULL);

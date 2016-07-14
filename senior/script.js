@@ -39,6 +39,23 @@ $(document).ready(function() {
 	$("#userFullName").text(seniorFirstName + " " + seniorLastName);
 
 	$.when($.ajax({
+		url: "http://vavit.no/adapt-staging/api/getNewestChangeTime.php?seniorUserID=" + seniorUserID,
+		type: 'GET',
+		beforeSend: function (request) {
+            request.setRequestHeader("Authorization", "Bearer " + token);
+        },
+		error : function(data, status) {
+			console.log("Error attempting to call API getNewestChangeTime.php with parameter seniorUserID=" + seniorUserID);
+		}, 
+		success: function(data, status) {
+			if (data.data) {
+				var updateTimeDiffText = getUpdateTimeDiff(new Date(data.data.timeCalculated));
+				$("#lastUpdatedValue").text(updateTimeDiffText);
+			} else {
+				console.log(data.status_message);
+			}
+		}
+	}), $.ajax({
 		url: "http://vavit.no/adapt-staging/api/getNewestMobilityIdx.php?seniorUserID=" + seniorUserID,
 		type: 'GET',
 		beforeSend: function (request) {
@@ -50,12 +67,8 @@ $(document).ready(function() {
 		success: function(data, status) {
 			if (data.data) {
 				$currentMobilityIdx = data.data.value;
-				$currentMobilityIdxRounded = Math.round($currentMobilityIdx * 10) / 10;
-				$updateTimeDiffText = getUpdateTimeDiff(new Date(data.data.timeDataCollected));
-				$("#lastUpdatedValue").text($updateTimeDiffText);
-
+				
 				readCookieMIImg();
-				drawBalanceChart();
 			} else {
 				$("#MIImgHeader").html("<h3>Det er ikke registrert noen mobilitetsindeks ennå.</h3>");
 				$("#MIImgInnerWrapper").hide();
@@ -64,22 +77,221 @@ $(document).ready(function() {
 			}
 		}
 	}), $.ajax({
-		url: "http://vavit.no/adapt-staging/api/getNewestActivityIdx.php?seniorUserID=" + seniorUserID,
+		/***************************
+		** Balance chart
+		***************************/
+		url: "http://vavit.no/adapt-staging/api/getBalanceIdxs.php?seniorUserID=" + seniorUserID,
 		type: 'GET',
 		beforeSend: function (request) {
             request.setRequestHeader("Authorization", "Bearer " + token);
         },
 		error : function(data, status) {
-			console.log("Error attempting to call API getNewestActivityIdx.php with parameter seniorUserID=" + seniorUserID);
+			console.log("Error attempting to call API getBalanceIdxs.php with parameter seniorUserID=" + seniorUserID);
 		}, 
 		success: function(data, status) {
-			if (data.data) {
-				$currentActivityIdx = data.data.value;
-				drawActivityChart();
+			var balanceChartDataJSON = data.data;
+			var balanceChartData = [];
+
+			if (balanceChartDataJSON != null) {
+				var maxMI = 0;
+				for (var i=0; i<balanceChartDataJSON.length; i++) {
+					if (i != 0) {
+						var dataPointPre = [];
+						var datePre = new Date(balanceChartDataJSON[i].timeDataCollected);
+						datePre.setSeconds(datePre.getSeconds() - 1);
+						dataPointPre.push(datePre.getTime());
+						dataPointPre.push(parseFloat(balanceChartDataJSON[i-1].value));
+						balanceChartData.push(dataPointPre);
+					}
+
+					var mi = parseFloat(balanceChartDataJSON[i].value);
+					if (mi > maxMI) maxMI = mi;
+
+					var dataPoint = [];
+					var date = Date.parse(balanceChartDataJSON[i].timeDataCollected);
+					dataPoint.push(date);
+					dataPoint.push(mi);
+					balanceChartData.push(dataPoint);
+
+					// If last data point from db, add a final data point at the current datetime
+					if (i+1 == balanceChartDataJSON.length) {
+						var dataPointFinal = [];
+						dataPointFinal.push(new Date().getTime());
+						dataPointFinal.push(parseFloat(balanceChartDataJSON[i].value));
+						balanceChartData.push(dataPointFinal);
+					}
+				}
+
+				balanceChartOptions = {
+					chart: {
+						renderTo: 'balanceChart',
+						type: 'area',
+						//zoomType: 'x',
+						backgroundColor: null,
+						reflow: true
+					},
+					title: {
+						text: 'Din balanse'
+					},
+					xAxis: {
+						type: 'datetime',
+						tickInterval: 24 * 3600 * 1000,
+						min: new Date().getTime() - (31 * 24 * 3600 * 1000) // Set start of x-axis to 1 month ago
+					},
+					yAxis: {
+						title: {
+							//text: 'Mobilitetsindeks'
+							enabled: false
+						},
+						//max: 1,
+						min: 0,
+			            endOnTick: false,
+						alternateGridColor: '#DEE0E3',
+						tickInterval: 0.1
+					},
+					plotOptions: {
+						series: {
+				            pointWidth: 40
+				        }
+					},
+					legend: {
+						enabled: false
+					},
+					credits: {
+						enabled: false
+					},
+					tooltip: {
+						enabled: false
+					},
+					series: [{
+						color: {
+			                linearGradient: {
+			                    x1: 0,
+			                    y1: 0,
+			                    x2: 0,
+			                    y2: 1
+			                },
+			                stops: [
+			                    [0, 'grey'],
+			                    [0.5, 'grey'],
+			                    [1, '#ED1E24']
+			                ]
+			            },
+			            lineWidth: 0,
+			            enableMouseTracking: false
+					}]
+				};
+
+				colorMaxMI = getMIChartData($currentMobilityIdx).color; // todo: define correlation between BI and MI
+				colorMidMI = getMIChartData($currentMobilityIdx/2).color;
+
+				balanceChartOptions.series[0].color.stops[0][1] = "#" + colorMaxMI;
+				balanceChartOptions.series[0].color.stops[1][1] = "#" + colorMidMI;
+
+				balanceChartOptions.series[0].data = balanceChartData;
+
+				balanceChart = new Highcharts.Chart(balanceChartOptions);
+			} else {
+				$("#balanceChartContainer").hide();
+				//$("#balanceChart").html("<h3>Det er ikke registrert noen data om din balanse ennå.</h3>");
+			}
+		}
+	}), $.ajax({
+		/***************************
+		** Activity chart
+		***************************/
+		url: "http://vavit.no/adapt-staging/api/getActivityIdxs.php?seniorUserID=" + seniorUserID,
+		type: 'GET',
+		beforeSend: function (request) {
+            request.setRequestHeader("Authorization", "Bearer " + token);
+        },
+		error : function(data, status) {
+			$("#activityChartContainer").hide();
+			console.log("Error attempting to call API getActivityIdxs.php with parameter seniorUserID=" + seniorUserID);
+		}, 
+		success: function(data, status) {
+			var activityChartDataJSON = data.data;
+			if (activityChartDataJSON != null) {
+				var activityChartData = [];
+				for (var i=0; i<activityChartDataJSON.length; i++) {
+					// Uncomment if chart is area chart!
+					/*if (i != 0) {
+						var dataPointPre = [];
+						var datePre = new Date(activityChartDataJSON[i].timeDataCollected);
+						datePre.setSeconds(datePre.getSeconds() - 1);
+						dataPointPre.push(datePre.getTime());
+						dataPointPre.push(activityChartDataJSON[i-1].value);
+						activityChartData.push(dataPointPre);
+					}*/
+
+					var dataPoint = [];
+					var date = Date.parse(activityChartDataJSON[i].timeDataCollected);
+					dataPoint.push(date);
+					dataPoint.push(activityChartDataJSON[i].value);
+					activityChartData.push(dataPoint);
+
+					// Uncomment if chart is area chart!
+					// If last data point from db, add a final data point one day after the last, to make the last change more visible
+					/*if (i+1 == activityChartDataJSON.length) {
+						var dataPointFinal = [];
+						date.setDate(date.getDate() + 1);
+						dataPointFinal.push(date);
+						dataPointFinal.push(activityChartDataJSON[i].value);
+						activityChartData.push(dataPointFinal);
+					}*/
+				}
+
+				activityChartOptions = {
+					chart: {
+						renderTo: 'activityChart',
+						type: 'column',
+						//zoomType: 'x',
+						backgroundColor: null,
+						reflow: true
+					},
+					title: {
+						text: 'Din fysiske aktivitet'
+					},
+					xAxis: {
+						type: 'datetime',
+						tickInterval: 24 * 3600 * 1000,
+						min: new Date().getTime() - (31 * 24 * 3600 * 1000) // Set start of x-axis to 1 month ago
+					},
+					yAxis: {
+						title: {
+							//text: 'Mobilitetsindeks'
+							enabled: false
+						},
+						max: 5,
+						min: 0,
+						alternateGridColor: '#DEE0E3',
+						tickInterval: 1
+					},
+					plotOptions: {
+						series: {
+							pointWidth: 20
+						}
+					},
+					legend: {
+						enabled: false
+					},
+					credits: {
+						enabled: false
+					},
+					tooltip: {
+						enabled: false
+					},
+					series: [{}]
+				};
+
+				activityChartOptions.series[0].data = activityChartData;
+
+				activityChart = new Highcharts.Chart(activityChartOptions);
 			} else {
 				$("#activityChartContainer").hide();
 				//$("#activityChart").html("<h3>Det er ikke registrert noen aktivitetsdata ennå.</h3>");
 			}
+			
 		}
 	}), $.ajax({
 		url: "http://vavit.no/adapt-staging/api/getFeedbackMsg.php?seniorUserID=" + seniorUserID + "&category=0", // Get newest AI feedback msg
@@ -154,7 +366,7 @@ $(document).ready(function() {
 			shortMonths: ['jan', 'feb', 'mars', 'apr', 'mai', 'juni',  'juli', 'aug', 'sep', 'okt', 'nov', 'des'],
 			weekdays: ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'],
 			shortWeekdays: ['sø', 'ma', 'ti', 'on', 'to', 'fr', 'lø']
-		},
+		}/*,
 		global: {
 			getTimezoneOffset: function (timestamp) {
 				var zone = 'Europe/Oslo',
@@ -162,230 +374,9 @@ $(document).ready(function() {
 
 				return timezoneOffset;
 			}
-		}
+		}*/
 	});
 });
-
-
-/***************************
-** Balance chart
-***************************/
-function drawBalanceChart() {
-	balanceChartOptions = {
-		chart: {
-			renderTo: 'balanceChart',
-			type: 'area',
-			//zoomType: 'x',
-			backgroundColor: null,
-			reflow: true
-		},
-		title: {
-			text: 'Din balanse'
-		},
-		xAxis: {
-			type: 'datetime',
-			tickInterval: 24 * 3600 * 1000
-		},
-		yAxis: {
-			title: {
-				//text: 'Mobilitetsindeks'
-				enabled: false
-			},
-			//max: 1,
-			min: 0,
-            endOnTick: false,
-			alternateGridColor: '#DEE0E3',
-			tickInterval: 0.1
-		},
-		plotOptions: {
-			series: {
-	            pointWidth: 40
-	        }
-		},
-		legend: {
-			enabled: false
-		},
-		credits: {
-			enabled: false
-		},
-		tooltip: {
-			enabled: false
-		},
-		series: [{
-			color: {
-                linearGradient: {
-                    x1: 0,
-                    y1: 0,
-                    x2: 0,
-                    y2: 1
-                },
-                stops: [
-                    [0, 'grey'],
-                    [0.5, 'grey'],
-                    [1, '#ED1E24']
-                ]
-            },
-            lineWidth: 0,
-            enableMouseTracking: false
-		}]
-	};
-
-	$.ajax({
-		url: "http://vavit.no/adapt-staging/api/getBalanceIdxs.php?seniorUserID=" + seniorUserID,
-		type: 'GET',
-		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token);
-        },
-		error : function(data, status) {
-			console.log("Error attempting to call API getBalanceIdxs.php with parameter seniorUserID=" + seniorUserID);
-		}, 
-		success: function(data, status) {
-			var balanceChartDataJSON = data.data;
-			var balanceChartData = [];
-
-			if (balanceChartDataJSON != null) {
-				var maxMI = 0;
-				for (var i=0; i<balanceChartDataJSON.length; i++) {
-					if (i != 0) {
-						var dataPointPre = [];
-						var datePre = new Date(balanceChartDataJSON[i].timeDataCollected);
-						datePre.setSeconds(datePre.getSeconds() - 1);
-						dataPointPre.push(datePre.getTime());
-						dataPointPre.push(parseFloat(balanceChartDataJSON[i-1].value));
-						balanceChartData.push(dataPointPre);
-					}
-
-					var mi = parseFloat(balanceChartDataJSON[i].value);
-					if (mi > maxMI) maxMI = mi;
-
-					var dataPoint = [];
-					var date = Date.parse(balanceChartDataJSON[i].timeDataCollected);
-					dataPoint.push(date);
-					dataPoint.push(mi);
-					balanceChartData.push(dataPoint);
-
-					// If last data point from db, add a final data point at the current datetime
-					if (i+1 == balanceChartDataJSON.length) {
-						var dataPointFinal = [];
-						dataPointFinal.push(new Date().getTime());
-						dataPointFinal.push(parseFloat(balanceChartDataJSON[i].value));
-						balanceChartData.push(dataPointFinal);
-					}
-				}
-
-				colorMaxMI = getMIChartData($currentMobilityIdx).color; // todo: define correlation between BI and MI
-				colorMidMI = getMIChartData($currentMobilityIdx/2).color;
-
-				balanceChartOptions.series[0].color.stops[0][1] = "#" + colorMaxMI;
-				balanceChartOptions.series[0].color.stops[1][1] = "#" + colorMidMI;
-
-				balanceChartOptions.series[0].data = balanceChartData;
-
-				balanceChart = new Highcharts.Chart(balanceChartOptions);
-			} else {
-				$("#balanceChartContainer").hide();
-				//$("#balanceChart").html("<h3>Det er ikke registrert noen data om din balanse ennå.</h3>");
-			}
-		}
-	});
-}
-
-
-
-/***************************
-** Activity chart
-***************************/
-function drawActivityChart() {
-	activityChartOptions = {
-		chart: {
-			renderTo: 'activityChart',
-			type: 'column',
-			//zoomType: 'x',
-			backgroundColor: null,
-			reflow: true
-		},
-		title: {
-			text: 'Din fysiske aktivitet'
-		},
-		xAxis: {
-			type: 'datetime',
-			tickInterval: 24 * 3600 * 1000
-		},
-		yAxis: {
-			title: {
-				//text: 'Mobilitetsindeks'
-				enabled: false
-			},
-			max: 5,
-			min: 0,
-			alternateGridColor: '#DEE0E3',
-			tickInterval: 1
-		},
-		plotOptions: {
-			series: {
-				pointWidth: 20
-			}
-		},
-		legend: {
-			enabled: false
-		},
-		credits: {
-			enabled: false
-		},
-		tooltip: {
-			enabled: false
-		},
-		series: [{}]
-	};
-
-
-	$.ajax({
-		url: "http://vavit.no/adapt-staging/api/getActivityIdxs.php?seniorUserID=" + seniorUserID,
-		type: 'GET',
-		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token);
-        },
-		error : function(data, status) {
-			console.log("Error attempting to call API getActivityIdxs.php with parameter seniorUserID=" + seniorUserID);
-		}, 
-		success: function(data, status) {
-			var activityChartDataJSON = data.data;
-			var activityChartData = [];
-			for (var i=0; i<activityChartDataJSON.length; i++) {
-				// Uncomment if chart is area chart!
-				/*if (i != 0) {
-					var dataPointPre = [];
-					var datePre = new Date(activityChartDataJSON[i].timeDataCollected);
-					datePre.setSeconds(datePre.getSeconds() - 1);
-					dataPointPre.push(datePre.getTime());
-					dataPointPre.push(activityChartDataJSON[i-1].value);
-					activityChartData.push(dataPointPre);
-				}*/
-
-				var dataPoint = [];
-				var date = Date.parse(activityChartDataJSON[i].timeDataCollected);
-				dataPoint.push(date);
-				dataPoint.push(activityChartDataJSON[i].value);
-				activityChartData.push(dataPoint);
-
-				// Uncomment if chart is area chart!
-				// If last data point from db, add a final data point one day after the last, to make the last change more visible
-				/*if (i+1 == activityChartDataJSON.length) {
-					var dataPointFinal = [];
-					date.setDate(date.getDate() + 1);
-					dataPointFinal.push(date);
-					dataPointFinal.push(activityChartDataJSON[i].value);
-					activityChartData.push(dataPointFinal);
-				}*/
-			}
-
-			activityChartOptions.series[0].data = activityChartData;
-
-			activityChart = new Highcharts.Chart(activityChartOptions);
-		}
-	});
-} 
-
 
 
 /***************************
@@ -485,17 +476,17 @@ function setCorrectBorder() {
 
 function showSaveAndCancelBtns(show) {
 	var backBtn = document.getElementById("backBtn");
-	var saveBtn = document.getElementById("saveBtn");
-	var cancelBtn = document.getElementById("cancelBtn");
+	//var saveBtn = document.getElementById("saveBtn");
+	//var cancelBtn = document.getElementById("cancelBtn");
 
 	if (show == 1) {
 		backBtn.style.display = "none";
-		saveBtn.style.display = "block";
-		cancelBtn.style.display = "block";
+		//saveBtn.style.display = "block";
+		//cancelBtn.style.display = "block";
 	} else {
 		backBtn.style.display = "block";
-		saveBtn.style.display = "none";
-		cancelBtn.style.display = "none";
+		//saveBtn.style.display = "none";
+		//cancelBtn.style.display = "none";
 	}
 }
 
@@ -520,7 +511,8 @@ function closeSettingsView() {
 
 	// Need to run reflow function in case the window has resized while in settings view
 	setTimeout(function () { 
-		chart.reflow();
+		activityChart.reflow();
+		balanceChart.reflow();
 	}, 500);
 }
 
@@ -532,10 +524,10 @@ function convertDateToUTC(date) {
 	return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds()); 
 }
 
-function getUpdateTimeDiff(timeDataCollected) {
+function getUpdateTimeDiff(timestamp) {
 	$updateTimeDiffText = "";
 	now = convertDateToUTC(new Date());
-	$milliDiff = now - timeDataCollected;
+	$milliDiff = now - timestamp;
 	$secDiff = $milliDiff / 1000;
 	if ($secDiff < 60) {
 		$updateTimeDiffText = "Akkurat nå";

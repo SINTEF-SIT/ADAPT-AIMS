@@ -7,10 +7,14 @@ var expertFirstName;
 var expertLastName;
 var expertEmail;
 var token;
+var tempMIFormData = null;
+var mobilityChart = null;
+var balanceChart = null;
+var activityChart = null;
 
 Date.prototype.toDateInputValue = (function() {
     var local = new Date(this);
-    local.setMinutes(this.getMinutes() - this.getTimezoneOffset());
+    //local.setMinutes(this.getMinutes() - this.getTimezoneOffset());
     return local.toJSON().slice(0,10);
 });
 
@@ -62,18 +66,24 @@ function updateDOM() {
 		}
 
 		$fullAddress = "";
+		$isZipSet = false;
 		if ($activeUserData["address"] != null) {
 			$fullAddress += $activeUserData["address"];
 		}
 		if ($activeUserData["zipCode"] != null) {
+			$isZipSet = true;
 			if ($fullAddress != "") {
 				$fullAddress += ", ";
 			}
-			$fullAddress += $activeUserData["zipCode"];
+			$fullAddress += $activeUserData["zipCode"] + " ";
 		}
 		if ($activeUserData["city"] != null) {
 			if ($fullAddress != "") {
-				$fullAddress += ", ";
+				if ($isZipSet) {
+					$fullAddress += " ";
+				} else {
+					$fullAddress += ", ";
+				}
 			}
 			$fullAddress += $activeUserData["city"];
 		}
@@ -151,8 +161,6 @@ $(document).ready(function() {
 
 	// Submit form for storing new mobility index
 	$("#mobilityIdxForm").submit(function(e){
-		showLoader();
-
 		$userIDValue = $("#mobilityIdxFormUserID").val();
 		$mobilityIdxValue = $('#mobilityIdxInputField').val();
 
@@ -160,38 +168,25 @@ $(document).ready(function() {
 			if ($userIDValue != "") {
 				if ($.isNumeric($mobilityIdxValue) && $mobilityIdxValue >= 0 && $mobilityIdxValue <= 1) {
 					formData = $("#mobilityIdxForm").serialize();
-					$.ajax({
-						type: "POST",
-						beforeSend: function (request) {
-				            request.setRequestHeader("Authorization", "Bearer " + token);
-				        },
-						url: "http://vavit.no/adapt-staging/api/postMobilityIdx.php",
-						data: formData,
-						success: function(data, status) {
-							hideLoader();
-							if (data.data) {
-								showToast("#toastMobilityIdxForm", true, data.status_message);
-							} else {
-								showToast("#toastMobilityIdxForm", false, data.status_message);
-							}
 
-							$currentNewestMIDate = $activeUserData.mobilityIdxTimeDataCollected;
-							$inputMIDate = $('#mobilityIdxDatePicker').val();
-
-							if ($currentNewestMIDate == null || parseDate($inputMIDate) > parseDate($currentNewestMIDate)) {
-								$("#cellMobilityIdx").html($mobilityIdxValue);
-								$activeUserData['mobilityIdx'] = $mobilityIdxValue;
-								$activeUserData['mobilityIdxTimeDataCollected'] = $inputMIDate;
-							}
-							
-							getUserOverview();
-							drawChart($userIDValue);
-						},
-						error: function(data, status) {
-							hideLoader();
-							showToast("#toastMobilityIdxForm", false, data.status_message);
+					// Check if an MI value is already registered for the given date
+					var match = null;
+					for (var i=0; i<$activeUserData.mobilityIdxs.length; i++) {
+						if ($activeUserData.mobilityIdxs[i].timeDataCollected == $("#mobilityIdxDatePicker").val()) {
+							match = $activeUserData.mobilityIdxs[i];
 						}
-					});
+					}
+					if (match == null) {
+						writeNewMI(formData, false);
+					} else {
+						formData += ("&mobilityIndexID=" + match.mobilityIndexID);
+						tempMIFormData = formData;
+						$("#overwriteMIDialogOldValue").html(match.value);
+						$("#overwriteMIDialogDate").html(match.timeDataCollected);
+						$("#overwriteMIDialogNewValue").html($mobilityIdxValue);
+						
+						$.mobile.changePage( "index.html#confirm-overwrite-mi-dialog", { transition: "pop" });
+					}
 				} else {
 					showToast("#toastMobilityIdxForm", false, "Feil: ugyldig mobility index");
 				}
@@ -224,7 +219,7 @@ $(document).ready(function() {
 		    dataType: "json",*/
 			data: formData,
 			success: function(data, status) {
-				hideLoader();
+				setActiveUser($activeUserData.userID, false);
 				showToast("#toastBalanceIdxManualForm", true, data.status_message);
 			},
 			error: function(data, status) {
@@ -232,10 +227,6 @@ $(document).ready(function() {
 				showToast("#toastBalanceIdxManualForm", false, data.status_message);
 			}
 		});
-		
-		// Todo: update user detail table if newer than current
-		//$("#cellBalanceIdx").html($balanceIdxValue);
-		
 
 		$('#balanceIdxDatePicker').val("");
 		$('#balanceIdxInputField').val("");
@@ -261,7 +252,7 @@ $(document).ready(function() {
 		    dataType: "json",*/
 			data: formData,
 			success: function(data, status) {
-				hideLoader();
+				setActiveUser($activeUserData.userID, false);
 				showToast("#toastActivityIdxManualForm", true, data.status_message);
 			},
 			error: function(data, status) {
@@ -269,9 +260,6 @@ $(document).ready(function() {
 				showToast("#toastActivityIdxManualForm", false, data.status_message);
 			}
 		});
-		
-		// Todo: update user detail table if newer than current
-		//$("#cellActivityIdx").html($activityIdxValue);
 		
 
 		$('#activityIdxDatePicker').val("");
@@ -407,7 +395,7 @@ $(document).ready(function() {
 					showToast("#toastEditUserDataForm", false, data.status_message);
 				}
 
-				setActiveUser($activeUserData.userID,false);
+				setActiveUser($activeUserData.userID, false);
 				getUserOverview();
 				updateDOM();
 			},
@@ -525,6 +513,11 @@ function getNewestMobilityIdx(userID) {
 
 function setActiveUser(userID, changePage) {
 	showLoader();
+
+	mobilityChart = null;
+    balanceChart = null;
+    activityChart = null;
+
 	clearUserDetailsTable();
 	clearEditUserForm();
 	$('#tableAIFeedbackMsgs tbody tr').remove();
@@ -536,20 +529,16 @@ function setActiveUser(userID, changePage) {
 		$.mobile.changePage("index.html#user-detail-page");
 	}
 
-	$.ajax({
+	$.when($.ajax({
 		url: "http://vavit.no/adapt-staging/api/getSeniorUserDetails.php?seniorUserID=" + userID,
 		type: 'GET',
 		beforeSend: function (request) {
             request.setRequestHeader("Authorization", "Bearer " + token);
         },
-		/*contentType: "application/json; charset=utf-8",
-	    dataType: "json",*/
 		error : function(data, status) {
-			hideLoader();
 			console.log("Error getting the user details. Msg from API: " + status);
 		}, 
 		success: function(data, status) {
-			hideLoader();
 			$activeUserData = data.data[0];
 			updateDOM();
 			getFeedbackMsgs(userID);
@@ -561,12 +550,363 @@ function setActiveUser(userID, changePage) {
 			$('#registerFeedbackFormUserID').val(userID);
 			$('#registerAIFeedbackFormUserID').val(userID);
 			$('#registerBIFeedbackFormUserID').val(userID);
+		}
+	}), $.ajax({
+			/***************************
+			** Mobility idx chart
+			***************************/
+			url: "http://vavit.no/adapt-staging/api/getMobilityIdxs.php?seniorUserID=" + userID,
+			type: 'GET',
+			beforeSend: function (request) {
+	            request.setRequestHeader("Authorization", "Bearer " + token);
+	        },
+			error : function(data, status) {
+				console.log("Error attempting to call API getMobilityIdxs.php with parameter seniorUserID=" + userID);
+				hideLoader();
+			}, 
+			success: function(data, status) {
+				var chartDataJSON = data.data;
+				if ($activeUserData == null) $activeUserData = {};	
+				$activeUserData["mobilityIdxs"] = chartDataJSON;
 
-			if ($activeUserData.mobilityIdx != null) {
-				drawChart(userID);
-			} else {
-				$("#chartContainer").hide();
+		        if (data.data != null) {
+			    	var chartData = [];
+			        for (var i=0; i<chartDataJSON.length; i++) {
+			            if (i != 0) {
+			                var dataPointPre = [];
+			                var datePre = new Date(chartDataJSON[i].timeDataCollected);
+			                datePre.setSeconds(datePre.getSeconds() - 1);
+			                dataPointPre.push(datePre.getTime());
+			                dataPointPre.push(parseFloat(chartDataJSON[i-1].value));
+			                chartData.push(dataPointPre);
+			            }
+
+			            var dataPoint = [];
+			            var date = Date.parse(chartDataJSON[i].timeDataCollected);
+			            dataPoint.push(date);
+			            dataPoint.push(parseFloat(chartDataJSON[i].value));
+			            chartData.push(dataPoint);
+
+			            // If last data point from db, add a final data point at the current datetime
+			            if (i+1 == chartDataJSON.length) {
+			                var dataPointFinal = [];
+			                dataPointFinal.push(new Date().getTime());
+			                dataPointFinal.push(parseFloat(chartDataJSON[i].value));
+			                chartData.push(dataPointFinal);
+			            }
+			        }
+
+			        chartOptions = {
+				        chart: {
+				            renderTo: 'mobilityChart',
+				            type: 'area',
+				            zoomType: 'x',
+				            backgroundColor: null,
+				            reflow: true
+				        },
+				        title: {
+				            text: 'Mobility index'
+				        },
+				        xAxis: {
+				            type: 'datetime',
+				            tickInterval: 24 * 3600 * 1000
+				        },
+				        yAxis: {
+				            title: {
+				                enabled: false
+				            },
+				            max: 1,
+				            min: 0,
+				            alternateGridColor: '#DEE0E3',
+				            tickInterval: 0.1
+				        },
+				        legend: {
+				            enabled: false
+				        },
+				        credits: {
+				            enabled: false
+				        },
+				        tooltip: {
+				            //enabled: false
+				        },
+				        series: [{}]
+				    };
+
+				    Highcharts.setOptions({
+				        lang: {
+				            months: ['januar', 'februar', 'mars', 'april', 'mai', 'juni',  'juli', 'august', 'september', 'oktober', 'november', 'desember'],
+				            shortMonths: ['jan', 'feb', 'mars', 'apr', 'mai', 'juni',  'juli', 'aug', 'sep', 'okt', 'nov', 'des'],
+				            weekdays: ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'],
+				            shortWeekdays: ['sø', 'ma', 'ti', 'on', 'to', 'fr', 'lø']
+				        }/*,
+				        global: {
+				            getTimezoneOffset: function (timestamp) {
+				                var zone = 'Europe/Oslo',
+				                    timezoneOffset = -moment.tz(timestamp, zone).utcOffset();
+
+				                return timezoneOffset;
+				            }
+				        }*/
+				    });
+
+			        chartOptions.series[0].data = chartData;
+
+			        mobilityChart = new Highcharts.Chart(chartOptions);
+			        $("#mobilityChartContainer").show();
+		        } else {
+		        	$("#mobilityChartContainer").hide();
+		        	console.log("No mobility idx values found in db.");
+		        }
+		        hideLoader();
 			}
+		}), $.ajax({
+		/***************************
+		** Balance chart
+		***************************/
+		url: "http://vavit.no/adapt-staging/api/getBalanceIdxs.php?seniorUserID=" + userID,
+		type: 'GET',
+		beforeSend: function (request) {
+            request.setRequestHeader("Authorization", "Bearer " + token);
+        },
+		error : function(data, status) {
+			console.log("Error attempting to call API getBalanceIdxs.php with parameter seniorUserID=" + userID);
+		}, 
+		success: function(data, status) {
+			var balanceChartDataJSON = data.data;
+			var balanceChartData = [];
+
+			if (balanceChartDataJSON != null) {
+				var maxMI = 0;
+				for (var i=0; i<balanceChartDataJSON.length; i++) {
+					/*if (i != 0) {
+						var dataPointPre = [];
+						var datePre = new Date(balanceChartDataJSON[i].timeDataCollected);
+						datePre.setSeconds(datePre.getSeconds() - 1);
+						dataPointPre.push(datePre.getTime());
+						dataPointPre.push(parseFloat(balanceChartDataJSON[i-1].value));
+						balanceChartData.push(dataPointPre);
+					}*/
+
+					var mi = parseFloat(balanceChartDataJSON[i].value);
+					if (mi > maxMI) maxMI = mi;
+
+					var dataPoint = [];
+					var date = Date.parse(balanceChartDataJSON[i].timeDataCollected);
+					dataPoint.push(date);
+					dataPoint.push(mi);
+					balanceChartData.push(dataPoint);
+
+					// If last data point from db, add a final data point at the current datetime
+					/*if (i+1 == balanceChartDataJSON.length) {
+						var dataPointFinal = [];
+						dataPointFinal.push(new Date().getTime());
+						dataPointFinal.push(parseFloat(balanceChartDataJSON[i].value));
+						balanceChartData.push(dataPointFinal);
+					}*/
+				}
+
+				balanceChartOptions = {
+					chart: {
+						renderTo: 'balanceChart',
+						type: 'column',
+						//zoomType: 'x',
+						backgroundColor: null,
+						reflow: true
+					},
+					title: {
+						text: 'Balance index'
+					},
+					xAxis: {
+						type: 'datetime',
+						tickInterval: 24 * 3600 * 1000
+					},
+					yAxis: {
+						title: {
+							enabled: false
+						},
+						//max: 1,
+						min: 0,
+			            endOnTick: false,
+						alternateGridColor: '#DEE0E3',
+						tickInterval: 0.1
+					},
+					legend: {
+						enabled: false
+					},
+					credits: {
+						enabled: false
+					},
+					tooltip: {
+						enabled: false
+					},
+					series: [{
+						/*color: {
+			                linearGradient: {
+			                    x1: 0,
+			                    y1: 0,
+			                    x2: 0,
+			                    y2: 1
+			                },
+			                stops: [
+			                    [0, 'grey'],
+			                    [0.5, 'grey'],
+			                    [1, '#ED1E24']
+			                ]
+			            },
+			            lineWidth: 0,
+			            enableMouseTracking: false*/
+					}]
+				};
+
+				/*colorMaxMI = getMIChartData($currentMobilityIdx).color; // todo: define correlation between BI and MI
+				colorMidMI = getMIChartData($currentMobilityIdx/2).color;
+
+				balanceChartOptions.series[0].color.stops[0][1] = "#" + colorMaxMI;
+				balanceChartOptions.series[0].color.stops[1][1] = "#" + colorMidMI;*/
+
+				balanceChartOptions.series[0].data = balanceChartData;
+
+				balanceChart = new Highcharts.Chart(balanceChartOptions);
+				$("#balanceChartContainer").show();
+			} else {
+				$("#balanceChartContainer").hide();
+				//$("#balanceChart").html("<h3>Det er ikke registrert noen data om din balanse ennå.</h3>");
+			}
+		}
+	})).then(function(data, textStatus, jqXHR) {
+		$.ajax({
+			/***************************
+			** Activity chart
+			***************************/
+			url: "http://vavit.no/adapt-staging/api/getActivityIdxs.php?seniorUserID=" + userID,
+			type: 'GET',
+			beforeSend: function (request) {
+	            request.setRequestHeader("Authorization", "Bearer " + token);
+	        },
+			error : function(data, status) {
+				$("#activityChartContainer").hide();
+				console.log("Error attempting to call API getActivityIdxs.php with parameter seniorUserID=" + userID);
+			}, 
+			success: function(data, status) {
+				var activityChartDataJSON = data.data;
+				if (activityChartDataJSON != null) {
+					var activityChartData = [];
+					for (var i=0; i<activityChartDataJSON.length; i++) {
+						// Uncomment if chart is area chart!
+						/*if (i != 0) {
+							var dataPointPre = [];
+							var datePre = new Date(activityChartDataJSON[i].timeDataCollected);
+							datePre.setSeconds(datePre.getSeconds() - 1);
+							dataPointPre.push(datePre.getTime());
+							dataPointPre.push(activityChartDataJSON[i-1].value);
+							activityChartData.push(dataPointPre);
+						}*/
+
+						var dataPoint = [];
+						var date = Date.parse(activityChartDataJSON[i].timeDataCollected);
+						dataPoint.push(date);
+						dataPoint.push(activityChartDataJSON[i].value);
+						activityChartData.push(dataPoint);
+
+						// Uncomment if chart is area chart!
+						// If last data point from db, add a final data point one day after the last, to make the last change more visible
+						/*if (i+1 == activityChartDataJSON.length) {
+							var dataPointFinal = [];
+							date.setDate(date.getDate() + 1);
+							dataPointFinal.push(date);
+							dataPointFinal.push(activityChartDataJSON[i].value);
+							activityChartData.push(dataPointFinal);
+						}*/
+					}
+
+					activityChartOptions = {
+						chart: {
+							renderTo: 'activityChart',
+							type: 'column',
+							//zoomType: 'x',
+							backgroundColor: null,
+							reflow: true
+						},
+						title: {
+							text: 'Activity index'
+						},
+						xAxis: {
+							type: 'datetime',
+							tickInterval: 24 * 3600 * 1000
+						},
+						yAxis: {
+							title: {
+								enabled: false
+							},
+							max: 5,
+							min: 0,
+							alternateGridColor: '#DEE0E3',
+							tickInterval: 1
+						},
+						legend: {
+							enabled: false
+						},
+						credits: {
+							enabled: false
+						},
+						tooltip: {
+							enabled: false
+						},
+						series: [{}]
+					};
+
+					activityChartOptions.series[0].data = activityChartData;
+
+					activityChart = new Highcharts.Chart(activityChartOptions);
+					$("#activityChartContainer").show();
+				} else {
+					$("#activityChartContainer").hide();
+					//$("#activityChart").html("<h3>Det er ikke registrert noen aktivitetsdata ennå.</h3>");
+				}
+			}
+		});
+	});
+}
+
+function updateMI() {
+	writeNewMI(tempMIFormData, true);
+	tempMIFormData = null;
+}
+
+function writeNewMI(formData, update) {
+	showLoader();
+	var urlPart = (update ? "put" : "post");
+	
+	$.ajax({
+		type: "POST",
+		beforeSend: function (request) {
+            request.setRequestHeader("Authorization", "Bearer " + token);
+        },
+		url: "http://vavit.no/adapt-staging/api/" + urlPart + "MobilityIdx.php",
+		data: formData,
+		success: function(data, status) {
+			hideLoader();
+			if (data.data) {
+				showToast("#toastMobilityIdxForm", true, data.status_message);
+			} else {
+				showToast("#toastMobilityIdxForm", false, data.status_message);
+			}
+
+			$currentNewestMIDate = $activeUserData.mobilityIdxTimeDataCollected;
+			$inputMIDate = $('#mobilityIdxDatePicker').val();
+
+			if ($currentNewestMIDate == null || parseDate($inputMIDate) > parseDate($currentNewestMIDate)) {
+				$("#cellMobilityIdx").html($mobilityIdxValue);
+				$activeUserData['mobilityIdx'] = $mobilityIdxValue;
+				$activeUserData['mobilityIdxTimeDataCollected'] = $inputMIDate;
+			}
+			
+			getUserOverview();
+			setActiveUser($activeUserData.userID, false);
+		},
+		error: function(data, status) {
+			hideLoader();
+			showToast("#toastMobilityIdxForm", false, data.status_message);
 		}
 	});
 }
@@ -657,129 +997,18 @@ function getFeedbackMsgs(userID) {
 					$('#BIFeedbackMsgsContainer').show();
 				}
 			} else {
-				console.log("No feedback data returned from API.");
-				// todo: show text saying 'no feedback registered yet'
+				//console.log("No feedback data returned from API.");
 			}
-		}
-	});
-}
-
-/***************************
-** Chart
-***************************/
-function drawChart(userID) {
-    chartOptions = {
-        chart: {
-            renderTo: 'chart',
-            type: 'area',
-            zoomType: 'x',
-            backgroundColor: null,
-            reflow: true
-        },
-        title: {
-            text: 'Endring i mobility idx over tid'
-        },
-        xAxis: {
-            type: 'datetime',
-            tickInterval: 24 * 3600 * 1000
-        },
-        yAxis: {
-            title: {
-                //text: 'Mobilitetsindeks'
-                enabled: false
-            },
-            max: 1,
-            min: 0,
-            alternateGridColor: '#DEE0E3',
-            tickInterval: 0.1
-        },
-        legend: {
-            enabled: false
-        },
-        credits: {
-            enabled: false
-        },
-        tooltip: {
-            //enabled: false
-        },
-        series: [{}]
-    };
-
-
-    Highcharts.setOptions({
-        lang: {
-            months: ['januar', 'februar', 'mars', 'april', 'mai', 'juni',  'juli', 'august', 'september', 'oktober', 'november', 'desember'],
-            shortMonths: ['jan', 'feb', 'mars', 'apr', 'mai', 'juni',  'juli', 'aug', 'sep', 'okt', 'nov', 'des'],
-            weekdays: ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'],
-            shortWeekdays: ['sø', 'ma', 'ti', 'on', 'to', 'fr', 'lø']
-        },
-        global: {
-            getTimezoneOffset: function (timestamp) {
-                var zone = 'Europe/Oslo',
-                    timezoneOffset = -moment.tz(timestamp, zone).utcOffset();
-
-                return timezoneOffset;
-            }
-        }
-    });
-
-    showLoader();
-    $.ajax({
-		url: "http://vavit.no/adapt-staging/api/getMobilityIdxs.php?seniorUserID=" + userID,
-		type: 'GET',
-		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token);
-        },
-		error : function(data, status) {
-			hideLoader();
-			console.log("Error attempting to call API getMobilityIdxs.php with parameter seniorUserID=" + userID);
-		}, 
-		success: function(data, status) {
-			hideLoader();
-			var chartDataJSON = data.data;
-
-	        if (data.data != null) {
-		    	var chartData = [];
-		        for (var i=0; i<chartDataJSON.length; i++) {
-		            if (i != 0) {
-		                var dataPointPre = [];
-		                var datePre = new Date(chartDataJSON[i].timeDataCollected);
-		                datePre.setSeconds(datePre.getSeconds() - 1);
-		                dataPointPre.push(datePre.getTime());
-		                dataPointPre.push(parseFloat(chartDataJSON[i-1].value));
-		                chartData.push(dataPointPre);
-		            }
-
-		            var dataPoint = [];
-		            var date = Date.parse(chartDataJSON[i].timeDataCollected);
-		            dataPoint.push(date);
-		            dataPoint.push(parseFloat(chartDataJSON[i].value));
-		            chartData.push(dataPoint);
-
-		            // If last data point from db, add a final data point at the current datetime
-		            if (i+1 == chartDataJSON.length) {
-		                var dataPointFinal = [];
-		                dataPointFinal.push(new Date().getTime());
-		                dataPointFinal.push(parseFloat(chartDataJSON[i].value));
-		                chartData.push(dataPointFinal);
-		            }
-		        }
-
-		        chartOptions.series[0].data = chartData;
-
-		        chart = new Highcharts.Chart(chartOptions);
-		        $("#chartContainer").show();
-	        } else {
-	        	console.log("No mobility idx values found in db.");
-	        }
 		}
 	});
 }
 
 
 $(document).delegate('#user-detail-page', 'pageshow', function () {
-    if ($activeUserData != null && $activeUserData.mobilityIdx != "" && chart != null) {
-    	chart.reflow();
+    if ($activeUserData != null) {
+    	if (mobilityChart != null) mobilityChart.reflow();
+	    if (balanceChart != null) balanceChart.reflow();
+	    if (activityChart != null) activityChart.reflow();
     }
 });
 

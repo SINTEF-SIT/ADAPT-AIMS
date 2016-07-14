@@ -173,9 +173,23 @@
 				<br>
 
 				<!-- Mobility idx chart -->
-				<div id="chartContainer" class="pageMainElement">
-					<div id="chartWell" class="well">
-						<div id="chart"></div>
+				<div id="mobilityChartContainer" class="pageMainElement">
+					<div class="well chartWell">
+						<div id="mobilityChart"></div>
+					</div>
+				</div>
+
+				<!-- Balance index chart -->
+				<div id="balanceChartContainer" class="pageMainElement">
+					<div class="well chartWell">
+						<div id="balanceChart"></div>
+					</div>
+				</div>
+
+				<!-- Activity index chart -->
+				<div id="activityChartContainer" class="pageMainElement">
+					<div class="well chartWell">
+						<div id="activityChart"></div>
 					</div>
 				</div>
 				
@@ -221,8 +235,26 @@
 			</div><!-- /content -->
 		</div><!-- /register-mi-page -->
 
+
 		<!-- ******************************************************* -->
-		<!-- ************* REGISTER BALANCE IDX PAGE ************** -->
+		<!-- ************* CONFIRM OVERWRITE MI DIALOG ************* -->
+		<!-- ******************************************************* -->
+		<div data-role="page" data-dialog="true" data-close-btn="right" id="confirm-overwrite-mi-dialog">
+			<div data-role="header" data-theme="b">
+				<h1>Bekreft ny MI</h1>
+			</div>
+
+			<div role="main" class="ui-content">
+				<h1>Erstatt eksisterende verdi?</h1>
+				<p>Verdien <span id="overwriteMIDialogOldValue"></span> er allerede registrert på datoen <span id="overwriteMIDialogDate"></span>. Vil du overskrive denne verdien med MI=<span id="overwriteMIDialogNewValue"></span>?
+				<a id="confirmOverwriteMIBtn" onclick="updateMI();" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Ja, lagre ny verdi</a>
+				<a data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Nei, avbryt</a>
+			</div>
+		</div> <!-- /confirm overwrite mi dialog -->
+
+
+		<!-- ******************************************************* -->
+		<!-- ************** REGISTER BALANCE IDX PAGE ************** -->
 		<!-- ******************************************************* -->
 		<div data-role="page" id="register-bi-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
@@ -252,7 +284,7 @@
 
 
 		<!-- ******************************************************* -->
-		<!-- ********** REGISTER BALANCE IDX MANUAL PAGE ********** -->
+		<!-- *********** REGISTER BALANCE IDX MANUAL PAGE ********** -->
 		<!-- ******************************************************* -->
 		<div data-role="page" id="register-bi-manual-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">

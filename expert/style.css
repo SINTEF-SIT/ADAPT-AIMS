@@ -87,7 +87,7 @@
 	/* float:          left; */
 }
 
-#chartContainer {
+#mobilityChartContainer, #balanceChartContainer, #activityChartContainer {
 	width: 80%;
 	margin: 0 auto;
 }

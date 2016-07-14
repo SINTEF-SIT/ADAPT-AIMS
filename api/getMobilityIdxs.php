@@ -5,7 +5,7 @@
 	function readDB($seniorUserID) {
 		include('../inc/db.inc.php');
 
-		if ($stmt = $conn->prepare("SELECT value, timeDataCollected, timeCalculated FROM MobilityIndexes WHERE userID = ? ORDER BY timeDataCollected ASC;")) {
+		if ($stmt = $conn->prepare("SELECT mobilityIndexID, value, timeDataCollected, timeCalculated FROM MobilityIndexes WHERE userID = ? ORDER BY timeDataCollected ASC;")) {
 			$stmt->bind_param("i", $seniorUserID);
 			$stmt->execute();
 			$result = $stmt->get_result();
