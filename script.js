@@ -1,4 +1,5 @@
 $(document).ready(function() {
+	// Listens for the submit of the login form
 	$("#loginForm").submit(function(e) {
 
 		formData = $("#loginForm").serialize();
@@ -7,7 +8,9 @@ $(document).ready(function() {
 			url: "http://vavit.no/adapt-staging/api/login.php",
 			data: formData,
 			success: function(data, status) {
+				// If API call returns data (successful login):
 				if (data.data) {
+					// Store data about logged in user in localstorage
 					localStorage.setItem("firstname", data.data.firstName);
 					localStorage.setItem("lastname", data.data.lastName);
 					localStorage.setItem("userid", data.data.userID);
@@ -15,34 +18,22 @@ $(document).ready(function() {
 					localStorage.setItem("isexpert", data.data.isExpert);
 					localStorage.setItem("token", data.data.token);
 
+					// Redirects the browser depending on whether the user has an expert or a senior account type
 					if (data.data.isExpert) {
 						window.location.href = "expert/index.html";
 					} else {
 						window.location.href = "senior/index.html";
 					}
 				} else {
+					// Display toast with error message if login credentials were incorrect
 					showToast("#toastloginForm", false, data.status_message);
 				}
 			},
 			error: function(data, status) {
+				// Display toast with error message if an error occured during API call
 				showToast("#toastloginForm", false, data.status_message);
 			}
 		});
 		return false;
 	});
 });
-
-function showToast(formID, success, msg) {
-	if (success) {
-		$(formID).removeClass("toast-error").addClass("toast-success");
-		$(formID + 'Img').attr("src","expert/img/check.png");
-		if (!msg) msg = "Suksess!";
-	} else {
-		$(formID).removeClass("toast-success").addClass("toast-error");
-		$(formID + 'Img').attr("src","expert/img/error.png");
-		if (!msg) msg = "Det har oppstått en feil.";
-	}
-
-	$(formID + 'Text').text($.trim(msg));
-	$(formID).stop().fadeIn(400).delay(3000).fadeOut(400); //fade out after 3 seconds
-}

@@ -1,79 +1,86 @@
 /***************************
 ** Global variables
 ***************************/
-var changesMade = 0;
-var balanceChart;
-var activityChart;
-var MIImgID;
-var oldMIImgID;
-//var chartData;
-var seniorUserID;
-var token;
-var seniorEmail;
-var seniorFirstName;
-var seniorLastName;
+var balanceChart; // The chart displaying the balance indexes
+var activityChart; // The chart displaying the activity indexes
+var MIImgID; // ID identifying the image used to represent the MI
+var oldMIImgID; // Stores the previously selected MI img when a new img is selected, for rollback if the user cancels the changes
 
-$mobilityIdxs = null;
-$currentMobilityIdx = null;
-$currentActivityIdx = null;
+var token; // The JWT used for communicating with the API
+var seniorUserID; // The user id of the logged in user
+var seniorEmail; // The email of the logged in user
+var seniorFirstName; // The first name of the logged in user
+var seniorLastName; // The last name of the logged in user
+
+$currentMobilityIdx = null; // The current mobility index for the logged in user
+$currentActivityIdx = null; // The current activity index for the logged in user. Not currently in use!
+
+
 
 /***************************
 ** General
 ***************************/
 $(document).ready(function() {
-	showLoader();
+	showLoader(); // Displays the loading widget
 
-	if (localStorage.token) {
+	// Checks if the token and user data exist in localStorage
+	if (localStorage.token && localStorage.userid && localStorage.firstname && localStorage.lastname && localStorage.email) {
+		// Fetches token and data about the logged in user from localStorage
 		token = localStorage.token;
+		seniorUserID = localStorage.userid;
+		seniorFirstName = localStorage.firstname;
+		seniorLastName = localStorage.lastname;
+		seniorEmail = localStorage.email;
 	} else {
+		// Redirect to login page
 		window.location.replace("../index.html");
 	}
-
-	seniorUserID = localStorage.userid;
-	seniorFirstName = localStorage.firstname;
-	seniorLastName = localStorage.lastname;
-	seniorEmail = localStorage.email;
 	
-	$("#messageWrapper").hide();
+	$("#messageWrapper").hide(); // Initially hides the box displaying feedback messages
 
-	$("#userFullName").text(seniorFirstName + " " + seniorLastName);
+	$("#userFullName").text(seniorFirstName + " " + seniorLastName); // Writes the full name of the logged in user to the DOM
 
 	$.when($.ajax({
+		/***************************
+		** Timestamp of most recent update
+		***************************/
 		url: "http://vavit.no/adapt-staging/api/getNewestChangeTime.php?seniorUserID=" + seniorUserID,
 		type: 'GET',
 		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token);
+            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
         },
-		error : function(data, status) {
+		error: function(data, status) { // If the API request fails
 			console.log("Error attempting to call API getNewestChangeTime.php with parameter seniorUserID=" + seniorUserID);
 		}, 
-		success: function(data, status) {
+		success: function(data, status) { // If the API request is successful
 			if (data.data) {
-				var updateTimeDiffText = getUpdateTimeDiff(new Date(data.data.timeCalculated));
-				$("#lastUpdatedValue").text(updateTimeDiffText);
+				var updateTimeDiffText = getUpdateTimeDiff(new Date(data.data.timeCalculated)); // Calculates the string to display to tell how long ago the information was last updated
+				$("#lastUpdatedValue").text(updateTimeDiffText); // Writes string to DOM
 			} else {
+				// No data registered for this user yet
 				console.log(data.status_message);
 			}
 		}
 	}), $.ajax({
+		/***************************
+		** Newest mobility idx
+		***************************/
 		url: "http://vavit.no/adapt-staging/api/getNewestMobilityIdx.php?seniorUserID=" + seniorUserID,
 		type: 'GET',
 		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token);
+            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
         },
-		error : function(data, status) {
+		error: function(data, status) { // If the API request fails
 			console.log("Error attempting to call API getNewestMobilityIdx.php with parameter seniorUserID=" + seniorUserID);
 		}, 
-		success: function(data, status) {
+		success: function(data, status) { // If the API request is successful
 			if (data.data) {
 				$currentMobilityIdx = data.data.value;
-				
-				readCookieMIImg();
+				readCookieMIImg(); // Checks if a cookie is set for picking an MI img
 			} else {
-				$("#MIImgHeader").html("<h3>Det er ikke registrert noen mobilitetsindeks ennå.</h3>");
-				$("#MIImgInnerWrapper").hide();
-				$("#balanceChartContainer").hide();
-				$("#messageWrapper").hide();
+				// No MI registered for this user yet
+				$("#MIImgHeader").html("<h3>Det er ikke registrert noen mobilitetsindeks ennå.</h3>"); // Writes to DOM
+				$("#MIImgInnerWrapper").hide(); // Hides the MI image
 			}
 		}
 	}), $.ajax({
@@ -83,19 +90,24 @@ $(document).ready(function() {
 		url: "http://vavit.no/adapt-staging/api/getBalanceIdxs.php?seniorUserID=" + seniorUserID,
 		type: 'GET',
 		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token);
+            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
         },
-		error : function(data, status) {
+		error: function(data, status) { // If the API request fails
+			$("#balanceChartContainer").hide(); // Hide BI chart
 			console.log("Error attempting to call API getBalanceIdxs.php with parameter seniorUserID=" + seniorUserID);
 		}, 
-		success: function(data, status) {
+		success: function(data, status) { // If the API request is successful
 			var balanceChartDataJSON = data.data;
 			var balanceChartData = [];
 
 			if (balanceChartDataJSON != null) {
-				var maxMI = 0;
+				//var maxBI = 0; // The highest BI value in the series
+				
 				for (var i=0; i<balanceChartDataJSON.length; i++) {
 					if (i != 0) {
+						// Draws an extra data point right before each data point (except the first) 
+						// to get a flat line instead of a straight, diagonal line between the points.
+						// Needs to be commented out if the chart is switched to a column chart.
 						var dataPointPre = [];
 						var datePre = new Date(balanceChartDataJSON[i].timeDataCollected);
 						datePre.setSeconds(datePre.getSeconds() - 1);
@@ -104,13 +116,14 @@ $(document).ready(function() {
 						balanceChartData.push(dataPointPre);
 					}
 
-					var mi = parseFloat(balanceChartDataJSON[i].value);
-					if (mi > maxMI) maxMI = mi;
+					
+					var bi = parseFloat(balanceChartDataJSON[i].value);
+					//if (bi > maxBI) maxBI = mi;
 
 					var dataPoint = [];
 					var date = Date.parse(balanceChartDataJSON[i].timeDataCollected);
 					dataPoint.push(date);
-					dataPoint.push(mi);
+					dataPoint.push(bi);
 					balanceChartData.push(dataPoint);
 
 					// If last data point from db, add a final data point at the current datetime
@@ -124,9 +137,8 @@ $(document).ready(function() {
 
 				balanceChartOptions = {
 					chart: {
-						renderTo: 'balanceChart',
-						type: 'area',
-						//zoomType: 'x',
+						renderTo: 'balanceChart', // ID of div where the chart is to be rendered
+						//zoomType: 'x', // Uncomment to make the chart zoomable along the x-axis
 						backgroundColor: null,
 						reflow: true
 					},
@@ -135,19 +147,14 @@ $(document).ready(function() {
 					},
 					xAxis: {
 						type: 'datetime',
-						tickInterval: 24 * 3600 * 1000,
+						tickInterval: 24 * 3600 * 1000, // How frequent a tick is displayed on the axis (set in milliseconds)
 						min: new Date().getTime() - (31 * 24 * 3600 * 1000) // Set start of x-axis to 1 month ago
 					},
 					yAxis: {
-						title: {
-							//text: 'Mobilitetsindeks'
-							enabled: false
-						},
-						//max: 1,
-						min: 0,
+						min: 0, // The floor of the y-axis. 
 			            endOnTick: false,
 						alternateGridColor: '#DEE0E3',
-						tickInterval: 0.1
+						tickInterval: 0.1 // How frequent a tick is displayed on the axis
 					},
 					plotOptions: {
 						series: {
@@ -155,16 +162,17 @@ $(document).ready(function() {
 				        }
 					},
 					legend: {
-						enabled: false
+						enabled: false // Hides the legend showing the name and toggle option for the series
 					},
 					credits: {
-						enabled: false
+						enabled: false // Hides the Highcharts credits
 					},
 					tooltip: {
-						enabled: false
+						enabled: false // Hides the tooltip from being displayed while hovering
 					},
 					series: [{
 						color: {
+							// Defines the color gradient of the chart.
 			                linearGradient: {
 			                    x1: 0,
 			                    y1: 0,
@@ -172,6 +180,7 @@ $(document).ready(function() {
 			                    y2: 1
 			                },
 			                stops: [
+								// The 'grey' color is temporary, as the top and middle colors are calculated later.
 			                    [0, 'grey'],
 			                    [0.5, 'grey'],
 			                    [1, '#ED1E24']
@@ -182,16 +191,20 @@ $(document).ready(function() {
 					}]
 				};
 
-				colorMaxMI = getMIChartData($currentMobilityIdx).color; // todo: define correlation between BI and MI
-				colorMidMI = getMIChartData($currentMobilityIdx/2).color;
+				// Finds the color to use in the top and middle of the chart based on the current MI.
+				// todo: Need to iterate through all MI values and use the highest value to calculate color,
+				// or define another correlastion between BI and MI.
+				colormaxBI = getMIChartData($currentMobilityIdx).color;
+				colorMidBI = getMIChartData($currentMobilityIdx/2).color;
 
-				balanceChartOptions.series[0].color.stops[0][1] = "#" + colorMaxMI;
-				balanceChartOptions.series[0].color.stops[1][1] = "#" + colorMidMI;
+				balanceChartOptions.series[0].color.stops[0][1] = "#" + colormaxBI;
+				balanceChartOptions.series[0].color.stops[1][1] = "#" + colorMidBI;
 
 				balanceChartOptions.series[0].data = balanceChartData;
 
 				balanceChart = new Highcharts.Chart(balanceChartOptions);
 			} else {
+				// No BI values registered. BI chart is hidden.
 				$("#balanceChartContainer").hide();
 				//$("#balanceChart").html("<h3>Det er ikke registrert noen data om din balanse ennå.</h3>");
 			}
@@ -203,19 +216,21 @@ $(document).ready(function() {
 		url: "http://vavit.no/adapt-staging/api/getActivityIdxs.php?seniorUserID=" + seniorUserID,
 		type: 'GET',
 		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token);
+            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
         },
-		error : function(data, status) {
-			$("#activityChartContainer").hide();
+		error: function(data, status) { // If the API request fails
+			$("#activityChartContainer").hide(); // Hide AI chart
 			console.log("Error attempting to call API getActivityIdxs.php with parameter seniorUserID=" + seniorUserID);
 		}, 
-		success: function(data, status) {
+		success: function(data, status) { // If the API request is successful
 			var activityChartDataJSON = data.data;
 			if (activityChartDataJSON != null) {
 				var activityChartData = [];
 				for (var i=0; i<activityChartDataJSON.length; i++) {
 					// Uncomment if chart is area chart!
 					/*if (i != 0) {
+						// Draws an extra data point right before each data point (except the first) 
+						// to get a flat line instead of a straight, diagonal line between the points.
 						var dataPointPre = [];
 						var datePre = new Date(activityChartDataJSON[i].timeDataCollected);
 						datePre.setSeconds(datePre.getSeconds() - 1);
@@ -243,9 +258,8 @@ $(document).ready(function() {
 
 				activityChartOptions = {
 					chart: {
-						renderTo: 'activityChart',
-						type: 'column',
-						//zoomType: 'x',
+						renderTo: 'activityChart', // ID of div where the chart is to be rendered
+						//zoomType: 'x', // Uncomment to make the chart zoomable along the x-axis
 						backgroundColor: null,
 						reflow: true
 					},
@@ -254,18 +268,17 @@ $(document).ready(function() {
 					},
 					xAxis: {
 						type: 'datetime',
-						tickInterval: 24 * 3600 * 1000,
+						tickInterval: 24 * 3600 * 1000, // How frequent a tick is displayed on the axis (set in milliseconds)
 						min: new Date().getTime() - (31 * 24 * 3600 * 1000) // Set start of x-axis to 1 month ago
 					},
 					yAxis: {
 						title: {
-							//text: 'Mobilitetsindeks'
 							enabled: false
 						},
-						max: 5,
-						min: 0,
+						max: 5, // The ceiling of the y-axis. Needs to be updated if the range of valid values changes!
+						min: 0, // The floor of the y-axis. 
 						alternateGridColor: '#DEE0E3',
-						tickInterval: 1
+						tickInterval: 1 // How frequent a tick is displayed on the axis
 					},
 					plotOptions: {
 						series: {
@@ -273,13 +286,13 @@ $(document).ready(function() {
 						}
 					},
 					legend: {
-						enabled: false
+						enabled: false // Hides the legend showing the name and toggle option for the series
 					},
 					credits: {
-						enabled: false
+						enabled: false // Hides the Highcharts credits
 					},
 					tooltip: {
-						enabled: false
+						enabled: false // Hides the tooltip from being displayed while hovering
 					},
 					series: [{}]
 				};
@@ -294,45 +307,54 @@ $(document).ready(function() {
 			
 		}
 	}), $.ajax({
-		url: "http://vavit.no/adapt-staging/api/getFeedbackMsg.php?seniorUserID=" + seniorUserID + "&category=0", // Get newest AI feedback msg
+		/***************************
+		** AI feedback message
+		***************************/
+		url: "http://vavit.no/adapt-staging/api/getFeedbackMsg.php?seniorUserID=" + seniorUserID + "&category=0",
 		type: 'GET',
 		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token);
+            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
         },
-		error : function(data, status) {
+		error: function(data, status) { // If the API request fails
 			console.log("Error attempting to call API getFeedbackMsg.php with parameters seniorUserID=" + seniorUserID + " and category=0");
 		}, 
-		success: function(data, status) {
+		success: function(data, status) { // If the API request is successful
 			if (data.data) {
-				$("#feedbackMsg").html("<b>Aktivitetsråd:</b> " + data.data.feedbackText);
+				$("#feedbackMsg").html("<b>Aktivitetsråd:</b> " + data.data.feedbackText); // Writes the AI feedback msg to the DOM
 				$("#messageWrapper").show();
 			} else {
+				// No AI feedback msg is found
 				console.log(data.status_message);
 			}
 		}
 	})).then(function(data, textStatus, jqXHR) {
 		$.ajax({
-			url: "http://vavit.no/adapt-staging/api/getFeedbackMsg.php?seniorUserID=" + seniorUserID + "&category=1", // Get newest BI feedback msg
+			/***************************
+			** BI feedback message
+			***************************/
+			url: "http://vavit.no/adapt-staging/api/getFeedbackMsg.php?seniorUserID=" + seniorUserID + "&category=1",
 			type: 'GET',
 			beforeSend: function (request) {
-	            request.setRequestHeader("Authorization", "Bearer " + token);
+	            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 	        },
-			error : function(data, status) {
+			error: function(data, status) { // If the API request fails
 				hideLoader();
 				console.log("Error attempting to call API getFeedbackMsg.php with parameters seniorUserID=" + seniorUserID + " and category=1");
 			}, 
-			success: function(data, status) {
-				hideLoader();
+			success: function(data, status) { // If the API request is successful
 				if (data.data) {
+					// Adds a br tag if an AI msg has already been written to the DOM
 					var newline = "";
 					if ($("#feedbackMsg").html() != "") {
 						newline = "<br>";
 					}
-					$("#feedbackMsg").append(newline + "<b>Balanseråd:</b> " + data.data.feedbackText);
+					$("#feedbackMsg").append(newline + "<b>Balanseråd:</b> " + data.data.feedbackText); // Writes the BI feedback msg to the DOM
 					$("#messageWrapper").show();
 				} else {
+					// No BI feedback msg is found
 					console.log(data.status_message);
 				}
+				hideLoader(); // Hides the loading widget
 			}
 		});
 
@@ -341,13 +363,13 @@ $(document).ready(function() {
 				url: 'http://vavit.no/adapt-staging/api/getFeedbackMsg.php?mi=' + $currentMobilityIdx + '&ai=' + $currentActivityIdx,
 				type: 'GET',
 				beforeSend: function (request) {
-	                request.setRequestHeader("Authorization", "Bearer " + token);
+	                request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 	            },
-				error : function(data, status) {
+				error: function(data, status) { // If the API request fails
 					hideLoader();
 					console.log("Error attempting to call API getFeedbackMsg.php with parameters mi=" + $currentMobilityIdx + ", ai=" + $currentActivityIdx);
 				}, 
-				success: function(data, status) {
+				success: function(data, status) { // If the API request is successful
 					hideLoader();
 					if (data.data) {
 						$("#feedbackMsg").html(data.data.feedbackText);
@@ -360,13 +382,18 @@ $(document).ready(function() {
 		}*/
 	});
 
+	// Sets global options for the charts
 	Highcharts.setOptions({
+		// Defines Norwegian text strings used in the charts
 		lang: {
 			months: ['januar', 'februar', 'mars', 'april', 'mai', 'juni',  'juli', 'august', 'september', 'oktober', 'november', 'desember'],
 			shortMonths: ['jan', 'feb', 'mars', 'apr', 'mai', 'juni',  'juli', 'aug', 'sep', 'okt', 'nov', 'des'],
 			weekdays: ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'],
 			shortWeekdays: ['sø', 'ma', 'ti', 'on', 'to', 'fr', 'lø']
 		}/*,
+		// Adjusts time values in data points to match Norwegian timezone (handles DST automatically).
+		// Commented out as all the charts currently display date values only, not time of day,
+		// and this code caused all values to be displayed at 2am instead of midnight.
 		global: {
 			getTimezoneOffset: function (timestamp) {
 				var zone = 'Europe/Oslo',
@@ -383,6 +410,7 @@ $(document).ready(function() {
 ** Cookies
 ***************************/
 function readCookieMIImg() {
+	// Read the cookie value to determine which of the MI img options to initially use
 	var MIImgIDCookie=getCookie("MIImgID");
 	if (MIImgIDCookie!="") {
 		MIImgID = MIImgIDCookie;
@@ -395,6 +423,7 @@ function readCookieMIImg() {
 
 
 function setCookie(cname, cvalue, exdays) {
+	// Writes a cookie
 	var d = new Date();
 	d.setTime(d.getTime() + (exdays*24*60*60*1000));
 	var expires = "expires="+ d.toUTCString();
@@ -402,6 +431,7 @@ function setCookie(cname, cvalue, exdays) {
 }
 
 function getCookie(cname) {
+	// Get a cookie with a given name
 	var name = cname + "=";
 	var ca = document.cookie.split(';');
 	for(var i = 0; i <ca.length; i++) {
@@ -426,11 +456,9 @@ function getCookie(cname) {
 		var clickedID = e.target.id;
 			if (clickedID != MIImgID && clickedID != null) {
 				if (clickedID == oldMIImgID) {
-					changesMade = 0;
-					showSaveAndCancelBtns(0);
+					showSaveAndCancelBtns(false);
 				} else {
-					changesMade = 1;
-					showSaveAndCancelBtns(1);
+					showSaveAndCancelBtns(true);
 				}
 
 				MIImgID = clickedID;
@@ -441,6 +469,7 @@ function getCookie(cname) {
 }, false);*/
 
 function setMMImg() {
+	// Updates the DOM with the MI img depending on the MI value
 	var fileName = "";
 
 	$miData = getMIChartData($currentMobilityIdx);
@@ -462,6 +491,8 @@ function setMMImg() {
 }
 
 function setCorrectBorder() {
+	// Sets a css class to the current MI img to give 
+	// it a border to indicate that it is selected.
 	var imgGroup = document.getElementById("MIImgSelectionGroup");
 	var children = imgGroup.children;
 	for (var i = 0; i < children.length; i++) {
@@ -475,11 +506,14 @@ function setCorrectBorder() {
 }
 
 function showSaveAndCancelBtns(show) {
+	// If a different MI img is selected, the 'back' button needs to 
+	// be replaced with a 'save' and 'cancel' button, and vice versa.
+
 	var backBtn = document.getElementById("backBtn");
 	//var saveBtn = document.getElementById("saveBtn");
 	//var cancelBtn = document.getElementById("cancelBtn");
 
-	if (show == 1) {
+	if (show) {
 		backBtn.style.display = "none";
 		//saveBtn.style.display = "block";
 		//cancelBtn.style.display = "block";
@@ -491,25 +525,25 @@ function showSaveAndCancelBtns(show) {
 }
 
 function saveChanges() {
-	oldMIImgID = MIImgID;
+	oldMIImgID = MIImgID; // Stores the previous MI img
 	closeSettingsView();
 }
 
 function cancelChanges() {
-	MIImgID = oldMIImgID;
-	setMMImg();
+	MIImgID = oldMIImgID; // fallback to the old MI img
+	setMMImg(); // Updates the DOM with the old MI img
 	closeSettingsView();
-	setTimeout(function () { 
+	setTimeout(function () {
+		// Returns to the main page 
 		$.mobile.changePage( "#mainPage", { transition: "flip"}); 
 	}, 1);
 }
 
 function closeSettingsView() {
-	showSaveAndCancelBtns(0);
-	changesMade = 0;
-	setCookie("MIImgID", MIImgID, 7);
+	showSaveAndCancelBtns(false); // Hides the save and cancel buttons
+	setCookie("MIImgID", MIImgID, 7); // Stores the selected MI img as a cookie
 
-	// Need to run reflow function in case the window has resized while in settings view
+	// Need to reflow the charts in case the window has resized while in settings view.
 	setTimeout(function () { 
 		activityChart.reflow();
 		balanceChart.reflow();
@@ -520,11 +554,13 @@ function closeSettingsView() {
 /***************************
 ** Time calculation
 ***************************/
-function convertDateToUTC(date) { 
+function convertDateToUTC(date) {
+	// Converts the given date to UTC format.
 	return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds()); 
 }
 
 function getUpdateTimeDiff(timestamp) {
+	// Calculates a string saying how long ago the given timestamp is from the current time.
 	$updateTimeDiffText = "";
 	now = convertDateToUTC(new Date());
 	$milliDiff = now - timestamp;
@@ -557,10 +593,13 @@ function getUpdateTimeDiff(timestamp) {
 }
 
 
+
 /***************************
 ** Misc
 ***************************/
 function logout() {
+	// Removes localStorage values,
+	// and redirects to the login page.
 	localStorage.removeItem("firstname");
 	localStorage.removeItem("lastname");
 	localStorage.removeItem("userid");
@@ -571,7 +610,10 @@ function logout() {
 	window.location.replace("../index.html");
 }
 
+
 function getMIChartData($mi) {
+	// Returns a filename for the MI img and a hex color value for the BI chart
+	// that corresponds to a given MI value.
 	if ($mi >= 0 && $mi <= 1) {
         $fileName = "";
         $color = "";
@@ -648,35 +690,4 @@ function getMIChartData($mi) {
     } else {
     	return null;
     }
-}
-
-
-function getColorBetween(color1, color2) {
-	var ratio = 0.5;
-
-	var hex = function(x) {
-	    x = x.toString(16);
-	    return (x.length == 1) ? '0' + x : x;
-	};
-
-	var r = Math.ceil(parseInt(color1.substring(0,2), 16) * ratio + parseInt(color2.substring(0,2), 16) * (1-ratio));
-	var g = Math.ceil(parseInt(color1.substring(2,4), 16) * ratio + parseInt(color2.substring(2,4), 16) * (1-ratio));
-	var b = Math.ceil(parseInt(color1.substring(4,6), 16) * ratio + parseInt(color2.substring(4,6), 16) * (1-ratio));
-
-	return hex(r) + hex(g) + hex(b);
-}
-
-
-function showLoader() {
-	$.mobile.loading( "show", {
-		text: '',
-		textVisible: false,
-		theme: 'a',
-		textonly: false,
-		html: ''
-    });
-}
-
-function hideLoader() {
-	$.mobile.loading( "hide" );
 }

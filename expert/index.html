@@ -30,6 +30,7 @@
 		<script src="lib/jquery-csv/jquery.csv.min.js"></script>
 
 		<!-- JS -->
+		<script src="../common.js"></script>
 		<script src="script.js" async></script>
 	</head>
 	
@@ -220,7 +221,6 @@
 
 					<label for="mobilityIdxInputField">Mobility index (0-1):</label>
 					<input type="number" name="mobilityIdx" id="mobilityIdxInputField" min="0" max="1" step="0.1" required>
-					<input type="hidden" name="userID" value="" id="mobilityIdxFormUserID">
 					
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 
@@ -247,8 +247,8 @@
 			<div role="main" class="ui-content">
 				<h1>Erstatt eksisterende verdi?</h1>
 				<p>Verdien <span id="overwriteMIDialogOldValue"></span> er allerede registrert på datoen <span id="overwriteMIDialogDate"></span>. Vil du overskrive denne verdien med MI=<span id="overwriteMIDialogNewValue"></span>?
-				<a id="confirmOverwriteMIBtn" onclick="updateMI();" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Ja, lagre ny verdi</a>
-				<a data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Nei, avbryt</a>
+				<a id="confirmOverwriteMIBtn" onclick="updateMI(true);" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Ja, lagre ny verdi</a>
+				<a onclick="updateMI(false);" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Nei, avbryt</a>
 			</div>
 		</div> <!-- /confirm overwrite mi dialog -->
 
@@ -304,8 +304,6 @@
 
 					<label for="balanceIdxInputField">Balance index:</label>
 					<input type="number" name="balanceIdx" id="balanceIdxInputField" min="0" required>
-					
-					<input type="hidden" name="userID" value="" id="balanceIdxFormUserID">
 					
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 
@@ -373,8 +371,6 @@
 					<label for="activityIdxInputField">Activity index:</label>
 					<input type="number" name="activityIdx" id="activityIdxInputField" min="0" required>
 					
-					<input type="hidden" name="userID" value="" id="activityIdxFormUserID">
-					
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 
 					<div id='toastActivityIdxManualForm' class="toast">
@@ -423,7 +419,6 @@
 						<input type="text" name="feedbackText" id="textarea-ai-feedback" required></input>
 					</div>
 
-					<input type="hidden" name="userID" id="registerAIFeedbackFormUserID">
 					<input type="hidden" name="category" value="0">
 
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
@@ -459,7 +454,6 @@
 						<input type="text" name="feedbackText" id="textarea-bi-feedback" required></input>
 					</div>
 
-					<input type="hidden" name="userID" id="registerBIFeedbackFormUserID">
 					<input type="hidden" name="category" value="1">
 
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
@@ -509,8 +503,6 @@
 							<label for="radio-feedback-red">Rød (alvorlig)</label>
 					</fieldset>
 					<br>
-
-					<input type="hidden" name="userID" id="registerFeedbackFormUserID">
 
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 					<a onclick="$.mobile.back()" data-role="button" data-icon="back">Avbryt</a>
@@ -601,8 +593,6 @@
 
 					<label for="inputFieldEditLivingIndependently">Bor for seg selv</label>
 					<input type="checkbox" name="livingIndependently" id="inputFieldEditLivingIndependently" value="livingIndependently">
-
-					<input type="hidden" name="userID" id="editUserDataFormUserID">
 
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 
@@ -727,8 +717,6 @@
 
 					<label for="inputFieldNewLivingIndependently">Bor for seg selv</label>
 					<input type="checkbox" name="livingIndependently" id="inputFieldNewLivingIndependently" value="livingIndependently">
-
-					<input id="newUserFormExpertUserID" type="hidden" name="expertUserID" value="">
 
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 
