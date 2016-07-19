@@ -15,12 +15,27 @@ var seniorLastName; // The last name of the logged in user
 $currentMobilityIdx = null; // The current mobility index for the logged in user
 $currentActivityIdx = null; // The current activity index for the logged in user. Not currently in use!
 
+$isFooterVisible = true;
 
 
 /***************************
 ** General
 ***************************/
+
+$(document).on('click touch', function () {
+	// Toggle footer visibility on klick or touch
+	if ($isFooterVisible) {
+		$("#footer").stop().fadeOut(400);
+		$isFooterVisible = false;
+	} else {
+		$("#footer").stop().fadeIn(400);
+		$isFooterVisible = true;
+	}
+});
+
+
 $(document).ready(function() {
+
 	showLoader(); // Displays the loading widget
 
 	// Checks if the token and user data exist in localStorage
@@ -138,6 +153,7 @@ $(document).ready(function() {
 				balanceChartOptions = {
 					chart: {
 						renderTo: 'balanceChart', // ID of div where the chart is to be rendered
+						type: 'area', // Chart type. Can e.g. be set to 'column' or 'area'
 						//zoomType: 'x', // Uncomment to make the chart zoomable along the x-axis
 						backgroundColor: null,
 						reflow: true
@@ -151,10 +167,11 @@ $(document).ready(function() {
 						min: new Date().getTime() - (31 * 24 * 3600 * 1000) // Set start of x-axis to 1 month ago
 					},
 					yAxis: {
+						//max: 1, // The ceiling value of the y-axis. Uncomment when a max value is defined
 						min: 0, // The floor of the y-axis. 
 			            endOnTick: false,
 						alternateGridColor: '#DEE0E3',
-						tickInterval: 0.1 // How frequent a tick is displayed on the axis
+						tickInterval: 1 // How frequent a tick is displayed on the axis
 					},
 					plotOptions: {
 						series: {
@@ -259,6 +276,7 @@ $(document).ready(function() {
 				activityChartOptions = {
 					chart: {
 						renderTo: 'activityChart', // ID of div where the chart is to be rendered
+						type: 'column', // Chart type. Can e.g. be set to 'column' or 'area'
 						//zoomType: 'x', // Uncomment to make the chart zoomable along the x-axis
 						backgroundColor: null,
 						reflow: true
@@ -282,7 +300,7 @@ $(document).ready(function() {
 					},
 					plotOptions: {
 						series: {
-							pointWidth: 20
+							//pointWidth: 20
 						}
 					},
 					legend: {

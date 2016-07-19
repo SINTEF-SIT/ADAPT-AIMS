@@ -2,10 +2,23 @@
 	include('deliver_response.inc.php');
 	include('../inc/jwt.inc.php');
 
-	function readDB($seniorUserID) {
+	function readDB($seniorUserID, $tokenUserID) {
 		include('../inc/db.inc.php');
 
-		if ($stmt = $conn->prepare("SELECT u.userID, u.firstName, u.lastName, u.email, su.address, su.zipCode, su.city, su.phoneNumber, su.birthDate, su.isMale, su.weight, su.height, su.numFalls6Mths, su.numFalls12Mths, su.usesWalkingAid, su.livingIndependently, su.dateJoinedAdapt FROM Users AS u INNER JOIN SeniorUsers AS su ON u.userID = su.userID WHERE u.userID = ?;")) {
+		// If the userID in the token belongs to an expert user, check that this expert is allowed to access this senior user's data
+		if ($tokenUserID != $seniorUserID) {
+			if (checkExpertSeniorLink($conn, $tokenUserID, $seniorUserID) == false) {
+				return false;
+			}
+		}
+
+		if ($stmt = $conn->prepare("SELECT u.userID, u.firstName, u.lastName, u.email, 
+				su.address, su.zipCode, su.city, su.phoneNumber, su.birthDate, su.isMale, 
+				su.weight, su.height, su.numFalls6Mths, su.numFalls12Mths, su.usesWalkingAid, 
+				su.livingIndependently, su.dateJoinedAdapt
+				FROM Users AS u
+				INNER JOIN SeniorUsers AS su ON u.userID = su.userID
+				WHERE u.userID = ?;")) {
 			$stmt->bind_param("i", $seniorUserID);
 			$stmt->execute();
 			$result = $stmt->get_result();
@@ -13,7 +26,7 @@
 
 			if (mysqli_num_rows($result) > 0) {
 				$rows = array();
-				while($r = mysqli_fetch_assoc($result)) {
+				while ($r = mysqli_fetch_assoc($result)) {
 
 					if ($r["firstName"] != null) $r["firstName"] = decrypt($r["firstName"]);
 					if ($r["lastName"] != null) $r["lastName"] = decrypt($r["lastName"]);
@@ -59,13 +72,12 @@
 		}
 	}
 
-	$validToken = validateToken();
+	$tokenUserID = validateToken();
 
-	if ($validToken == true) {
+	if ($tokenUserID != null) {
 		if (isset($_GET["seniorUserID"])) {
-			$seniorUserID = $_GET["seniorUserID"];
-
-			$seniorUserDetails = readDB($seniorUserID);
+			
+			$seniorUserDetails = readDB($_GET["seniorUserID"], $tokenUserID);
 
 			if (empty($seniorUserDetails)) {
 				deliver_response(200, "No results found.", NULL);

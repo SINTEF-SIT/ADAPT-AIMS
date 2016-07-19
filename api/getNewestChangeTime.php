@@ -2,13 +2,20 @@
 	include('deliver_response.inc.php');
 	include('../inc/jwt.inc.php');
 
-	function readDB($seniorUserID) {
+	function readDB($seniorUserID, $tokenUserID) {
 		include('../inc/db.inc.php');
 
-		if ($stmt = $conn->prepare("SELECT timeCalculated FROM MobilityIndexes WHERE userID = ?
-				UNION SELECT timeCalculated FROM ActivityIndexes WHERE userID = ?
-				UNION SELECT timeCalculated FROM BalanceIndexes WHERE userID = ?
-				UNION SELECT timeCreated FROM FeedbackMsgCustom WHERE userID = ?
+		// If the userID in the token belongs to an expert user, check that this expert is allowed to access this senior user's data
+		if ($tokenUserID != $seniorUserID) {
+			if (checkExpertSeniorLink($conn, $tokenUserID, $seniorUserID) == false) {
+				return false;
+			}
+		}
+
+		if ($stmt = $conn->prepare("SELECT timeCalculated FROM MobilityIndexes AS mi WHERE mi.userID = ?
+				UNION SELECT timeCalculated FROM ActivityIndexes AS ai WHERE ai.userID = ?
+				UNION SELECT timeCalculated FROM BalanceIndexes AS bi WHERE bi.userID = ?
+				UNION SELECT timeCreated FROM FeedbackMsgCustom AS fmc WHERE fmc.userID = ?
 				ORDER BY timeCalculated DESC LIMIT 1;")) {
 			$stmt->bind_param("iiii", $seniorUserID, $seniorUserID, $seniorUserID, $seniorUserID);
 			$stmt->execute();
@@ -27,13 +34,12 @@
 		}
 	}
 
-	$validToken = validateToken();
+	$tokenUserID = validateToken();
 
-	if ($validToken == true) {
+	if ($tokenUserID != null) {
 		if (isset($_GET["seniorUserID"])) {
-			$seniorUserID = $_GET["seniorUserID"];
-
-			$time = readDB($seniorUserID);
+			
+			$time = readDB($_GET["seniorUserID"], $tokenUserID);
 
 			if (empty($time)) {
 				deliver_response(200, "Ingen data er registrert ennå.", NULL);

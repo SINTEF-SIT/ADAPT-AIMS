@@ -2,27 +2,31 @@
 	include('deliver_response.inc.php');
 	include('../inc/jwt.inc.php');
 
-	function deleteFromDB($userID) {
+	function deleteFromDB($expertUserID, $seniorUserID) {
 		include('../inc/db.inc.php');
 
-		if ($stmt = $conn->prepare("UPDATE SeniorUsers SET active = b'0' WHERE userID = ?")) {
-			$stmt->bind_param("i", $userID);
-			$stmt->execute();
-			$stmt->close();
-			$conn->close();
-			return true;
+		if (checkExpertSeniorLink($conn, $expertUserID, $seniorUserID)) {
+			if ($stmt = $conn->prepare("UPDATE SeniorUsers SET active = b'0' WHERE userID = ?")) {
+				$stmt->bind_param("i", $seniorUserID);
+				$stmt->execute();
+				$stmt->close();
+				$conn->close();
+				return true;
+			} else {
+				$stmt->close();
+				$conn->close();
+				return false;
+			}
 		} else {
-			$stmt->close();
-			$conn->close();
 			return false;
 		}
 	}
 
-	$validToken = validateToken();
+	$tokenUserID = validateToken();
 
-	if ($validToken == true) {
+	if ($tokenUserID != null) {
 		if (isset($_GET["seniorUserID"])) {
-			$dbWriteSuccess = deleteFromDB($_GET["seniorUserID"]);
+			$dbWriteSuccess = deleteFromDB($tokenUserID, $_GET["seniorUserID"]);
 			
 			if ($dbWriteSuccess) {
 				deliver_response(200, "Brukeren ble satt som inaktiv.", true);

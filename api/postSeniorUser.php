@@ -53,9 +53,9 @@
 		}
 	}
 
-	$validToken = validateToken();
+	$tokenUserID = validateToken();
 
-	if ($validToken == true) {
+	if ($tokenUserID != null) {
 		if (isset($_POST["expertUserID"]) && isset($_POST["email"]) && isset($_POST["password"]) && isset($_POST["firstName"]) && isset($_POST["lastName"]) && isset($_POST["birthDate"]) && isset($_POST["isMale"])) {
 			
 			$dbWriteSuccess = wirteDB();

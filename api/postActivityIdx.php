@@ -2,27 +2,31 @@
 	include('deliver_response.inc.php');
 	include('../inc/jwt.inc.php');
 
-	function wirteDB() {
+	function wirteDB($expertUserID) {
 		include('../inc/db.inc.php');
 
-		if ($stmt = $conn->prepare("INSERT INTO ActivityIndexes (userID, timeCalculated, timeDataCollected, value) VALUES (?, NOW(), ?, ?);")) {
-			$stmt->bind_param("isi", $_POST["userID"], $_POST["timeDataCollected"], $_POST["activityIdx"]);
-			$stmt->execute();
+		if (checkExpertSeniorLink($conn, $expertUserID, $_POST["userID"])) {
+			if ($stmt = $conn->prepare("INSERT INTO ActivityIndexes (userID, timeCalculated, timeDataCollected, value) VALUES (?, NOW(), ?, ?);")) {
+				$stmt->bind_param("isi", $_POST["userID"], $_POST["timeDataCollected"], $_POST["activityIdx"]);
+				$stmt->execute();
 
-			$stmt->close();
-			$conn->close();
-			return true;
+				$stmt->close();
+				$conn->close();
+				return true;
+			} else {
+				$conn->close();
+				return false;
+			}
 		} else {
-			$conn->close();
 			return false;
 		}
 	}
 
-	$validToken = validateToken();
+	$tokenUserID = validateToken();
 
-	if ($validToken == true) {
+	if ($tokenUserID != null) {
 		if (isset($_POST["userID"]) && isset($_POST["timeDataCollected"]) && isset($_POST["activityIdx"])) {
-			$dbWriteSuccess = wirteDB();
+			$dbWriteSuccess = wirteDB($tokenUserID);
 
 			if ($dbWriteSuccess) {
 				deliver_response(200, "Verdien " . $_POST["activityIdx"] . " for bruker-ID=" . $_POST["userID"] . " på dato " . $_POST["timeDataCollected"] . " ble lagret i databasen.", true);

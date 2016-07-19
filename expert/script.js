@@ -375,7 +375,7 @@ $(document).ready(function() {
 function getUserOverview() {
 	showLoader(); // Shows the loading widget
 	$.ajax({
-		url: "http://vavit.no/adapt-staging/api/getSeniorUserOverview.php?expertUserID=" + expertUserID,
+		url: "http://vavit.no/adapt-staging/api/getSeniorUserOverview.php",
 		type: 'GET',
 		beforeSend: function (request) {
             request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
@@ -391,7 +391,18 @@ function getUserOverview() {
 			if (userData != null) { // Checks that the API call returned data
 				$('#usersTable tbody tr').remove(); // Removes all rows from the usersTable body (if any)
 				
-				var html = '';
+				var html = '<table data-role="table" data-mode="columntoggle" data-column-btn-text="Velg synlige kolonner" data-filter="true" data-input="#filterTable-input" class="ui-responsive table-stripe ui-shadow" id="usersTable">';
+				html += '<thead>';
+				html += '<tr>';
+				html += '<th data-priority="4">Bruker-ID</th>';
+				html += '<th >Etternavn</th>';
+				html += '<th data-priority="1">Fornavn</th>';
+				html += '<th data-priority="3">Alder</th>';
+				html += '<th data-priority="2">Mobility index</th>';
+				html += '</tr>';
+				html += '</thead>';
+				html += '<tbody>';
+
 				for (var i=0; i<userData.length; i++) { // Iterates the user data to build a table row for each entry
 					//If MI is null, replace it with empty string
 					$mobilityIdx = userData[i].mobilityIdx;
@@ -402,14 +413,18 @@ function getUserOverview() {
 					$age = calculateAge(userData[i].birthDate); // Calculate the age of the senior user in years
 
 					html += "<tr>"
-					+ "<td class='ui-table-priority-4'><a onclick='setActiveUser(" + userData[i].userID + ",true);'>" + userData[i].userID + "</a></td>"
-					+ "<td><a onclick='setActiveUser(" + userData[i].userID + ",true);'>" + userData[i].lastName + "</a></td>"
-					+ "<td class='ui-table-priority-1'><a onclick='setActiveUser(" + userData[i].userID + ",true);'>" + userData[i].firstName + "</a></td>"
-					+ "<td class='ui-table-priority-3'><a onclick='setActiveUser(" + userData[i].userID + ",true);'>" + $age + "</a></td>"
-					+ "<td class='ui-table-priority-2'><a onclick='setActiveUser(" + userData[i].userID + ",true);'>" + $mobilityIdx + "</a></td>"
-					+ "</tr>";
+						+ "<td class='ui-table-priority-4'><a onclick='setActiveUser(" + userData[i].userID + ",true);'>" + userData[i].userID + "</a></td>"
+						+ "<td><a onclick='setActiveUser(" + userData[i].userID + ",true);'>" + userData[i].lastName + "</a></td>"
+						+ "<td class='ui-table-priority-1'><a onclick='setActiveUser(" + userData[i].userID + ",true);'>" + userData[i].firstName + "</a></td>"
+						+ "<td class='ui-table-priority-3'><a onclick='setActiveUser(" + userData[i].userID + ",true);'>" + $age + "</a></td>"
+						+ "<td class='ui-table-priority-2'><a onclick='setActiveUser(" + userData[i].userID + ",true);'>" + $mobilityIdx + "</a></td>"
+						+ "</tr>";
 				}
-				$('#usersTable tbody').append(html);
+
+				html += '</tbody></table>';
+				
+				$("#usersTable-popup-popup").remove();  
+				$('#usersTableContainer').html(html).enhanceWithin();
 			} else {
 				console.log("No user data returned from API.");
 			}
@@ -599,7 +614,6 @@ function setActiveUser(userID, changePage) {
 	        	$("#mobilityChartContainer").hide(); // Hides the chart if no MI data is found
 	        	console.log("No mobility idx values found in db.");
 	        }
-	        hideLoader(); // Hides the loading widget
 		}
 	}), $.ajax({
 		//********************************************************************
@@ -620,8 +634,8 @@ function setActiveUser(userID, changePage) {
 			if (balanceChartDataJSON != null) {
 				var maxMI = 0;
 				for (var i=0; i<balanceChartDataJSON.length; i++) {
-					// Uncomment if chart is area chart!
-					/*if (i != 0) {
+					// Comment out if chart is changed to a column chart!
+					if (i != 0) {
 						// Draws an extra data point right before each data point (except the first) 
 						// to get a flat line instead of a straight, diagonal line between the points.
 						// Needs to be commented out if the chart is switched to a column chart.
@@ -631,7 +645,7 @@ function setActiveUser(userID, changePage) {
 						dataPointPre.push(datePre.getTime());
 						dataPointPre.push(parseFloat(balanceChartDataJSON[i-1].value));
 						balanceChartData.push(dataPointPre);
-					}*/
+					}
 
 					var mi = parseFloat(balanceChartDataJSON[i].value);
 					if (mi > maxMI) maxMI = mi;
@@ -642,20 +656,20 @@ function setActiveUser(userID, changePage) {
 					dataPoint.push(mi);
 					balanceChartData.push(dataPoint);
 
-					// Uncomment if chart is area chart!
+					// Comment out if chart is changed to a column chart!
 					// If last data point from db, add a final data point at the current datetime
-					/*if (i+1 == balanceChartDataJSON.length) {
+					if (i+1 == balanceChartDataJSON.length) {
 						var dataPointFinal = [];
 						dataPointFinal.push(new Date().getTime());
 						dataPointFinal.push(parseFloat(balanceChartDataJSON[i].value));
 						balanceChartData.push(dataPointFinal);
-					}*/
+					}
 				}
 
 				balanceChartOptions = {
 					chart: {
 						renderTo: 'balanceChart', // ID of div where the chart is to be rendered
-						type: 'column', // Chart type. Can e.g. be set to 'column' or 'area'
+						type: 'area', // Chart type. Can e.g. be set to 'column' or 'area'
 						zoomType: 'x', // The chart is zoomable along the x-axis by clicking and draging over a portion of the chart
 						backgroundColor: null,
 						reflow: true
@@ -731,6 +745,7 @@ function setActiveUser(userID, changePage) {
 			error : function(data, status) {
 				$("#activityChartContainer").hide();
 				console.log("Error attempting to call API getActivityIdxs.php with parameter seniorUserID=" + userID);
+				hideLoader();
 			}, 
 			success: function(data, status) { // If the API request is successful
 				var activityChartDataJSON = data.data;
@@ -805,6 +820,7 @@ function setActiveUser(userID, changePage) {
 					$("#activityChartContainer").hide(); // Hides the chart if no MI data is found
 					//$("#activityChart").html("<h3>Det er ikke registrert noen aktivitetsdata ennå.</h3>");
 				}
+				hideLoader();
 			}
 		});
 	});
@@ -1082,6 +1098,7 @@ function readCSVFile(isAI) {
 			file = CSVFileAI;
 		} else {
 			alert("Ingen fil er valgt.");
+			hideLoader();
 			return false;
 		}
 	} else { // BI file upload
@@ -1089,6 +1106,7 @@ function readCSVFile(isAI) {
 			file = CSVFileBI;
 		} else {
 			alert("Ingen fil er valgt.");
+			hideLoader();
 			return false;
 		}
 	}

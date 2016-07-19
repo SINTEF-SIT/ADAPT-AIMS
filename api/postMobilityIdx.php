@@ -2,33 +2,37 @@
 	include('deliver_response.inc.php');
 	include('../inc/jwt.inc.php');
 
-	function wirteDB($seniorUserID, $mobilityIdx, $timeDataCollected) {
+	function wirteDB($seniorUserID, $mobilityIdx, $timeDataCollected, $expertUserID) {
 		include('../inc/db.inc.php');
 
-		if ($stmt = $conn->prepare("INSERT INTO MobilityIndexes (userID, timeCalculated, timeDataCollected, value) VALUES (?, NOW(), ?, ?);")) {
-			$stmt->bind_param("isd", $seniorUserID, $timeDataCollected, $mobilityIdx);
-			$stmt->execute();
+		if (checkExpertSeniorLink($conn, $expertUserID, $seniorUserID)) {
+			if ($stmt = $conn->prepare("INSERT INTO MobilityIndexes (userID, timeCalculated, timeDataCollected, value) VALUES (?, NOW(), ?, ?);")) {
+				$stmt->bind_param("isd", $seniorUserID, $timeDataCollected, $mobilityIdx);
+				$stmt->execute();
 
-			$stmt->close();
-			$conn->close();
-			return true;
+				$stmt->close();
+				$conn->close();
+				return true;
+			} else {
+				$conn->close();
+				return false;
+			}
 		} else {
-			$conn->close();
 			return false;
 		}
 
-		$conn->close();
+			
 	}
 
-	$validToken = validateToken();
+	$tokenUserID = validateToken();
 
-	if ($validToken == true) {
+	if ($tokenUserID != null) {
 		if (isset($_POST["userID"]) && isset($_POST["mobilityIdx"]) && isset($_POST["timeDataCollected"])) {
 			$seniorUserID = $_POST["userID"];
 	    	$mobilityIdx = $_POST["mobilityIdx"];
 	    	$timeDataCollected = $_POST["timeDataCollected"];
 
-			$dbWriteSuccess = wirteDB($seniorUserID, $mobilityIdx, $timeDataCollected);
+			$dbWriteSuccess = wirteDB($seniorUserID, $mobilityIdx, $timeDataCollected, $tokenUserID);
 
 			if ($dbWriteSuccess) {
 				deliver_response(200, "Verdien " . $mobilityIdx . " for bruker-ID = " . $seniorUserID . " ble lagret i databasen.", true);

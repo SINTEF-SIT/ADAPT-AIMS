@@ -2,11 +2,21 @@
 	include('deliver_response.inc.php');
 	include('../inc/jwt.inc.php');
 
-	function readDB($userID) {
+	function readDB($seniorUserID, $tokenUserID) {
 		include('../inc/db.inc.php');
 
-		if ($stmt = $conn->prepare("SELECT feedbackText, timeCreated, category FROM FeedbackMsgCustom WHERE userID=? ORDER BY timeCreated DESC;")) {
-			$stmt->bind_param("i", $userID);
+		// If the userID in the token belongs to an expert user, check that this expert is allowed to access this senior user's data
+		if ($tokenUserID != $seniorUserID) {
+			if (checkExpertSeniorLink($conn, $tokenUserID, $seniorUserID) == false) {
+				return false;
+			}
+		}
+
+		if ($stmt = $conn->prepare("SELECT feedbackText, timeCreated, category
+				FROM FeedbackMsgCustom
+				WHERE userID=?
+				ORDER BY timeCreated DESC;")) {
+			$stmt->bind_param("i", $seniorUserID);
 			$stmt->execute();
 			$result = $stmt->get_result();
 			$stmt->close();
@@ -28,16 +38,17 @@
 		}
 	}
 
-	$validToken = validateToken();
+	$tokenUserID = validateToken();
 
-	if ($validToken == true) {
+	if ($tokenUserID != null) {
 		if (isset($_GET["userID"])) {
-			$userID = $_GET["userID"];
-
-			$res = readDB($userID);
+			
+			$seniorUserID = $_GET["userID"];
+			
+			$res = readDB($seniorUserID, $tokenUserID);
 
 			if (empty($res)) {
-				deliver_response(200, "Ingen feedback-meldinger funnet for bruker-ID = " . $userID, NULL);
+				deliver_response(200, "Ingen feedback-meldinger funnet for bruker-ID = " . $seniorUserID, NULL);
 			} else {
 				deliver_response(200, "Feedback funnet.", $res);
 			}

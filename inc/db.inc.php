@@ -27,4 +27,25 @@
 		$string = crypt($string, '$1$' . md5('adapt2016') . '$');
 		return $string;
 	}
+
+	function checkExpertSeniorLink($conn, $expertUserID, $seniorUserID) {
+		if ($stmt = $conn->prepare("SELECT su.userID
+				FROM SeniorUsers AS su
+				INNER JOIN ExpertSeniorLink AS esl ON esl.seniorUserID = su.userID
+				WHERE su.active = 1 AND esl.expertUserID = ?;")) {
+			$stmt->bind_param("i", $expertUserID);
+			$stmt->execute();
+			$result = $stmt->get_result();
+			$stmt->close();
+
+			if (mysqli_num_rows($result) > 0) {
+				while ($r = mysqli_fetch_assoc($result)) {
+					if ($r["userID"] == $seniorUserID) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
 ?>

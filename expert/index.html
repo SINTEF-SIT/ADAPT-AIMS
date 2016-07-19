@@ -3,6 +3,8 @@
 	<head>
 		<title>AIMS - Ekspertvisning</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta charset="utf-8" /> 
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 
 		<!-- jQuery -->
 		<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
@@ -37,7 +39,7 @@
 	<body>
 
 		<!-- ******************************************************* -->
-		<!-- ********************** Main PAGE ********************** -->
+		<!-- ********************** MAIN PAGE ********************** -->
 		<!-- ******************************************************* -->
 		<div data-role="page" id="mainPage">
 			<div data-role="header" data-backbtn="false">
@@ -53,20 +55,7 @@
 					<input id="filterTable-input" data-type="search">
 				</form>
 				<div id="usersTableContainer">
-					<table data-role="table" data-mode="columntoggle" data-column-btn-text="Velg synlige kolonner" data-filter="true" data-input="#filterTable-input" class="ui-responsive table-stripe ui-shadow" id="usersTable">
-						<thead>
-							<tr>
-								<th data-priority="4">Bruker-ID</th>
-								<th >Etternavn</th>
-								<th data-priority="1">Fornavn</th>
-								<th data-priority="3">Alder</th>
-								<th data-priority="2">Mobility index</th>
-								<!--<th>Detaljer</th>-->
-							</tr>
-						</thead>
-						<tbody>
-						</tbody>
-					</table>
+					
 				</div>
 
 				<a onclick="$.mobile.changePage('index.html#new-user-page');" data-role="button" data-icon="plus">Registrer ny bruker</a>

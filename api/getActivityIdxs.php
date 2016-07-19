@@ -2,10 +2,20 @@
 	include('deliver_response.inc.php');
 	include('../inc/jwt.inc.php');
 
-	function readDB($seniorUserID) {
+	function readDB($seniorUserID, $tokenUserID) {
 		include('../inc/db.inc.php');
 
-		if ($stmt = $conn->prepare("SELECT value, timeDataCollected, timeCalculated FROM ActivityIndexes WHERE userID = ? ORDER BY timeDataCollected ASC;")) {
+		// If the userID in the token belongs to an expert user, check that this expert is allowed to access this senior user's data
+		if ($tokenUserID != $seniorUserID) {
+			if (checkExpertSeniorLink($conn, $tokenUserID, $seniorUserID) == false) {
+				return false;
+			}
+		}
+
+		if ($stmt = $conn->prepare("SELECT value, timeDataCollected, timeCalculated
+				FROM ActivityIndexes
+				WHERE userID=?
+				ORDER BY timeDataCollected ASC;")) {
 			$stmt->bind_param("i", $seniorUserID);
 			$stmt->execute();
 			$result = $stmt->get_result();
@@ -27,13 +37,12 @@
 		}
 	}
 
-	$validToken = validateToken();
+	$tokenUserID = validateToken();
 
-	if ($validToken == true) {
+	if ($tokenUserID != null) {
 		if (isset($_GET["seniorUserID"])) {
-			$seniorUserID = $_GET["seniorUserID"];
-
-			$mobilityIndexes = readDB($seniorUserID);
+			
+			$mobilityIndexes = readDB($_GET["seniorUserID"], $tokenUserID);
 
 			if (empty($mobilityIndexes)) {
 				deliver_response(200, "Ingen data er registrert ennå.", NULL);

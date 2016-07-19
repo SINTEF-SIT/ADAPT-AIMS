@@ -39,7 +39,11 @@
 				$clientUserID = $clientPayload['userid'];
 
 				$generatedToken = generateToken($clientUserID);
-				return ($clientToken === $generatedToken);
+				if ($clientToken === $generatedToken) {
+					return $clientUserID;
+				} else {
+					return null;
+				}
 			}
 		}
 		return false;
