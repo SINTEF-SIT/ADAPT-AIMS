@@ -8,13 +8,13 @@
 		// If the userID in the token belongs to an expert user, check that this expert is allowed to access this senior user's data
 		if ($tokenUserID != $seniorUserID) {
 			if (checkExpertSeniorLink($conn, $tokenUserID, $seniorUserID) == false) {
-				return false;
+				return null;
 			}
 		}
 
 		if ($stmt = $conn->prepare("SELECT value, timeDataCollected, timeCalculated
 				FROM ActivityIndexes
-				WHERE ai.userID=?
+				WHERE userID=?
 				ORDER BY timeDataCollected DESC LIMIT 1;")) {
 			$stmt->bind_param("i", $seniorUserID);
 			$stmt->execute();

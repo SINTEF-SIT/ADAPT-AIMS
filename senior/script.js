@@ -6,6 +6,14 @@ var activityChart; // The chart displaying the activity indexes
 var MIImgID; // ID identifying the image used to represent the MI
 var oldMIImgID; // Stores the previously selected MI img when a new img is selected, for rollback if the user cancels the changes
 
+// Tooltip texts explaining what the different AI values mean.
+var activityChartTooltips = ["Det er ikke registrert noe fysisk aktivitet denne dagen.", // AI = 0
+	"Dette tilsvarer <i>noe</i> fysisk aktivitet (x antall skritt).", // AI = 1
+	"Dette tilsvarer <i>moderat</i> fysisk aktivitet (x antall skritt).", // AI = 2
+	"Dette tilsvarer over <i>middels</i> mengde fysisk aktivitet (x antall skritt).", // AI = 3
+	"Dette tilsvarer <i>mye</i> fysisk aktivitet (x antall skritt).", // AI = 4
+	"Dette tilsvarer <i>veldig mye</i> fysisk aktivitet (x antall skritt)."]; // AI = 5
+
 var token; // The JWT used for communicating with the API
 var seniorUserID; // The user id of the logged in user
 var seniorEmail; // The email of the logged in user
@@ -15,23 +23,22 @@ var seniorLastName; // The last name of the logged in user
 $currentMobilityIdx = null; // The current mobility index for the logged in user
 $currentActivityIdx = null; // The current activity index for the logged in user. Not currently in use!
 
-$isFooterVisible = true;
+//$isFooterVisible = true;
 
 
 /***************************
 ** General
 ***************************/
 
-$(document).on('click touch', function () {
-	// Toggle footer visibility on klick or touch
-	if ($isFooterVisible) {
-		$("#footer").stop().fadeOut(400);
-		$isFooterVisible = false;
-	} else {
-		$("#footer").stop().fadeIn(400);
-		$isFooterVisible = true;
-	}
+$(document).delegate('#mainPage', 'pageshow', function () {
+	/************************************************************
+	** Every time the main page is shown: reflow the charts
+	** in case the window size has changed while on another page
+	************************************************************/
+	if (balanceChart != null) balanceChart.reflow();
+	if (activityChart != null) activityChart.reflow();
 });
+
 
 
 $(document).ready(function() {
@@ -51,7 +58,8 @@ $(document).ready(function() {
 		window.location.replace("../index.html");
 	}
 	
-	$("#messageWrapper").hide(); // Initially hides the box displaying feedback messages
+	$("#messageWrapperAI").hide(); // Initially hides the box displaying AI feedback messages
+	$("#messageWrapperBI").hide(); // Initially hides the box displaying BI feedback messages
 
 	$("#userFullName").text(seniorFirstName + " " + seniorLastName); // Writes the full name of the logged in user to the DOM
 
@@ -62,8 +70,8 @@ $(document).ready(function() {
 		url: "http://vavit.no/adapt-staging/api/getNewestChangeTime.php?seniorUserID=" + seniorUserID,
 		type: 'GET',
 		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-        },
+			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+		},
 		error: function(data, status) { // If the API request fails
 			console.log("Error attempting to call API getNewestChangeTime.php with parameter seniorUserID=" + seniorUserID);
 		}, 
@@ -76,328 +84,380 @@ $(document).ready(function() {
 				console.log(data.status_message);
 			}
 		}
-	}), $.ajax({
-		/***************************
-		** Newest mobility idx
-		***************************/
-		url: "http://vavit.no/adapt-staging/api/getNewestMobilityIdx.php?seniorUserID=" + seniorUserID,
-		type: 'GET',
-		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-        },
-		error: function(data, status) { // If the API request fails
-			console.log("Error attempting to call API getNewestMobilityIdx.php with parameter seniorUserID=" + seniorUserID);
-		}, 
-		success: function(data, status) { // If the API request is successful
-			if (data.data) {
-				$currentMobilityIdx = data.data.value;
-				readCookieMIImg(); // Checks if a cookie is set for picking an MI img
-			} else {
-				// No MI registered for this user yet
-				$("#MIImgHeader").html("<h3>Det er ikke registrert noen mobilitetsindeks ennå.</h3>"); // Writes to DOM
-				$("#MIImgInnerWrapper").hide(); // Hides the MI image
-			}
-		}
-	}), $.ajax({
-		/***************************
-		** Balance chart
-		***************************/
-		url: "http://vavit.no/adapt-staging/api/getBalanceIdxs.php?seniorUserID=" + seniorUserID,
-		type: 'GET',
-		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-        },
-		error: function(data, status) { // If the API request fails
-			$("#balanceChartContainer").hide(); // Hide BI chart
-			console.log("Error attempting to call API getBalanceIdxs.php with parameter seniorUserID=" + seniorUserID);
-		}, 
-		success: function(data, status) { // If the API request is successful
-			var balanceChartDataJSON = data.data;
-			var balanceChartData = [];
-
-			if (balanceChartDataJSON != null) {
-				//var maxBI = 0; // The highest BI value in the series
-				
-				for (var i=0; i<balanceChartDataJSON.length; i++) {
-					if (i != 0) {
-						// Draws an extra data point right before each data point (except the first) 
-						// to get a flat line instead of a straight, diagonal line between the points.
-						// Needs to be commented out if the chart is switched to a column chart.
-						var dataPointPre = [];
-						var datePre = new Date(balanceChartDataJSON[i].timeDataCollected);
-						datePre.setSeconds(datePre.getSeconds() - 1);
-						dataPointPre.push(datePre.getTime());
-						dataPointPre.push(parseFloat(balanceChartDataJSON[i-1].value));
-						balanceChartData.push(dataPointPre);
-					}
-
-					
-					var bi = parseFloat(balanceChartDataJSON[i].value);
-					//if (bi > maxBI) maxBI = mi;
-
-					var dataPoint = [];
-					var date = Date.parse(balanceChartDataJSON[i].timeDataCollected);
-					dataPoint.push(date);
-					dataPoint.push(bi);
-					balanceChartData.push(dataPoint);
-
-					// If last data point from db, add a final data point at the current datetime
-					if (i+1 == balanceChartDataJSON.length) {
-						var dataPointFinal = [];
-						dataPointFinal.push(new Date().getTime());
-						dataPointFinal.push(parseFloat(balanceChartDataJSON[i].value));
-						balanceChartData.push(dataPointFinal);
-					}
-				}
-
-				balanceChartOptions = {
-					chart: {
-						renderTo: 'balanceChart', // ID of div where the chart is to be rendered
-						type: 'area', // Chart type. Can e.g. be set to 'column' or 'area'
-						//zoomType: 'x', // Uncomment to make the chart zoomable along the x-axis
-						backgroundColor: null,
-						reflow: true
-					},
-					title: {
-						text: 'Din balanse'
-					},
-					xAxis: {
-						type: 'datetime',
-						tickInterval: 24 * 3600 * 1000, // How frequent a tick is displayed on the axis (set in milliseconds)
-						min: new Date().getTime() - (31 * 24 * 3600 * 1000) // Set start of x-axis to 1 month ago
-					},
-					yAxis: {
-						//max: 1, // The ceiling value of the y-axis. Uncomment when a max value is defined
-						min: 0, // The floor of the y-axis. 
-			            endOnTick: false,
-						alternateGridColor: '#DEE0E3',
-						tickInterval: 1 // How frequent a tick is displayed on the axis
-					},
-					plotOptions: {
-						series: {
-				            pointWidth: 40
-				        }
-					},
-					legend: {
-						enabled: false // Hides the legend showing the name and toggle option for the series
-					},
-					credits: {
-						enabled: false // Hides the Highcharts credits
-					},
-					tooltip: {
-						enabled: false // Hides the tooltip from being displayed while hovering
-					},
-					series: [{
-						color: {
-							// Defines the color gradient of the chart.
-			                linearGradient: {
-			                    x1: 0,
-			                    y1: 0,
-			                    x2: 0,
-			                    y2: 1
-			                },
-			                stops: [
-								// The 'grey' color is temporary, as the top and middle colors are calculated later.
-			                    [0, 'grey'],
-			                    [0.5, 'grey'],
-			                    [1, '#ED1E24']
-			                ]
-			            },
-			            lineWidth: 0,
-			            enableMouseTracking: false
-					}]
-				};
-
-				// Finds the color to use in the top and middle of the chart based on the current MI.
-				// todo: Need to iterate through all MI values and use the highest value to calculate color,
-				// or define another correlastion between BI and MI.
-				colormaxBI = getMIChartData($currentMobilityIdx).color;
-				colorMidBI = getMIChartData($currentMobilityIdx/2).color;
-
-				balanceChartOptions.series[0].color.stops[0][1] = "#" + colormaxBI;
-				balanceChartOptions.series[0].color.stops[1][1] = "#" + colorMidBI;
-
-				balanceChartOptions.series[0].data = balanceChartData;
-
-				balanceChart = new Highcharts.Chart(balanceChartOptions);
-			} else {
-				// No BI values registered. BI chart is hidden.
-				$("#balanceChartContainer").hide();
-				//$("#balanceChart").html("<h3>Det er ikke registrert noen data om din balanse ennå.</h3>");
-			}
-		}
-	}), $.ajax({
-		/***************************
-		** Activity chart
-		***************************/
-		url: "http://vavit.no/adapt-staging/api/getActivityIdxs.php?seniorUserID=" + seniorUserID,
-		type: 'GET',
-		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-        },
-		error: function(data, status) { // If the API request fails
-			$("#activityChartContainer").hide(); // Hide AI chart
-			console.log("Error attempting to call API getActivityIdxs.php with parameter seniorUserID=" + seniorUserID);
-		}, 
-		success: function(data, status) { // If the API request is successful
-			var activityChartDataJSON = data.data;
-			if (activityChartDataJSON != null) {
-				var activityChartData = [];
-				for (var i=0; i<activityChartDataJSON.length; i++) {
-					// Uncomment if chart is area chart!
-					/*if (i != 0) {
-						// Draws an extra data point right before each data point (except the first) 
-						// to get a flat line instead of a straight, diagonal line between the points.
-						var dataPointPre = [];
-						var datePre = new Date(activityChartDataJSON[i].timeDataCollected);
-						datePre.setSeconds(datePre.getSeconds() - 1);
-						dataPointPre.push(datePre.getTime());
-						dataPointPre.push(activityChartDataJSON[i-1].value);
-						activityChartData.push(dataPointPre);
-					}*/
-
-					var dataPoint = [];
-					var date = Date.parse(activityChartDataJSON[i].timeDataCollected);
-					dataPoint.push(date);
-					dataPoint.push(activityChartDataJSON[i].value);
-					activityChartData.push(dataPoint);
-
-					// Uncomment if chart is area chart!
-					// If last data point from db, add a final data point one day after the last, to make the last change more visible
-					/*if (i+1 == activityChartDataJSON.length) {
-						var dataPointFinal = [];
-						date.setDate(date.getDate() + 1);
-						dataPointFinal.push(date);
-						dataPointFinal.push(activityChartDataJSON[i].value);
-						activityChartData.push(dataPointFinal);
-					}*/
-				}
-
-				activityChartOptions = {
-					chart: {
-						renderTo: 'activityChart', // ID of div where the chart is to be rendered
-						type: 'column', // Chart type. Can e.g. be set to 'column' or 'area'
-						//zoomType: 'x', // Uncomment to make the chart zoomable along the x-axis
-						backgroundColor: null,
-						reflow: true
-					},
-					title: {
-						text: 'Din fysiske aktivitet'
-					},
-					xAxis: {
-						type: 'datetime',
-						tickInterval: 24 * 3600 * 1000, // How frequent a tick is displayed on the axis (set in milliseconds)
-						min: new Date().getTime() - (31 * 24 * 3600 * 1000) // Set start of x-axis to 1 month ago
-					},
-					yAxis: {
-						title: {
-							enabled: false
-						},
-						max: 5, // The ceiling of the y-axis. Needs to be updated if the range of valid values changes!
-						min: 0, // The floor of the y-axis. 
-						alternateGridColor: '#DEE0E3',
-						tickInterval: 1 // How frequent a tick is displayed on the axis
-					},
-					plotOptions: {
-						series: {
-							//pointWidth: 20
-						}
-					},
-					legend: {
-						enabled: false // Hides the legend showing the name and toggle option for the series
-					},
-					credits: {
-						enabled: false // Hides the Highcharts credits
-					},
-					tooltip: {
-						enabled: false // Hides the tooltip from being displayed while hovering
-					},
-					series: [{}]
-				};
-
-				activityChartOptions.series[0].data = activityChartData;
-
-				activityChart = new Highcharts.Chart(activityChartOptions);
-			} else {
-				$("#activityChartContainer").hide();
-				//$("#activityChart").html("<h3>Det er ikke registrert noen aktivitetsdata ennå.</h3>");
-			}
-			
-		}
-	}), $.ajax({
-		/***************************
-		** AI feedback message
-		***************************/
-		url: "http://vavit.no/adapt-staging/api/getFeedbackMsg.php?seniorUserID=" + seniorUserID + "&category=0",
-		type: 'GET',
-		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-        },
-		error: function(data, status) { // If the API request fails
-			console.log("Error attempting to call API getFeedbackMsg.php with parameters seniorUserID=" + seniorUserID + " and category=0");
-		}, 
-		success: function(data, status) { // If the API request is successful
-			if (data.data) {
-				$("#feedbackMsg").html("<b>Aktivitetsråd:</b> " + data.data.feedbackText); // Writes the AI feedback msg to the DOM
-				$("#messageWrapper").show();
-			} else {
-				// No AI feedback msg is found
-				console.log(data.status_message);
-			}
-		}
 	})).then(function(data, textStatus, jqXHR) {
-		$.ajax({
+		$.when($.ajax({
 			/***************************
-			** BI feedback message
+			** Newest mobility idx
 			***************************/
-			url: "http://vavit.no/adapt-staging/api/getFeedbackMsg.php?seniorUserID=" + seniorUserID + "&category=1",
+			url: "http://vavit.no/adapt-staging/api/getNewestMobilityIdx.php?seniorUserID=" + seniorUserID,
 			type: 'GET',
 			beforeSend: function (request) {
-	            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-	        },
+				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+			},
 			error: function(data, status) { // If the API request fails
-				hideLoader();
-				console.log("Error attempting to call API getFeedbackMsg.php with parameters seniorUserID=" + seniorUserID + " and category=1");
+				console.log("Error attempting to call API getNewestMobilityIdx.php with parameter seniorUserID=" + seniorUserID);
 			}, 
 			success: function(data, status) { // If the API request is successful
 				if (data.data) {
-					// Adds a br tag if an AI msg has already been written to the DOM
-					var newline = "";
-					if ($("#feedbackMsg").html() != "") {
-						newline = "<br>";
-					}
-					$("#feedbackMsg").append(newline + "<b>Balanseråd:</b> " + data.data.feedbackText); // Writes the BI feedback msg to the DOM
-					$("#messageWrapper").show();
+					//console.log("current MI stored!");
+					$currentMobilityIdx = data.data.value;
+					readCookieMIImg(); // Checks if a cookie is set for picking an MI img
 				} else {
-					// No BI feedback msg is found
-					console.log(data.status_message);
+					// No MI registered for this user yet
+					$("#MIImgHeader").html("<h3>Det er ikke registrert noen mobilitetsindeks ennå.</h3>"); // Writes to DOM
+					$("#MIImgInnerWrapper").hide(); // Hides the MI image
 				}
-				hideLoader(); // Hides the loading widget
 			}
-		});
-
-		/*if ($currentMobilityIdx && $currentActivityIdx) {
-			$.ajax({
-				url: 'http://vavit.no/adapt-staging/api/getFeedbackMsg.php?mi=' + $currentMobilityIdx + '&ai=' + $currentActivityIdx,
+		})).then(function(data, textStatus, jqXHR) {
+			$.when($.ajax({
+				/***************************
+				** Balance chart
+				***************************/
+				url: "http://vavit.no/adapt-staging/api/getBalanceIdxs.php?seniorUserID=" + seniorUserID,
 				type: 'GET',
 				beforeSend: function (request) {
-	                request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-	            },
+					request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+				},
 				error: function(data, status) { // If the API request fails
-					hideLoader();
-					console.log("Error attempting to call API getFeedbackMsg.php with parameters mi=" + $currentMobilityIdx + ", ai=" + $currentActivityIdx);
+					$("#balanceChartContainer").hide(); // Hide BI chart
+					console.log("Error attempting to call API getBalanceIdxs.php with parameter seniorUserID=" + seniorUserID);
 				}, 
 				success: function(data, status) { // If the API request is successful
-					hideLoader();
-					if (data.data) {
-						$("#feedbackMsg").html(data.data.feedbackText);
-						$("#messageWrapper").show();
+					var balanceChartDataJSON = data.data;
+					var balanceChartData = [];
+
+					if (balanceChartDataJSON != null) {
+						//var maxBI = 0; // The highest BI value in the series
+						
+						for (var i=0; i<balanceChartDataJSON.length; i++) {
+							if (i != 0) {
+								// Draws an extra data point right before each data point (except the first) 
+								// to get a flat line instead of a straight, diagonal line between the points.
+								// Needs to be commented out if the chart is switched to a column chart.
+								var dataPointPre = [];
+								var datePre = new Date(balanceChartDataJSON[i].timeDataCollected);
+								datePre.setSeconds(datePre.getSeconds() - 1);
+								dataPointPre.push(datePre.getTime());
+								dataPointPre.push(parseFloat(balanceChartDataJSON[i-1].value));
+								balanceChartData.push(dataPointPre);
+							}
+
+							
+							var bi = parseFloat(balanceChartDataJSON[i].value);
+							//if (bi > maxBI) maxBI = mi;
+
+							var dataPoint = [];
+							var date = Date.parse(balanceChartDataJSON[i].timeDataCollected);
+							dataPoint.push(date);
+							dataPoint.push(bi);
+							balanceChartData.push(dataPoint);
+
+							// If last data point from db, add a final data point at the current datetime
+							if (i+1 == balanceChartDataJSON.length) {
+								var dataPointFinal = [];
+								dataPointFinal.push(new Date().getTime());
+								dataPointFinal.push(parseFloat(balanceChartDataJSON[i].value));
+								balanceChartData.push(dataPointFinal);
+							}
+						}
+
+						balanceChartOptions = {
+							chart: {
+								renderTo: 'balanceChart', // ID of div where the chart is to be rendered
+								type: 'area', // Chart type. Can e.g. be set to 'column' or 'area'
+								//zoomType: 'x', // Uncomment to make the chart zoomable along the x-axis
+								backgroundColor: null,
+								reflow: true
+							},
+							title: {
+								text: 'Din balanse'
+							},
+							xAxis: {
+								type: 'datetime',
+								tickInterval: 7 * 24 * 3600 * 1000, // How frequent a tick is displayed on the axis (set in milliseconds)
+								min: new Date().getTime() - (90 * 24 * 3600 * 1000) // Set start of x-axis to 1 month ago
+							},
+							yAxis: {
+								max: 5, // The ceiling value of the y-axis.
+								min: 0, // The floor of the y-axis. 
+								endOnTick: false,
+								alternateGridColor: '#DEE0E3',
+								tickInterval: 1, // How frequent a tick is displayed on the axis,
+								title: {
+									enabled: false
+								},
+							},
+							plotOptions: {
+								series: {
+									pointWidth: 40
+								}
+							},
+							legend: {
+								enabled: false // Hides the legend showing the name and toggle option for the series
+							},
+							credits: {
+								enabled: false // Hides the Highcharts credits
+							},
+							tooltip: {
+								enabled: false // Hides the tooltip from being displayed while hovering
+							},
+							series: [{
+								/*color: {
+									// Defines the color gradient of the chart.
+									linearGradient: {
+										x1: 0,
+										y1: 0,
+										x2: 0,
+										y2: 1
+									},
+									stops: [
+										// The 'grey' color is temporary, as the top and middle colors are calculated later.
+										[0, 'grey'],
+										[0.5, 'grey'],
+										[1, '#ED1E24']
+									]
+								},*/
+								lineWidth: 0,
+								enableMouseTracking: false
+							}]
+						};
+
+						// Finds the color to use in the top and middle of the chart based on the current MI.
+						// todo: Need to iterate through all MI values and use the highest value to calculate color,
+						// or define another correlastion between BI and MI.
+						/*console.log("current MI: " + $currentMobilityIdx);
+						colorMaxBI = getMIChartData($currentMobilityIdx).color;
+						colorMidBI = getMIChartData($currentMobilityIdx/2).color;
+
+						balanceChartOptions.series[0].color.stops[0][1] = "#" + colorMaxBI;
+						balanceChartOptions.series[0].color.stops[1][1] = "#" + colorMidBI;
+						console.log("ColorMax: " + colorMaxBI + ", colorMid: " + colorMidBI);*/
+
+						balanceChartOptions.series[0].data = balanceChartData;
+
+						balanceChart = new Highcharts.Chart(balanceChartOptions);
 					} else {
-						console.log(data.status_message);
+						// No BI values registered. BI chart is hidden.
+						$("#balanceChartContainer").hide();
+						//$("#balanceChart").html("<h3>Det er ikke registrert noen data om din balanse ennå.</h3>");
 					}
 				}
+			})).then(function(data, textStatus, jqXHR) {
+				$.when($.ajax({
+					/***************************
+					** Activity chart
+					***************************/
+					url: "http://vavit.no/adapt-staging/api/getActivityIdxs.php?seniorUserID=" + seniorUserID,
+					type: 'GET',
+					beforeSend: function (request) {
+						request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+					},
+					error: function(data, status) { // If the API request fails
+						$("#activityChartContainer").hide(); // Hide AI chart
+						console.log("Error attempting to call API getActivityIdxs.php with parameter seniorUserID=" + seniorUserID);
+					}, 
+					success: function(data, status) { // If the API request is successful
+						var activityChartDataJSON = data.data;
+						if (activityChartDataJSON != null) {
+							var activityChartData = [];
+							for (var i=0; i<activityChartDataJSON.length; i++) {
+								// Uncomment if chart is area chart!
+								/*if (i != 0) {
+									// Draws an extra data point right before each data point (except the first) 
+									// to get a flat line instead of a straight, diagonal line between the points.
+									var dataPointPre = [];
+									var datePre = new Date(activityChartDataJSON[i].timeDataCollected);
+									datePre.setSeconds(datePre.getSeconds() - 1);
+									dataPointPre.push(datePre.getTime());
+									dataPointPre.push(activityChartDataJSON[i-1].value);
+									activityChartData.push(dataPointPre);
+								}*/
+
+								var dataPoint = [];
+								var date = Date.parse(activityChartDataJSON[i].timeDataCollected);
+								dataPoint.push(date);
+								dataPoint.push(activityChartDataJSON[i].value);
+								activityChartData.push(dataPoint);
+
+								// Uncomment if chart is area chart!
+								// If last data point from db, add a final data point one day after the last, to make the last change more visible
+								/*if (i+1 == activityChartDataJSON.length) {
+									var dataPointFinal = [];
+									date.setDate(date.getDate() + 1);
+									dataPointFinal.push(date);
+									dataPointFinal.push(activityChartDataJSON[i].value);
+									activityChartData.push(dataPointFinal);
+								}*/
+							}
+
+							activityChartOptions = {
+								chart: {
+									renderTo: 'activityChart', // ID of div where the chart is to be rendered
+									type: 'column', // Chart type. Can e.g. be set to 'column' or 'area'
+									//zoomType: 'x', // Uncomment to make the chart zoomable along the x-axis
+									backgroundColor: null,
+									reflow: true
+								},
+								title: {
+									text: 'Din fysiske aktivitet'
+								},
+								xAxis: {
+									type: 'datetime',
+									tickInterval: 24 * 3600 * 1000, // How frequent a tick is displayed on the axis (set in milliseconds)
+									min: new Date().getTime() - (31 * 24 * 3600 * 1000) // Set start of x-axis to 1 month ago
+								},
+								yAxis: {
+									title: {
+										enabled: false
+									},
+									max: 5, // The ceiling of the y-axis. Needs to be updated if the range of valid values changes!
+									min: 0, // The floor of the y-axis. 
+									alternateGridColor: '#DEE0E3',
+									tickInterval: 1 // How frequent a tick is displayed on the axis
+								},
+								plotOptions: {
+									series: {
+										//pointWidth: 20
+									}
+								},
+								legend: {
+									enabled: false // Hides the legend showing the name and toggle option for the series
+								},
+								credits: {
+									enabled: false // Hides the Highcharts credits
+								},
+								tooltip: {
+									headerFormat: '',
+									pointFormat: '<b>{point.x:%A %e. %B}</b> ble din aktivitetsindeks målt til <b>{point.y}</b>.<br />{point.tooltipText}'
+								},
+								series: [{}]
+							};
+
+							activityChartOptions.series[0].data = activityChartData;
+
+							activityChart = new Highcharts.Chart(activityChartOptions);
+
+							for (var i=0; i<activityChart.series[0].data.length; i++) {
+								activityChart.series[0].data[i].tooltipText = activityChartTooltips[activityChartDataJSON[i].value];
+							}
+						} else {
+							$("#activityChartContainer").hide();
+							//$("#activityChart").html("<h3>Det er ikke registrert noen aktivitetsdata ennå.</h3>");
+						}
+					}
+				})).then(function(data, textStatus, jqXHR) {
+
+					var firstFeedbackAjaxCall = null;
+					var secondFeedbackAjaxCall = null;
+
+					if (activityChart) {
+						var currentAI = getNewestChartValue(activityChart);
+						firstFeedbackAjaxCall = {
+							category: '0',
+							textID: 'AI',
+							textStart: 'Aktivitetsråd:',
+							idx: currentAI
+						};
+					}
+
+					if (balanceChart) {
+						currentBI = getNewestChartValue(balanceChart);
+						var BITemp = {
+							category: '1',
+							textID: 'BI',
+							textStart: 'Balanseråd:',
+							idx: currentBI
+						};
+
+						if (activityChart) {
+							secondFeedbackAjaxCall = BITemp;
+						} else {
+							firstFeedbackAjaxCall = BITemp;
+						}
+					}
+
+					if (firstFeedbackAjaxCall) {
+						$.when($.ajax({
+							/***************************
+							** Gets first feedback msg (if any)
+							***************************/
+							url: "http://vavit.no/adapt-staging/api/getFeedbackMsg.php?seniorUserID=" + seniorUserID 
+								+ "&idx=" + firstFeedbackAjaxCall.idx + "&category=" + firstFeedbackAjaxCall.category,
+							type: 'GET',
+							beforeSend: function (request) {
+								request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+							},
+							error: function(data, status) { // If the API request fails
+								console.log("Error attempting to call API getFeedbackMsg.php with parameters idx=" 
+									+ firstFeedbackAjaxCall.idx + " and category=" + firstFeedbackAjaxCall.category);
+							}, 
+							success: function(data, status) { // If the API request is successful
+								var textID = firstFeedbackAjaxCall.textID;
+								if (data.data) {
+									$("#feedbackMsg" + textID).html("<b>" + firstFeedbackAjaxCall.textStart 
+										+ "</b> " + data.data.feedbackText); // Writes the AI feedback msg to the DOM
+									$("#messageWrapper" + textID).show();
+
+									if (data.data.exerciseID != null) {
+										// If an exercise is linked to this feedback msg: insert exercise info into DOM
+										var exerciseHTML = generateExerciseHTML(data.data, textID);
+
+										// Creates a click listener on the message box
+										setFeedbackMsgClickListnerer(textID);
+									}
+								} else {
+									// No feedback msg is found
+									console.log(data.status_message);
+								}
+							}
+						})).then(function(data, textStatus, jqXHR) {
+							if (secondFeedbackAjaxCall) {
+								$.when($.ajax({
+									/***************************
+									** Gets the other feedback msg (if any)
+									***************************/
+									url: "http://vavit.no/adapt-staging/api/getFeedbackMsg.php?seniorUserID=" + seniorUserID 
+									+ "&idx=" + secondFeedbackAjaxCall.idx + "&category=" + secondFeedbackAjaxCall.category,
+									type: 'GET',
+									beforeSend: function (request) {
+										request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+									},
+									error: function(data, status) { // If the API request fails
+										hideLoader(); // Hides the loading widget
+										console.log("Error attempting to call API getFeedbackMsg.php with parameters idx=" 
+											+ secondFeedbackAjaxCall.idx + " and category=" + secondFeedbackAjaxCall.category);
+									}, 
+									success: function(data, status) { // If the API request is successful
+										var textID = secondFeedbackAjaxCall.textID;
+										if (data.data) {
+											$("#feedbackMsg" + textID).html("<b>" + secondFeedbackAjaxCall.textStart 
+												+ "</b> " + data.data.feedbackText); // Writes the BI feedback msg to the DOM
+											$("#messageWrapper" + textID).show();
+
+											if (data.data.exerciseID != null) {
+												// If an exercise is linked to this feedback msg: insert exercise info into DOM
+												var exerciseHTML = generateExerciseHTML(data.data, textID);
+												
+												// Creates a click listener on the message box
+												setFeedbackMsgClickListnerer(textID);
+											}
+										} else {
+											// No feedback msg is found
+											console.log(data.status_message);
+										}
+										hideLoader(); // Hides the loading widget
+									}
+								}));
+							} else {
+								hideLoader(); // Hides the loading widget
+							}	
+						});
+					} else {
+						hideLoader(); // Hides the loading widget
+					}
+				});
 			});
-		}*/
+		});
 	});
 
 	// Sets global options for the charts
@@ -422,6 +482,48 @@ $(document).ready(function() {
 		}*/
 	});
 });
+
+
+function setFeedbackMsgClickListnerer(textID) {
+	// Click listeners on feedback messages boxes
+	$("#feedbackMsg" + textID).addClass("clickableFeedback");
+	$("#messageWrapper" + textID).click(function() {
+		$.mobile.changePage( "index.html#exercise-info-page-" + textID, { transition: "pop" });
+	});
+}
+
+
+function generateExerciseHTML(data, textID) {
+	// Builds a HTML string for an exercise to be inserted into the DOM
+	$("#exerciseHeader" + textID).html(data.title);
+	$("#exerciseImg" + textID).attr("src","img/exercises/" + data.imgFilename);
+
+	var html = "";
+	if (data.textPreList != null) {
+		html += "<p>" + data.textPreList + "</p>";
+	}
+
+	if (data.textList != null) {
+		html += "<ul>";
+		var listItems = data.textList.split(";");
+		for (var i=0; i<listItems.length; i++) {
+			html += "<li>" + listItems[i] + "</li>";
+		}
+		html += "</ul>";
+	}
+
+	if (data.textPostList != null) {
+		html += "<p>" + data.textPostList + "</p>";
+	}
+
+	if (data.textPostListBold != null) {
+		html += "<strong>" + data.textPostListBold + "</strong>";
+	}
+
+	$("#exerciseDesc" + textID).append(html);
+}
+
+
 
 
 /***************************
@@ -494,8 +596,8 @@ function setMMImg() {
 	if ($miData != null) {
 		$fileName = $miData.fileName;
 
-    	var imgPath = "img/MIImg/" + $fileName;
-    	var img = document.getElementById("MIImg");
+		var imgPath = "img/MIImg/" + $fileName;
+		var img = document.getElementById("MIImg");
 		img.src = imgPath;
 	} else {
 		$("#MIImgHeader").html("<h3>Det oppstod en feil.</h3>");
@@ -562,10 +664,10 @@ function closeSettingsView() {
 	setCookie("MIImgID", MIImgID, 7); // Stores the selected MI img as a cookie
 
 	// Need to reflow the charts in case the window has resized while in settings view.
-	setTimeout(function () { 
+	/*setTimeout(function () { 
 		activityChart.reflow();
 		balanceChart.reflow();
-	}, 500);
+	}, 500);*/
 }
 
 
@@ -633,79 +735,85 @@ function getMIChartData($mi) {
 	// Returns a filename for the MI img and a hex color value for the BI chart
 	// that corresponds to a given MI value.
 	if ($mi >= 0 && $mi <= 1) {
-        $fileName = "";
-        $color = "";
+		$fileName = "";
+		$color = "";
 
-        if ($mi < 0.025) {
-        	$fileName = "0.png";
-        	$color = "ED1E24";
-        } else if ($mi >= 0.025 && $mi < 0.075) {
-        	$fileName = "05.png";
-        	$color = "F03223";
-        } else if ($mi >= 0.075 && $mi < 0.125) {
-        	$fileName = "10.png";
-        	$color = "F44D22";
-        } else if ($mi >= 0.125 && $mi < 0.175) {
-        	$fileName = "15.png";
-        	$color = "F76E20";
-        } else if ($mi >= 0.175 && $mi < 0.225) {
-        	$fileName = "20.png";
-        	$color = "F78F1F";
-        } else if ($mi >= 0.225 && $mi < 0.275) {
-        	$fileName = "25.png";
-        	$color = "F7AE1F";
-        } else if ($mi >= 0.275 && $mi < 0.325) {
-        	$fileName = "30.png";
-        	$color = "F7CC1F";
-        } else if ($mi >= 0.325 && $mi < 0.375) {
-        	$fileName = "35.png";
-        	$color = "F7E11F";
-        } else if ($mi >= 0.375 && $mi < 0.425) {
-        	$fileName = "40.png";
-        	$color = "F6EC1F";
-        } else if ($mi >= 0.425 && $mi < 0.475) {
-        	$fileName = "45.png";
-        	$color = "EEEC21";
-        } else if ($mi >= 0.475 && $mi < 0.525) {
-        	$fileName = "50.png";
-        	$color = "E4EC23";
-        } else if ($mi >= 0.525 && $mi < 0.575) {
-        	$fileName = "55.png";
-        	$color = "D8EC27";
-        } else if ($mi >= 0.575 && $mi < 0.625) {
-        	$fileName = "60.png";
-        	$color = "CBEC2A";
-        } else if ($mi >= 0.625 && $mi < 0.675) {
-        	$fileName = "65.png";
-        	$color = "BCE82E";
-        } else if ($mi >= 0.675 && $mi < 0.725) {
-        	$fileName = "70.png";
-        	$color = "ADE132";
-        } else if ($mi >= 0.725 && $mi < 0.775) {
-        	$fileName = "75.png";
-        	$color = "9EDA36";
-        } else if ($mi >= 0.775 && $mi < 0.825) {
-        	$fileName = "80.png";
-        	$color = "8FD339";
-        } else if ($mi >= 0.825 && $mi < 0.875) {
-        	$fileName = "85.png";
-        	$color = "7ECA3E";
-        } else if ($mi >= 0.875 && $mi < 0.925) {
-        	$fileName = "90.png";
-        	$color = "73C541";
-        } else if ($mi >= 0.925 && $mi < 0.975) {
-        	$fileName = "95.png";
-        	$color = "68C043";
-        } else {
-        	$fileName = "100.png";
-        	$color = "68BF44";
-        }
+		if ($mi < 0.025) {
+			$fileName = "0.png";
+			$color = "ED1E24";
+		} else if ($mi >= 0.025 && $mi < 0.075) {
+			$fileName = "05.png";
+			$color = "F03223";
+		} else if ($mi >= 0.075 && $mi < 0.125) {
+			$fileName = "10.png";
+			$color = "F44D22";
+		} else if ($mi >= 0.125 && $mi < 0.175) {
+			$fileName = "15.png";
+			$color = "F76E20";
+		} else if ($mi >= 0.175 && $mi < 0.225) {
+			$fileName = "20.png";
+			$color = "F78F1F";
+		} else if ($mi >= 0.225 && $mi < 0.275) {
+			$fileName = "25.png";
+			$color = "F7AE1F";
+		} else if ($mi >= 0.275 && $mi < 0.325) {
+			$fileName = "30.png";
+			$color = "F7CC1F";
+		} else if ($mi >= 0.325 && $mi < 0.375) {
+			$fileName = "35.png";
+			$color = "F7E11F";
+		} else if ($mi >= 0.375 && $mi < 0.425) {
+			$fileName = "40.png";
+			$color = "F6EC1F";
+		} else if ($mi >= 0.425 && $mi < 0.475) {
+			$fileName = "45.png";
+			$color = "EEEC21";
+		} else if ($mi >= 0.475 && $mi < 0.525) {
+			$fileName = "50.png";
+			$color = "E4EC23";
+		} else if ($mi >= 0.525 && $mi < 0.575) {
+			$fileName = "55.png";
+			$color = "D8EC27";
+		} else if ($mi >= 0.575 && $mi < 0.625) {
+			$fileName = "60.png";
+			$color = "CBEC2A";
+		} else if ($mi >= 0.625 && $mi < 0.675) {
+			$fileName = "65.png";
+			$color = "BCE82E";
+		} else if ($mi >= 0.675 && $mi < 0.725) {
+			$fileName = "70.png";
+			$color = "ADE132";
+		} else if ($mi >= 0.725 && $mi < 0.775) {
+			$fileName = "75.png";
+			$color = "9EDA36";
+		} else if ($mi >= 0.775 && $mi < 0.825) {
+			$fileName = "80.png";
+			$color = "8FD339";
+		} else if ($mi >= 0.825 && $mi < 0.875) {
+			$fileName = "85.png";
+			$color = "7ECA3E";
+		} else if ($mi >= 0.875 && $mi < 0.925) {
+			$fileName = "90.png";
+			$color = "73C541";
+		} else if ($mi >= 0.925 && $mi < 0.975) {
+			$fileName = "95.png";
+			$color = "68C043";
+		} else {
+			$fileName = "100.png";
+			$color = "68BF44";
+		}
 
-        return {
-            "fileName": $fileName,
-            "color": $color
-    	};
-    } else {
-    	return null;
-    }
+		return {
+			"fileName": $fileName,
+			"color": $color
+		};
+	} else {
+		return null;
+	}
+}
+
+function getNewestChartValue(chart) {
+	// Returns the most recent data value from a given chart
+	var data = chart.series[0].data;
+	return data[data.length-1].y;
 }

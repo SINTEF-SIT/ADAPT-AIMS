@@ -59,6 +59,10 @@
 				</div>
 
 				<a onclick="$.mobile.changePage('index.html#new-user-page');" data-role="button" data-icon="plus">Registrer ny bruker</a>
+				
+				<br><br>
+
+				<a onclick="$.mobile.changePage('index.html#default-feedback-page');" data-role="button" data-icon="comment">Rediger standard-råd</a>
 			</div><!-- /content -->
 
 			<!--<div data-role="footer">
@@ -74,7 +78,7 @@
 
 		<div data-role="page" id="user-detail-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
-				<h1 id="headerTitleDetailView">Brukerdetaljer</h1>
+				<h1 id="headerTitleDetailPage">Brukerdetaljer</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
 					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
@@ -126,8 +130,8 @@
 										<td id="cellHeight"></td>
 									</tr>
 									<tr>
-										<td>Antall fall 6 mnd. før start</td>
-										<td id="cellFalls6"></td>
+										<td>Antall fall 3 mnd. før start</td>
+										<td id="cellFalls3"></td>
 									</tr>
 									<tr>
 										<td>Antall fall 12 mnd. før start</td>
@@ -141,6 +145,10 @@
 										<td>Bor for seg selv</td>
 										<td id="cellLivingIndependently"></td>
 									</tr>
+									<tr>
+										<td>Kommentar</td>
+										<td id="cellComment"></td>
+									</tr>
 								</tbody>
 							</table>
 						</div>
@@ -149,7 +157,7 @@
 							<a onclick="$.mobile.changePage('index.html#register-mi-page');" data-role="button" data-icon="plus">Registrer ny mobility idx</a>
 							<a onclick="$.mobile.changePage('index.html#register-bi-page');" data-role="button" data-icon="plus">Registrer ny balance idx</a>
 							<a onclick="$.mobile.changePage('index.html#register-ai-page');" data-role="button" data-icon="plus">Registrer ny activity idx</a>
-							<a onclick="$.mobile.changePage('index.html#feedback-overview-page');" data-role="button" data-icon="comment">Skriv/rediger anbefaling</a>
+							<a onclick="$.mobile.changePage('index.html#personalized-feedback-page');" data-role="button" data-icon="comment">Skriv personalisert råd</a>
 							<a onclick="$.mobile.changePage('index.html#edit-data-page');" data-role="button" data-icon="edit">Rediger opplysninger</a>
 							<!--<a onclick="" data-role="button">Se brukerens visning</a>
 							<a onclick="" data-role="button">Administrer sensorenheter</a>-->
@@ -196,7 +204,7 @@
 		<!-- ******************************************************* -->
 		<div data-role="page" id="register-mi-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
-				<h1 id="headerTitleRegisterDataView">Registrer MI</h1>
+				<h1>Registrer MI</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
 					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
@@ -247,7 +255,7 @@
 		<!-- ******************************************************* -->
 		<div data-role="page" id="register-bi-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
-				<h1 id="headerTitleRegisterDataView">Registrer BI</h1>
+				<h1>Registrer BI</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
 					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
@@ -277,7 +285,7 @@
 		<!-- ******************************************************* -->
 		<div data-role="page" id="register-bi-manual-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
-				<h1 id="headerTitleRegisterDataView">Registrer BI</h1>
+				<h1>Registrer BI manuelt</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
 					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
@@ -292,7 +300,7 @@
 					<input type="date" name="timeDataCollected" id="balanceIdxDatePicker" required>
 
 					<label for="balanceIdxInputField">Balance index:</label>
-					<input type="number" name="balanceIdx" id="balanceIdxInputField" min="0" required>
+					<input type="number" name="balanceIdx" id="balanceIdxInputField" min="0" max="5" required>
 					
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 
@@ -313,7 +321,7 @@
 		<!-- ******************************************************* -->
 		<div data-role="page" id="register-ai-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
-				<h1 id="headerTitleRegisterDataView">Registrer AI</h1>
+				<h1>Registrer AI</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
 					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
@@ -343,7 +351,7 @@
 		<!-- ******************************************************* -->
 		<div data-role="page" id="register-ai-manual-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
-				<h1 id="headerTitleRegisterDataView">Registrer AI</h1>
+				<h1>Registrer AI manuelt</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
 					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
@@ -358,7 +366,7 @@
 					<input type="date" name="timeDataCollected" id="activityIdxDatePicker" required>
 
 					<label for="activityIdxInputField">Activity index:</label>
-					<input type="number" name="activityIdx" id="activityIdxInputField" min="0" required>
+					<input type="number" name="activityIdx" id="activityIdxInputField" min="0" max="5" required>
 					
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 
@@ -375,145 +383,11 @@
 
 
 		<!-- ******************************************************* -->
-		<!-- *************** FEEDBACK OVERVIEW PAGE **************** -->
-		<!-- ******************************************************* -->
-		<div data-role="page" id="feedback-overview-page">
-			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
-				<h1 id="headerTitleRegisterDataView">Registrer anbefaling til brukeren</h1>
-				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
-					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
-					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
-				</div>
-			</div><!-- /header -->
-
-			<div data-role="content" data-theme="a">
-
-				<h2>Råd knyttet til aktivitetsindeks (AI):</h2>
-				<div id="AIFeedbackMsgsContainer" class="feedbackMsgsContainer">
-					<table id="tableAIFeedbackMsgs" data-role="table" class="ui-responsive table-stripe ui-shadow">
-						<thead>
-							<th>Dato</th>
-							<th>Tekst</th>
-						</thead>
-						<tbody>
-						</tbody>
-					</table>
-				</div>
-
-				<br>
-
-				<form id="registerAIFeedbackForm" method="post">
-					<div class="ui-field-contain">
-						<label for="textarea-ai-feedback">Nytt AI-råd:</label>
-						<input type="text" name="feedbackText" id="textarea-ai-feedback" required></input>
-					</div>
-
-					<input type="hidden" name="category" value="0">
-
-					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
-
-					<div id='toastAIFeedbackForm' class="toast">
-						<div class="toast-content">
-							<img id="toastAIFeedbackFormImg" class="toast-icon" src="//:0"/> <span id="toastAIFeedbackFormText"></span>
-						</div>
-					</div>
-				</form>
-
-				<br><br>
-				<hr>
-				<br><br>
-
-				<h2>Råd knyttet til balanseindeks (BI):</h2>
-				<div id="BIFeedbackMsgsContainer" class="feedbackMsgsContainer">
-					<table id="tableBIFeedbackMsgs" data-role="table" class="ui-responsive table-stripe ui-shadow">
-						<thead>
-							<th>Dato</th>
-							<th>Tekst</th>
-						</thead>
-						<tbody>
-						</tbody>
-					</table>
-				</div>
-
-				<br>
-
-				<form id="registerBIFeedbackForm" method="post">
-					<div class="ui-field-contain">
-						<label for="textarea-bi-feedback">Nytt BI-råd:</label>
-						<input type="text" name="feedbackText" id="textarea-bi-feedback" required></input>
-					</div>
-
-					<input type="hidden" name="category" value="1">
-
-					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
-
-					<div id='toastBIFeedbackForm' class="toast">
-						<div class="toast-content">
-							<img id="toastBIFeedbackFormImg" class="toast-icon" src="//:0"/> <span id="toastBIFeedbackFormText"></span>
-						</div>
-					</div>
-					
-				</form>
-			</div><!-- /content -->
-		</div><!-- /feedback-overview-page -->
-
-
-		<!-- ******************************************************* -->
-		<!-- *************** REGISTER FEEDBACK PAGE **************** -->
-		<!-- ******************************************************* -->
-		<!--
-		<div data-role="page" id="register-feedback-page">
-			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
-				<h1 id="headerTitleRegisterDataView">Registrer anbefaling til brukeren</h1>
-				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
-					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
-				</div>
-			</div>
-
-			<div data-role="content" data-theme="a">
-				<form id="registerFeedbackForm" method="post">
-
-					<label for="textarea-feedback">Anbefaling / tilbakemelding:</label>
-					<textarea name="feedbackText" id="textarea-feedback" required></textarea>
-					<br>
-
-					<fieldset data-role="controlgroup">
-						<legend>Velg farge/alvorlighetsgrad:</legend>
-							<input type="radio" name="radio-feedback-color" id="radio-feedback-green" value="alert-success" />
-							<label for="radio-feedback-green">Grønn (positiv)</label>
-
-							<input type="radio" name="radio-feedback-color" id="radio-feedback-blue" value="alert-info" checked="checked" />
-							<label for="radio-feedback-blue">Blå (informativ/nøytral)</label>
-
-							<input type="radio" name="radio-feedback-color" id="radio-feedback-yellow" value="alert-warning" />
-							<label for="radio-feedback-yellow">Gul (advarsel)</label>
-
-							<input type="radio" name="radio-feedback-color" id="radio-feedback-red" value="alert-danger" />
-							<label for="radio-feedback-red">Rød (alvorlig)</label>
-					</fieldset>
-					<br>
-
-					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
-					<a onclick="$.mobile.back()" data-role="button" data-icon="back">Avbryt</a>
-
-					<div id='toastFeedbackForm' class="toast">
-						<div class="toast-content">
-							<img id="toastFeedbackFormImg" class="toast-icon" src="//:0"/> <span id="toastFeedbackFormText"></span>
-						</div>
-					</div>
-					
-				</form>
-			</div>
-		</div>
-		-->
-
-
-		<!-- ******************************************************* -->
 		<!-- ***************** EDIT USER DATA PAGE ***************** -->
 		<!-- ******************************************************* -->
 		<div data-role="page" id="edit-data-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
-				<h1 id="headerTitleEditDataView">Rediger opplysninger</h1>
+				<h1>Rediger opplysninger</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
 					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
@@ -568,8 +442,8 @@
 					</div>
 					
 					<div class="ui-field-contain">
-						<label for="inputFieldEditNumFalls6Mths">Antall fall 6 mnd. før start:</label>
-						<input type="number" name="falls6Mths" id="inputFieldEditNumFalls6Mths" min="0">
+						<label for="inputFieldEditNumFalls3Mths">Antall fall 3 mnd. før start:</label>
+						<input type="number" name="falls3Mths" id="inputFieldEditNumFalls3Mths" min="0">
 					</div>
 					
 					<div class="ui-field-contain">
@@ -582,6 +456,11 @@
 
 					<label for="inputFieldEditLivingIndependently">Bor for seg selv</label>
 					<input type="checkbox" name="livingIndependently" id="inputFieldEditLivingIndependently" value="livingIndependently">
+					
+					<div class="ui-field-contain">
+						<label for="inputFieldEditComment">Kommentar:</label>
+						<input type="text" name="comment" id="inputFieldEditComment">
+					</div>
 
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 
@@ -617,7 +496,7 @@
 		<!-- ******************************************************* -->
 		<div data-role="page" id="new-user-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
-				<h1 id="headerTitleEditDataView">Registrer ny bruker</h1>
+				<h1>Registrer ny bruker</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
 					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
@@ -692,8 +571,8 @@
 					</div>
 					
 					<div class="ui-field-contain">
-						<label for="inputFieldNewNumFalls6Mths">Antall fall 6 mnd. før start:</label>
-						<input type="number" name="falls6Mths" id="inputFieldNewNumFalls6Mths" min="0">
+						<label for="inputFieldNewNumFalls3Mths">Antall fall 3 mnd. før start:</label>
+						<input type="number" name="falls3Mths" id="inputFieldNewNumFalls3Mths" min="0">
 					</div>
 					
 					<div class="ui-field-contain">
@@ -713,5 +592,163 @@
 				</form>
 			</div><!-- /content -->
 		</div><!-- /new user page -->
+
+
+		<!-- ******************************************************* -->
+		<!-- **************** DEFAULT FEEDBACK PAGE **************** -->
+		<!-- ******************************************************* -->
+		<div data-role="page" id="default-feedback-page">
+			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
+				<h1>Rediger standard-råd</h1>
+				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
+					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
+				</div>
+			</div>
+
+			<div data-role="content" data-theme="a">
+				<form id="registerDefaultFeedbackForm" method="post">
+					<h1>Aktivitetsråd</h1>
+					<table id="AIDefaultFeedbackTable" data-role="table" class="ui-responsive table-stripe ui-shadow">
+						<thead>
+							<tr>
+								<th>AI-verdi</th>
+								<th>Råd</th>
+								<th>Øvelse</th>
+							</tr>
+						</thead>
+						<tbody></tbody>
+					</table>
+
+					<br><br>
+
+					<h1>Balanseråd</h1>
+					<table id="BIDefaultFeedbackTable" data-role="table" class="ui-responsive table-stripe ui-shadow">
+						<thead>
+							<tr>
+								<th>BI-verdi</th>
+								<th>Råd</th>
+								<th>Øvelse</th>
+							</tr>
+						</thead>
+						<tbody></tbody>
+					</table>
+
+					<br><br>
+
+					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
+
+					<div id='toastDefaultFeedbackForm' class="toast">
+						<div class="toast-content">
+							<img id="toastDefaultFeedbackFormImg" class="toast-icon" src="//:0"/> <span id="toastDefaultFeedbackFormText"></span>
+						</div>
+					</div>
+					
+				</form>
+			</div>
+		</div>
+
+
+		<!-- ******************************************************* -->
+		<!-- ************* PERSONALIZED FEEDBACK PAGE ************** -->
+		<!-- ******************************************************* -->
+		<div data-role="page" id="personalized-feedback-page">
+			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
+				<h1>Personaliserte råd</h1>
+				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
+					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
+					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
+				</div>
+			</div><!-- /header -->
+
+			<div data-role="content" data-theme="a">
+
+				<h2>Råd knyttet til aktivitetsindeks (AI):</h2>
+
+				<div class="ui-field-contain">
+				    <label for="flipPersonalizedAI">Personaliserte AI-råd:</label>
+				    <input type="checkbox" data-role="flipswitch" name="personalizedAI" id="flipPersonalizedAI" data-on-text="På" data-off-text="Av">
+				<div>
+
+				<br><br>
+
+				<div id="personalizedAIFeedbackMsgsContainer" class="personalizedFeedbackMsgsContainer">
+					<table id="tablePersonalizedAIFeedbackMsgs" data-role="table" class="ui-responsive table-stripe ui-shadow">
+						<thead>
+							<th>Dato</th>
+							<th>Tekst</th>
+							<th>Øvelse</th>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
+
+				<br>
+
+				<form id="registerPersonalizedAIFeedbackForm" method="post">
+					<div class="ui-field-contain">
+						<label for="textareaPersonalizedAIFeedback">Nytt AI-råd:</label>
+						<input type="text" name="feedbackText" id="textareaPersonalizedAIFeedback" required></input>
+					</div>
+					<div class="ui-field-contain">
+						<label>Øvelse:</label>
+						<select id="selectPersonalizedAIFeedbackExercise" name="exerciseID"></select>
+					</div>
+
+					<input type="hidden" name="category" value="0">
+
+					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
+				</form>
+
+				<br><br>
+				<hr>
+				<br><br>
+
+				<h2>Råd knyttet til balanseindeks (BI):</h2>
+				
+				<div class="ui-field-contain">
+				    <label for="flipPersonalizedAI">Personaliserte BI-råd:</label>
+				    <input type="checkbox" data-role="flipswitch" name="personalizedBI" id="flipPersonalizedBI" data-on-text="På" data-off-text="Av">
+				<div>
+
+				<br><br>
+				
+				<div id="personalizedBIFeedbackMsgsContainer" class="personalizedFeedbackMsgsContainer">
+					<table id="tablePersonalizedBIFeedbackMsgs" data-role="table" class="ui-responsive table-stripe ui-shadow">
+						<thead>
+							<th>Dato</th>
+							<th>Tekst</th>
+							<th>Øvelse</th>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
+
+				<br>
+
+				<form id="registerPersonalizedBIFeedbackForm" method="post">
+					<div class="ui-field-contain">
+						<label for="textareaPersonalizedBIFeedback">Nytt BI-råd:</label>
+						<input type="text" name="feedbackText" id="textareaPersonalizedBIFeedback" required></input>
+					</div>
+					<div class="ui-field-contain">
+						<label>Øvelse:</label>
+						<select id="selectPersonalizedBIFeedbackExercise" name="exerciseID"></select>
+					</div>
+
+					<input type="hidden" name="category" value="1">
+
+					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
+
+					<div id='toastPersonalizedFeedback' class="toast">
+						<div class="toast-content">
+							<img id="toastPersonalizedFeedbackImg" class="toast-icon" src="//:0"/> <span id="toastPersonalizedFeedbackText"></span>
+						</div>
+					</div>
+					
+				</form>
+			</div><!-- /content -->
+		</div><!-- /personalized-feedback-page -->
 	</body>
 </html>

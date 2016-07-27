@@ -8,14 +8,15 @@
 		// If the userID in the token belongs to an expert user, check that this expert is allowed to access this senior user's data
 		if ($tokenUserID != $seniorUserID) {
 			if (checkExpertSeniorLink($conn, $tokenUserID, $seniorUserID) == false) {
-				return false;
+				return null;
 			}
 		}
 
 		if ($stmt = $conn->prepare("SELECT u.userID, u.firstName, u.lastName, u.email, 
 				su.address, su.zipCode, su.city, su.phoneNumber, su.birthDate, su.isMale, 
-				su.weight, su.height, su.numFalls6Mths, su.numFalls12Mths, su.usesWalkingAid, 
-				su.livingIndependently, su.dateJoinedAdapt
+				su.weight, su.height, su.numFalls3Mths, su.numFalls12Mths, su.usesWalkingAid, 
+				su.livingIndependently, su.dateJoinedAdapt, su.showPersonalizedAIFeedback, 
+				su.showPersonalizedBIFeedback, su.comment
 				FROM Users AS u
 				INNER JOIN SeniorUsers AS su ON u.userID = su.userID
 				WHERE u.userID = ?;")) {
@@ -25,43 +26,39 @@
 			$stmt->close();
 
 			if (mysqli_num_rows($result) > 0) {
-				$rows = array();
-				while ($r = mysqli_fetch_assoc($result)) {
+				$row = mysqli_fetch_assoc($result);
 
-					if ($r["firstName"] != null) $r["firstName"] = decrypt($r["firstName"]);
-					if ($r["lastName"] != null) $r["lastName"] = decrypt($r["lastName"]);
-					if ($r["email"] != null) $r["email"] = decrypt($r["email"]);
-					if ($r["address"] != null) $r["address"] = decrypt($r["address"]);
-					if ($r["zipCode"] != null) $r["zipCode"] = decrypt($r["zipCode"]);
-					if ($r["city"] != null) $r["city"] = decrypt($r["city"]);
-					if ($r["phoneNumber"] != null) $r["phoneNumber"] = decrypt($r["phoneNumber"]);
-					if ($r["birthDate"] != null) $r["birthDate"] = decrypt($r["birthDate"]);
+				if ($row["firstName"] != null) $row["firstName"] = decrypt($row["firstName"]);
+				if ($row["lastName"] != null) $row["lastName"] = decrypt($row["lastName"]);
+				if ($row["email"] != null) $row["email"] = decrypt($row["email"]);
+				if ($row["address"] != null) $row["address"] = decrypt($row["address"]);
+				if ($row["zipCode"] != null) $row["zipCode"] = decrypt($row["zipCode"]);
+				if ($row["city"] != null) $row["city"] = decrypt($row["city"]);
+				if ($row["phoneNumber"] != null) $row["phoneNumber"] = decrypt($row["phoneNumber"]);
+				if ($row["birthDate"] != null) $row["birthDate"] = decrypt($row["birthDate"]);
+				if ($row["comment"] != null) $row["comment"] = decrypt($row["comment"]);
 
-					$userID = $r["userID"];
-
-					if ($stmt2 = $conn->prepare("SELECT value, timeDataCollected FROM MobilityIndexes WHERE userID=? ORDER BY timeDataCollected DESC LIMIT 1;")) {
-						$stmt2->bind_param("i", $userID);
-						$stmt2->execute();
-						$mobilityIdxResult = $stmt2->get_result();
-						
-						$stmt2->close();
-
-						if (mysqli_num_rows($mobilityIdxResult) > 0) {
-							$rowMI = mysqli_fetch_assoc($mobilityIdxResult);
-							$r["mobilityIdx"] = $rowMI["value"];
-							$r["mobilityIdxTimeDataCollected"] = $rowMI["timeDataCollected"];
-						} else {
-							$r["mobilityIdx"] = null;
-							$r["mobilityIdxTimeDataCollected"] = null;
-						}
-					} else {
-						return false;
-					}
+				if ($stmt2 = $conn->prepare("SELECT value, timeDataCollected FROM MobilityIndexes WHERE userID=? ORDER BY timeDataCollected DESC LIMIT 1;")) {
+					$stmt2->bind_param("i", $row["userID"]);
+					$stmt2->execute();
+					$mobilityIdxResult = $stmt2->get_result();
 					
-					$rows[] = $r;
+					$stmt2->close();
+
+					if (mysqli_num_rows($mobilityIdxResult) > 0) {
+						$rowMI = mysqli_fetch_assoc($mobilityIdxResult);
+						$row["mobilityIdx"] = $rowMI["value"];
+						$row["mobilityIdxTimeDataCollected"] = $rowMI["timeDataCollected"];
+					} else {
+						$row["mobilityIdx"] = null;
+						$row["mobilityIdxTimeDataCollected"] = null;
+					}
+				} else {
+					return NULL;
 				}
+				
 				$conn->close();
-				return $rows;
+				return $row;
 			} else {
 				$conn->close();
 				return NULL;

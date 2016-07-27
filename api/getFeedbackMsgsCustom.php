@@ -8,19 +8,18 @@
 		// If the userID in the token belongs to an expert user, check that this expert is allowed to access this senior user's data
 		if ($tokenUserID != $seniorUserID) {
 			if (checkExpertSeniorLink($conn, $tokenUserID, $seniorUserID) == false) {
-				return false;
+				return null;
 			}
 		}
 
-		if ($stmt = $conn->prepare("SELECT feedbackText, timeCreated, category
-				FROM FeedbackMsgCustom
+		if ($stmt = $conn->prepare("SELECT fmc.feedbackText, fmc.timeCreated, fmc.category, e.*
+				FROM FeedbackMsgCustom AS fmc LEFT JOIN Exercises AS e ON fmc.exerciseID = e.exerciseID
 				WHERE userID=?
 				ORDER BY timeCreated DESC;")) {
 			$stmt->bind_param("i", $seniorUserID);
 			$stmt->execute();
 			$result = $stmt->get_result();
 			$stmt->close();
-			$conn->close();
 
 			if (mysqli_num_rows($result) > 0) {
 				$rows = array();
@@ -28,8 +27,10 @@
 					$r["feedbackText"] = decrypt($r["feedbackText"]);
 					$rows[] = $r;
 				}
+				$conn->close();
 				return $rows;
 			} else {
+				$conn->close();
 				return NULL;
 			}
 		} else {
@@ -40,15 +41,13 @@
 
 	$tokenUserID = validateToken();
 
-	if ($tokenUserID != null) {
+	if ($tokenUserID != null) {	
+
 		if (isset($_GET["userID"])) {
-			
-			$seniorUserID = $_GET["userID"];
-			
-			$res = readDB($seniorUserID, $tokenUserID);
+			$res = readDB($_GET["userID"], $tokenUserID);
 
 			if (empty($res)) {
-				deliver_response(200, "Ingen feedback-meldinger funnet for bruker-ID = " . $seniorUserID, NULL);
+				deliver_response(200, "Ingen feedback-meldinger er lagret i databasen.", NULL);
 			} else {
 				deliver_response(200, "Feedback funnet.", $res);
 			}

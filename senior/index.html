@@ -31,40 +31,44 @@
 	</head>
 	<body>
 		<div data-role="page" id="mainPage">
-
-			<!-- Mobility index image (MIImg) -->
-			<div id="MIImgOuterWrapper" class="pageMainElement">
-				<div id="MIImgWell" class="well">
-					<div id="MIImgHeader"></div>
-					<div id="MIImgInnerWrapper">
-						<span class="verticalAlignHelper"></span><img src="//:0" alt="Mobility index" id="MIImg"/>
+			<div data-role="content">
+				<!-- Mobility index image (MIImg) -->
+				<div id="MIImgOuterWrapper" class="pageMainElement">
+					<div id="MIImgWell" class="well">
+						<div id="MIImgHeader"></div>
+						<div id="MIImgInnerWrapper">
+							<span class="verticalAlignHelper"></span><img src="//:0" alt="Mobility index" id="MIImg"/>
+						</div>
 					</div>
 				</div>
-			</div>
 
-			<!-- Activity index chart -->
-			<div id="activityChartContainer" class="pageMainElement">
-				<div class="well chartWell">
-					<div id="activityChart"></div>
+				<!-- Balance index chart -->
+				<div id="balanceChartContainer" class="pageMainElement">
+					<div class="well chartWell">
+						<div id="balanceChart"></div>
+					</div>
 				</div>
-			</div>
 
-			<!-- Balance index chart -->
-			<div id="balanceChartContainer" class="pageMainElement">
-				<div class="well chartWell">
-					<div id="balanceChart"></div>
+				<!-- Activity index chart -->
+				<div id="activityChartContainer" class="pageMainElement">
+					<div class="well chartWell">
+						<div id="activityChart"></div>
+					</div>
 				</div>
-			</div>
 
-			<!-- Feedback message -->
-			<div id="messageWrapper" class="pageMainElement">
-				<div id="feedbackMsg" class="alert alert-success" role="alert">
-					<!--<strong>Bra jobba!</strong> Du har forbedret balansen din den siste uka, og har nå mindre sannsynlighet for å falle. Fortsett slik!-->
+				<!-- AI feedback message -->
+				<div id="messageWrapperAI" class="pageMainElement messageWrapper">
+					<div id="feedbackMsgAI" class="alert alert-success" role="alert"></div>
+				</div>
+
+				<!-- BI feedback message -->
+				<div id="messageWrapperBI" class="pageMainElement messageWrapper">
+					<div id="feedbackMsgBI" class="alert alert-success" role="alert"></div>
 				</div>
 			</div>
 
 			<!-- Footer -->
-			<div id="footer" class="footer" data-role="footer">
+			<div id="footer" data-role="footer" data-position="fixed" data-tap-toggle="false">
 				<p>
 					Innlogget som: <i><span id="userFullName"></span></i><br>
 					Sist oppdatert: <span id="lastUpdatedValue"></span>
@@ -73,6 +77,40 @@
 			</div>
 			
 		</div>
+
+
+
+		<!--  Exercise info page, AI  -->
+		<div data-role="page" data-dialog="true" data-close-btn="right" id="exercise-info-page-AI">
+			<div class="exerciseInfoHeader" data-role="header" data-theme="b">
+				<h1>-</h1>
+			</div>
+
+			<div role="main" class="ui-content">
+				<h1 id="exerciseHeaderAI"></h1>
+				<img id="exerciseImgAI" class="exerciseImg" src="//:0"/>
+				<div id="exerciseDescAI" class="exerciseDesc"></div>
+				
+				<a data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Lukk</a>
+			</div>
+		</div> <!-- /exercise info page, AI -->
+
+
+		<<!--  Exercise info page, BI  -->
+		<div data-role="page" data-dialog="true" data-close-btn="right" id="exercise-info-page-BI">
+			<div class="exerciseInfoHeader" data-role="header" data-theme="b">
+				<h1>-</h1>
+			</div>
+
+			<div role="main" class="ui-content">
+				<h1 id="exerciseHeaderBI"></h1>
+				<img id="exerciseImgBI" class="exerciseImg" src="//:0"/>
+				<div id="exerciseDescBI" class="exerciseDesc"></div>
+				
+				<a data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Lukk</a>
+			</div>
+		</div> <!-- /exercise info page, BI -->
+	
 
 
 		<!-- Settings page -->

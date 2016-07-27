@@ -6,8 +6,11 @@
 		include('../inc/db.inc.php');
 
 		if (checkExpertSeniorLink($conn, $expertUserID, $seniorUserID)) {
-			if ($stmt = $conn->prepare("INSERT INTO FeedbackMsgCustom (userID, feedbackText, timeCreated, category) VALUES (?, ?, NOW(), ?);")) {
-				$stmt->bind_param("isi", $seniorUserID, encrypt($feedbackText), $category);
+			
+			$exerciseID = (isset($_POST["exerciseID"]) && $_POST["exerciseID"] != "-1") ? $_POST["exerciseID"] : NULL;
+
+			if ($stmt = $conn->prepare("INSERT INTO FeedbackMsgCustom (userID, feedbackText, timeCreated, category, exerciseID) VALUES (?, ?, NOW(), ?, ?);")) {
+				$stmt->bind_param("isii", $seniorUserID, encrypt($feedbackText), $category, $exerciseID);
 				$stmt->execute();
 
 				$stmt->close();

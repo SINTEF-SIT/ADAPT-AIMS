@@ -40,7 +40,7 @@
 							$r["mobilityIdx"] = null;
 						}
 					} else {
-						return false;
+						return NULL;
 					}
 
 					$rows[] = $r;

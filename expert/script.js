@@ -13,15 +13,20 @@ var expertLastName;
 var expertEmail;
 var token; // The JWT used for communicating with the API
 
+var exercises; // Data about the exercises that can be recommended to the senior users
+
 // If expert user tries to submit a new MI with a date that already has an MI
 // for this senior user, a prompt appears asking to confirm overwrite. The form
 // data is stored here temporarily.
 var tempMIFormData = null;
 
-// Stores the charts displayed on the user detail page
+// The chart objects and options for these
 var mobilityChart = null;
 var balanceChart = null;
 var activityChart = null;
+var mobilityChartOptions = null;
+var balanceChartOptions = null;
+var activityChartOptions = null;
 
 
 
@@ -30,9 +35,9 @@ var activityChart = null;
 //*********** value in the datepicker in the new MI form *************
 //********************************************************************
 Date.prototype.toDateInputValue = (function() {
-    var local = new Date(this);
-    //local.setMinutes(this.getMinutes() - this.getTimezoneOffset());
-    return local.toJSON().slice(0,10);
+	var local = new Date(this);
+	//local.setMinutes(this.getMinutes() - this.getTimezoneOffset());
+	return local.toJSON().slice(0,10);
 });
 
 
@@ -51,12 +56,33 @@ $(document).bind("mobileinit", function(){
 //***** in case the window size has changed while on another page ****
 //********************************************************************
 $(document).delegate('#user-detail-page', 'pageshow', function () {
-    if ($activeUserData != null) {
-    	if (mobilityChart != null) mobilityChart.reflow();
-	    if (balanceChart != null) balanceChart.reflow();
-	    if (activityChart != null) activityChart.reflow();
-    }
+	if ($activeUserData != null) {
+		if (mobilityChart != null) mobilityChart.reflow();
+		if (balanceChart != null) balanceChart.reflow();
+		if (activityChart != null) activityChart.reflow();
+	}
 });
+
+
+//********************************************************************
+//***** Disable the flip switches on personalized-feedback-page ******
+//******************** if no messages are present ********************
+//********************************************************************
+$(document).on("pagebeforeshow", "#personalized-feedback-page", function () {
+	if ($activeUserData) {
+		if ($activeUserData.customAIFeedback == null) {
+			$("#flipPersonalizedAI").flipswitch("disable");
+		} else {
+			$("#flipPersonalizedAI").flipswitch("enable");
+		}
+		if ($activeUserData.customBIFeedback == null) {
+			$("#flipPersonalizedBI").flipswitch("disable");
+		} else {
+			$("#flipPersonalizedBI").flipswitch("enable");
+		}
+	}
+});
+
 
 
 
@@ -80,6 +106,9 @@ $(document).ready(function() {
 	// Writes the current date to the datepicker in the new MI form
 	$('#mobilityIdxDatePicker').val(new Date().toDateInputValue());
 
+	// Fetches the detfault feedback messages from the db, and populates the DOM.
+	getDefaultFeedbackMsgs();
+
 	// Fetches data about the senior users that the expert user has access to from db. 
 	getUserOverview();
 
@@ -100,7 +129,7 @@ $(document).ready(function() {
 		$mobilityIdxValue = $('#mobilityIdxInputField').val();
 
 		// Checks that the MI value is not equal to the current MI
-		if (parseFloat($mobilityIdxValue) != parseFloat($activeUserData["mobilityIdx"])) {
+		if (parseFloat($mobilityIdxValue) != parseFloat($activeUserData.mobilityIdx)) {
 			// Checks that the MI is numeric and within the boundaries
 			if ($.isNumeric($mobilityIdxValue) && $mobilityIdxValue >= 0 && $mobilityIdxValue <= 1) {
 				
@@ -163,8 +192,8 @@ $(document).ready(function() {
 		$.ajax({
 			type: "POST",
 			beforeSend: function (request) {
-	            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-	        },
+				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+			},
 			url: "http://vavit.no/adapt-staging/api/postBalanceIdx.php",
 			data: formData,
 			success: function(data, status) { // If the API request is successful
@@ -202,8 +231,8 @@ $(document).ready(function() {
 		$.ajax({
 			type: "POST",
 			beforeSend: function (request) {
-	            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-	        },
+				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+			},
 			url: "http://vavit.no/adapt-staging/api/postActivityIdx.php",
 			data: formData,
 			success: function(data, status) { // If the API request is successful
@@ -223,58 +252,19 @@ $(document).ready(function() {
 
 		return false; // Returns false to stop the default form behaviour
 	});
-
-
-	//********************************************************************
-	//****** Submit form for storing new custom feedback message *********
-	//********************************************************************
-	/*$("#registerFeedbackForm").submit(function(e){
-		showLoader(); // Shows the loading widget
-
-		// Fetch the submitted feedback message from the DOM
-		$feedbackText = $('#textarea-feedback').val();
-
-		if ($feedbackText != null && $feedbackText != "") {
-			// Serialize the form data and append the senior user ID
-			formData = $("#registerFeedbackForm").serialize();
-			formData += "&userID=" + $activeUserData.userID;
-			$.ajax({
-				type: "POST",
-				beforeSend: function (request) {
-		            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-		        },
-				url: "http://vavit.no/adapt-staging/api/postFeedbackMsgCustom.php",
-				data: formData,
-				success: function(data, status) { // If the API request is successful
-					hideLoader(); // Hides the loading widget
-					showToast("#toastFeedbackForm", true, data.status_message); // Shows toast with success msg
-				},
-				error: function(data, status) {
-					hideLoader(); // Hides the loading widget
-					showToast("#toastFeedbackForm", false, data.status_message); // Shows toast with error msg
-				}
-			});
-		} else {
-			showToast("#toastFeedbackForm", false, "Feil: Du må skrive inn en tekst.");
-		}
-
-		$('#textarea-feedback').val("");
-
-		return false; // Returns false to stop the default form behaviour
-	});*/
 	
 
 
 	//********************************************************************
 	//***** Submit form for storing new custom AI feedback message *******
 	//********************************************************************
-	$("#registerAIFeedbackForm").submit(function(e){
+	$("#registerPersonalizedAIFeedbackForm").submit(function(e){
 		showLoader(); // Shows the loading widget
-		formData = $("#registerAIFeedbackForm").serialize(); // Serialize the form data
+		formData = $("#registerPersonalizedAIFeedbackForm").serialize(); // Serialize the form data
 		
-		submitFeedbackMsg(formData, "#toastAIFeedbackForm"); // Calls the API to store the new feedback msg
+		submitCustomFeedbackMsg(formData, "#toastPersonalizedFeedback", true); // Calls the API to store the new feedback msg
 		
-		$('#textarea-ai-feedback').val(""); // Empties the feedback input field
+		$('#textareaPersonalizedAIFeedback').val(""); // Empties the feedback input field
 		return false; // Returns false to stop the default form behaviour
 	});
 	
@@ -283,13 +273,13 @@ $(document).ready(function() {
 	//********************************************************************
 	//***** Submit form for storing new custom BI feedback message *******
 	//********************************************************************
-	$("#registerBIFeedbackForm").submit(function(e){
+	$("#registerPersonalizedBIFeedbackForm").submit(function(e){
 		showLoader(); // Shows the loading widget
-		formData = $("#registerBIFeedbackForm").serialize();// Serialize the form data
+		formData = $("#registerPersonalizedBIFeedbackForm").serialize();// Serialize the form data
 		
-		submitFeedbackMsg(formData, "#toastBIFeedbackForm"); // Calls the API to store the new feedback msg
+		submitCustomFeedbackMsg(formData, "#toastPersonalizedFeedback", false); // Calls the API to store the new feedback msg
 		
-		$('#textarea-bi-feedback').val(""); // Empties the feedback input field
+		$('#textareaPersonalizedBIFeedback').val(""); // Empties the feedback input field
 		return false; // Returns false to stop the default form behaviour
 	});
 
@@ -303,24 +293,28 @@ $(document).ready(function() {
 		
 		// Serialize the form data and append the senior user ID
 		formData = $("#editUserDataForm").serialize();
-		formData += "&userID=" + $activeUserData.userID;
+		formData += "&seniorUserID=" + $activeUserData.userID;
 		
 		$.ajax({
 			type: "POST",
 			beforeSend: function (request) {
-	            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-	        },
+				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+			},
 			url: "http://vavit.no/adapt-staging/api/putUserData.php",
 			data: formData,
 			success: function(data, status) { // If the API request is successful
+				
 				if (data.data) {
+					$activeUserData.firstName = $("#inputFieldEditFirstName").val();
+					$activeUserData.lastName = $("#inputFieldEditLastName").val();
+
+					setActiveUser($activeUserData.userID, false); // Sets the active user, which in turn updates the DOM with new user data
+					updateUsersTableRow(); // Updates the values in the row in the user overview table corresponding to the active user
+
 					showToast("#toastEditUserDataForm", true, data.status_message); // Shows toast with success msg
 				} else {
 					showToast("#toastEditUserDataForm", false, data.status_message); // Shows toast with error msg
 				}
-
-				setActiveUser($activeUserData.userID, false); // Sets the active user, which in turn updates the DOM with new user data
-				getUserOverview(); // Updates the main page DOM with new data from db
 			},
 			error: function(data, status) {
 				hideLoader(); // Hides the loading widget
@@ -345,15 +339,15 @@ $(document).ready(function() {
 		$.ajax({
 			type: "POST",
 			beforeSend: function (request) {
-	            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-	        },
+				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+			},
 			url: "http://vavit.no/adapt-staging/api/postSeniorUser.php",
 			data: formData,
 			success: function(data, status) { // If the API request is successful
 				hideLoader(); // Hides the loading widget
 				$.mobile.back();
 				getUserOverview(); // Updates the DOM with new data from db
-				clearNewUserForm();
+				document.getElementById("newUserForm").reset(); // Clears all the input fields in the new user form
 			},
 			error: function(data, status) {
 				hideLoader(); // Hides the loading widget
@@ -364,7 +358,139 @@ $(document).ready(function() {
 		// Returns false to stop the default form behaviour
 		return false;
 	});
+	
+
+
+	//********************************************************************
+	//******** Submit form for updating default feedback messages ********
+	//********************************************************************
+	$("#registerDefaultFeedbackForm").submit(function(e){
+		showLoader(); // Shows the loading widget
+		formData = $("#registerDefaultFeedbackForm").serialize(); // Serialize the form data
+
+		$.ajax({
+			type: "POST",
+			beforeSend: function (request) {
+				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+			},
+			url: "http://vavit.no/adapt-staging/api/putFeedbackMsgDefault.php",
+			data: formData,
+			success: function(data, status) { // If the API request is successful
+				hideLoader(); // Hides the loading widget
+				showToast("#toastDefaultFeedbackForm", true, data.status_message); // Shows toast with success msg
+			},
+			error: function(data, status) {
+				hideLoader(); // Hides the loading widget
+				showToast("#toastDefaultFeedbackForm", false, data.status_message); // Shows toast with error msg
+			}
+		});
+
+		return false; // Returns false to stop the default form behaviour
+	});
+
 });
+
+
+
+
+//********************************************************************
+//****** Fetches the default feedback messages from the DB and *******
+//*********************** populates the DOM. *************************
+//********************************************************************
+function getDefaultFeedbackMsgs() {
+	showLoader(); // Shows the loading widget
+
+	$.when($.ajax({
+		url: "http://vavit.no/adapt-staging/api/getExercises.php",
+		type: 'GET',
+		beforeSend: function (request) {
+			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+		},
+		error: function(data, status) {
+			hideLoader(); // Hides the loading widget
+			console.log("Error fetching data from API getSeniorUserOverview.");
+		},
+		success: function(data, status) { // If the API request is successful
+			exercises = data.data;
+
+			// Populate the dropdown for selecting linked exercise to new personalized AI/BI feedback msgs
+			var selectExerciseHtml = generateExerciseDropdownOptionHTML(-1);
+			$("#selectPersonalizedAIFeedbackExercise").html(selectExerciseHtml);
+			$("#selectPersonalizedBIFeedbackExercise").html(selectExerciseHtml);
+		}
+	})).then(function(data, textStatus, jqXHR) {
+		if (exercises != null) {
+			$.ajax({
+				url: "http://vavit.no/adapt-staging/api/getFeedbackMsgsDefault.php",
+				type: 'GET',
+				beforeSend: function (request) {
+					request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+				},
+				error: function(data, status) {
+					hideLoader(); // Hides the loading widget
+					console.log("Error fetching data from API getSeniorUserOverview.");
+				},
+				success: function(data, status) { // If the API request is successful
+					hideLoader(); // Hides the loading widget
+					var msgs = data.data;
+
+					if (msgs != null) { // Checks that the API call returned data
+						// Removes all rows from the feedback table bodies (if any)
+						$('#AIDefaultFeedbackTable tbody tr').remove();
+						$('#BIDefaultFeedbackTable tbody tr').remove();
+						
+						var htmlAI = "";
+						var htmlBI = "";
+
+						for (var i=0; i<msgs.length; i++) { // Iterates the messages to build a table row for each message
+							
+							// Builds the html for the dropdown box for selecting an exercise
+							var optionsHtml = generateExerciseDropdownOptionHTML(msgs[i].exerciseID);
+
+							// Builds the HTML code for a table row
+							var categoryTxt = (msgs[i].category == 1 ? "BI" : "AI");
+							var htmlTemp = "<tr>"
+								+ "<td>" + msgs[i].idx + "</td><td>"
+								+ "<input type='text' name='msg-" + msgs[i].msgID + "' id='default" + categoryTxt + "FeedbackInput" + msgs[i].idx + "' value='" + msgs[i].feedbackText + "' required>"
+								+ "</td><td><select name='exercise-" + msgs[i].msgID + "'>" + optionsHtml + "</select></td></tr>";
+							
+							// Places the HTML string in the correct variable (AI or BI)
+							if (msgs[i].category == 1) {
+								htmlBI += htmlTemp;
+							} else {
+								htmlAI += htmlTemp;
+							}
+						}
+
+						// Inserts the generated HTML into the DOM
+						$("#AIDefaultFeedbackTable tbody").append(htmlAI);
+						$("#BIDefaultFeedbackTable tbody").append(htmlBI);
+					} else {
+						console.log("No feedback messages returned from API.");
+					}
+				}
+			});
+		}
+	});
+	
+}
+
+
+//********************************************************************
+//******* Generates the options elements used in a select box ********
+//********* to select an exercise to link to a feedback msg **********
+//********************************************************************
+function generateExerciseDropdownOptionHTML(selectedID) {
+	var html = "<option value='-1'>Ingen</option>";
+	for (var j=0; j<exercises.length; j++) {
+		html += "<option value='" + exercises[j].exerciseID + "'";
+		if (selectedID == exercises[j].exerciseID) {
+			html += " selected";
+		}
+		html += ">" + exercises[j].title + "</option>";
+	}
+	return html;
+}
 
 
 
@@ -378,9 +504,9 @@ function getUserOverview() {
 		url: "http://vavit.no/adapt-staging/api/getSeniorUserOverview.php",
 		type: 'GET',
 		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-        },
-		error : function(data, status) {
+			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+		},
+		error: function(data, status) {
 			hideLoader(); // Hides the loading widget
 			console.log("Error fetching data from API getSeniorUserOverview.");
 		},
@@ -389,19 +515,20 @@ function getUserOverview() {
 			var userData = data.data;
 
 			if (userData != null) { // Checks that the API call returned data
-				$('#usersTable tbody tr').remove(); // Removes all rows from the usersTable body (if any)
+				$('#usersTable').remove(); // Removes all rows from the usersTable body (if any)
 				
-				var html = '<table data-role="table" data-mode="columntoggle" data-column-btn-text="Velg synlige kolonner" data-filter="true" data-input="#filterTable-input" class="ui-responsive table-stripe ui-shadow" id="usersTable">';
-				html += '<thead>';
-				html += '<tr>';
-				html += '<th data-priority="4">Bruker-ID</th>';
-				html += '<th >Etternavn</th>';
-				html += '<th data-priority="1">Fornavn</th>';
-				html += '<th data-priority="3">Alder</th>';
-				html += '<th data-priority="2">Mobility index</th>';
-				html += '</tr>';
-				html += '</thead>';
-				html += '<tbody>';
+				var html = '<table data-role="table" data-mode="columntoggle" data-column-btn-text="Velg synlige kolonner" '
+					+ 'data-filter="true" data-input="#filterTable-input" class="ui-responsive table-stripe ui-shadow" id="usersTable">'
+					+ '<thead>'
+					+ '<tr>'
+					+ '<th data-priority="4">Bruker-ID</th>'
+					+ '<th >Etternavn</th>'
+					+ '<th data-priority="1">Fornavn</th>'
+					+ '<th data-priority="3">Alder</th>'
+					+ '<th data-priority="2">Mobility index</th>'
+					+ '</tr>'
+					+ '</thead>'
+					+ '<tbody>';
 
 				for (var i=0; i<userData.length; i++) { // Iterates the user data to build a table row for each entry
 					//If MI is null, replace it with empty string
@@ -433,7 +560,6 @@ function getUserOverview() {
 }
 
 
-
 //********************************************************************
 //****** Fetches the most recent MI for the given senior user ********
 //********************************************************************
@@ -443,9 +569,9 @@ function getUserOverview() {
 		url: "http://vavit.no/adapt-staging/api/getNewestMobilityIdx.php?seniorUserID=" + userID,
 		type: 'GET',
 		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-        },
-		error : function(data, status) {
+			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+		},
+		error: function(data, status) {
 			hideLoader(); // Hides the loading widget
 			console.log("Error fetching data from API getNewestMobilityIdx.");
 			return null;
@@ -468,19 +594,35 @@ function getUserOverview() {
 //** Feches data about a specific senior user and writes to the DOM **
 //********************************************************************
 function setActiveUser(userID, changePage) {
+
+	// Don't fetch data again if the DOM already contains the data for the requested user
+	if (changePage && $activeUserData != null && $activeUserData.userID == userID) {
+		$.mobile.changePage("index.html#user-detail-page");
+		return;
+	}
+
 	showLoader(); // Shows the loading widget
 
 	mobilityChart = null;
-    balanceChart = null;
-    activityChart = null;
+	balanceChart = null;
+	activityChart = null;
+	mobilityChartOptions = null;
+	balanceChartOptions = null;
+	activityChartOptions = null;
+
+	// Hides the charts until they are populated with data
+	$("#mobilityChartContainer").hide();
+	$("#balanceChartContainer").hide();
+	$("#activityChartContainer").hide();
+
 
 	clearUserDetailsTable(); // Removes existing content (if any) from the user details table
-	clearEditUserForm(); // Removes existing content (if any) from the edit user form
+	//document.getElementById("editUserDataForm").reset(); // Removes existing content (if any) from the edit user form
 
-	$('#tableAIFeedbackMsgs tbody tr').remove(); // Removes all content (if any) from them AI feedback table
-	$('#tableBIFeedbackMsgs tbody tr').remove(); // Removes all content (if any) from them BI feedback table
-	$('#AIFeedbackMsgsContainer').hide(); // Hides the container of the AI feedback (will be shown again if AI feedback is found in DB)
-	$('#BIFeedbackMsgsContainer').hide(); // Hides the container of the BI feedback (will be shown again if BI feedback is found in DB)
+	$('#tablePersonalizedAIFeedbackMsgs tbody tr').remove(); // Removes all content (if any) from them AI feedback table
+	$('#tablePersonalizedBIFeedbackMsgs tbody tr').remove(); // Removes all content (if any) from them BI feedback table
+	$('#personalizedAIFeedbackMsgsContainer').hide(); // Hides the container of the AI feedback (will be shown again if AI feedback is found in DB)
+	$('#personalizedBIFeedbackMsgsContainer').hide(); // Hides the container of the BI feedback (will be shown again if BI feedback is found in DB)
 
 	if (changePage) { // If the function is called from the main page: redirect to the user detail page
 		$.mobile.changePage("index.html#user-detail-page");
@@ -493,246 +635,248 @@ function setActiveUser(userID, changePage) {
 		url: "http://vavit.no/adapt-staging/api/getSeniorUserDetails.php?seniorUserID=" + userID,
 		type: 'GET',
 		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-        },
-		error : function(data, status) {
+			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+		},
+		error: function(data, status) {
 			console.log("Error getting the user details. Msg from API: " + status);
 		}, 
 		success: function(data, status) { // If the API request is successful
-			$activeUserData = data.data[0];
+			$activeUserData = data.data;
+
+			$activeUserData.showPersonalizedAIFeedback = ($activeUserData.showPersonalizedAIFeedback == "1" ? true : false);
+			$activeUserData.showPersonalizedBIFeedback = ($activeUserData.showPersonalizedBIFeedback == "1" ? true : false);
+			$activeUserData.customAIFeedback = null;
+			$activeUserData.customBIFeedback = null;
+			
 			updateDOM(); // Populates the user detail and edit user data pages with data from $activeUserData
-			getFeedbackMsgs(userID); // Fetches feedback messages for the senior user from DB
-		}
-	}), $.ajax({
-		//********************************************************************
-		//********** Get mobility indexes to populate the MI chart ***********
-		//********************************************************************
-		url: "http://vavit.no/adapt-staging/api/getMobilityIdxs.php?seniorUserID=" + userID,
-		type: 'GET',
-		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-        },
-		error : function(data, status) {
-			console.log("Error attempting to call API getMobilityIdxs.php with parameter seniorUserID=" + userID);
-			hideLoader(); // Hides the loading widget
-		}, 
-		success: function(data, status) { // If the API request is successful
-			var chartDataJSON = data.data;
-			if ($activeUserData == null) $activeUserData = {}; // Create empty object if $activeUserData has not been created yet
-			$activeUserData["mobilityIdxs"] = chartDataJSON; // Store the MI values in $activeUserData
 
-	        if (data.data != null) { // Check if API returned any MI values
-		    	var chartData = [];
-		        for (var i=0; i<chartDataJSON.length; i++) {
-		            if (i != 0) {
-		            	// Draws an extra data point right before each data point (except the first) 
-						// to get a flat line instead of a straight, diagonal line between the points.
-						// Needs to be commented out if the chart is switched to a column chart.
-		                var dataPointPre = [];
-		                var datePre = new Date(chartDataJSON[i].timeDataCollected);
-		                datePre.setSeconds(datePre.getSeconds() - 1);
-		                dataPointPre.push(datePre.getTime());
-		                dataPointPre.push(parseFloat(chartDataJSON[i-1].value));
-		                chartData.push(dataPointPre);
-		            }
+			// Sets current values and adds change listeners to the flip switches on personalized-feedback-page
+			initCustomFeedbackFlipSwitches();
 
-		            var dataPoint = [];
-		            var date = Date.parse(chartDataJSON[i].timeDataCollected);
-		            dataPoint.push(date);
-		            dataPoint.push(parseFloat(chartDataJSON[i].value));
-		            chartData.push(dataPoint);
+			getCustomFeedbackMsgs(userID); // Fetches feedback messages for the senior user from DB
 
-		            // If last data point from db, add a final data point at the current datetime
-		            if (i+1 == chartDataJSON.length) {
-		                var dataPointFinal = [];
-		                dataPointFinal.push(new Date().getTime());
-		                dataPointFinal.push(parseFloat(chartDataJSON[i].value));
-		                chartData.push(dataPointFinal);
-		            }
-		        }
-
-		        chartOptions = {
-			        chart: {
-			            renderTo: 'mobilityChart', // ID of div where the chart is to be rendered
-			            type: 'area', // Chart type. Can e.g. be set to 'column' or 'area'
-			            zoomType: 'x', // The chart is zoomable along the x-axis by clicking and draging over a portion of the chart
-			            backgroundColor: null,
-			            reflow: true
-			        },
-			        title: {
-			            text: 'Mobility index'
-			        },
-			        xAxis: {
-			            type: 'datetime',
-			            tickInterval: 24 * 3600 * 1000 // How frequent a tick is displayed on the axis (set in milliseconds)
-			        },
-			        yAxis: {
-			            title: {
-			                enabled: false
-			            },
-			            max: 1, // The ceiling value of the y-axis
-			            min: 0, // The floor of the y-axis
-			            alternateGridColor: '#DEE0E3',
-			            tickInterval: 0.1 // How frequent a tick is displayed on the axis
-			        },
-			        legend: {
-			            enabled: false // Hides the legend showing the name and toggle option for the series
-			        },
-			        credits: {
-			            enabled: false // Hides the Highcharts credits
-			        },
-			        series: [{}]
-			    };
-
-			    // Sets global options for the charts
-				Highcharts.setOptions({
-			        // Defines Norwegian text strings used in the charts
-			        lang: {
-			        	months: ['januar', 'februar', 'mars', 'april', 'mai', 'juni',  'juli', 'august', 'september', 'oktober', 'november', 'desember'],
-			            shortMonths: ['jan', 'feb', 'mars', 'apr', 'mai', 'juni',  'juli', 'aug', 'sep', 'okt', 'nov', 'des'],
-			            weekdays: ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'],
-			            shortWeekdays: ['sø', 'ma', 'ti', 'on', 'to', 'fr', 'lø']
-			        }/*,
-			        // Adjusts time values in data points to match Norwegian timezone (handles DST automatically).
-					// Commented out as all the charts currently display date values only, not time of day,
-					// and this code caused all values to be displayed at 2am instead of midnight.
-			        global: {
-			            getTimezoneOffset: function (timestamp) {
-			                var zone = 'Europe/Oslo',
-			                    timezoneOffset = -moment.tz(timestamp, zone).utcOffset();
-
-			                return timezoneOffset;
-			            }
-			        }*/
-			    });
-
-		        chartOptions.series[0].data = chartData;
-
-		        mobilityChart = new Highcharts.Chart(chartOptions);
-		        $("#mobilityChartContainer").show(); // Shows the MI chart in the DOM
-	        } else {
-	        	$("#mobilityChartContainer").hide(); // Hides the chart if no MI data is found
-	        	console.log("No mobility idx values found in db.");
-	        }
-		}
-	}), $.ajax({
-		//********************************************************************
-		//********** Get balance indexes to populate the BI chart ************
-		//********************************************************************
-		url: "http://vavit.no/adapt-staging/api/getBalanceIdxs.php?seniorUserID=" + userID,
-		type: 'GET',
-		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-        },
-		error : function(data, status) {
-			console.log("Error attempting to call API getBalanceIdxs.php with parameter seniorUserID=" + userID);
-		}, 
-		success: function(data, status) { // If the API request is successful
-			var balanceChartDataJSON = data.data;
-			var balanceChartData = [];
-
-			if (balanceChartDataJSON != null) {
-				var maxMI = 0;
-				for (var i=0; i<balanceChartDataJSON.length; i++) {
-					// Comment out if chart is changed to a column chart!
-					if (i != 0) {
-						// Draws an extra data point right before each data point (except the first) 
-						// to get a flat line instead of a straight, diagonal line between the points.
-						// Needs to be commented out if the chart is switched to a column chart.
-						var dataPointPre = [];
-						var datePre = new Date(balanceChartDataJSON[i].timeDataCollected);
-						datePre.setSeconds(datePre.getSeconds() - 1);
-						dataPointPre.push(datePre.getTime());
-						dataPointPre.push(parseFloat(balanceChartDataJSON[i-1].value));
-						balanceChartData.push(dataPointPre);
-					}
-
-					var mi = parseFloat(balanceChartDataJSON[i].value);
-					if (mi > maxMI) maxMI = mi;
-
-					var dataPoint = [];
-					var date = Date.parse(balanceChartDataJSON[i].timeDataCollected);
-					dataPoint.push(date);
-					dataPoint.push(mi);
-					balanceChartData.push(dataPoint);
-
-					// Comment out if chart is changed to a column chart!
-					// If last data point from db, add a final data point at the current datetime
-					if (i+1 == balanceChartDataJSON.length) {
-						var dataPointFinal = [];
-						dataPointFinal.push(new Date().getTime());
-						dataPointFinal.push(parseFloat(balanceChartDataJSON[i].value));
-						balanceChartData.push(dataPointFinal);
-					}
-				}
-
-				balanceChartOptions = {
-					chart: {
-						renderTo: 'balanceChart', // ID of div where the chart is to be rendered
-						type: 'area', // Chart type. Can e.g. be set to 'column' or 'area'
-						zoomType: 'x', // The chart is zoomable along the x-axis by clicking and draging over a portion of the chart
-						backgroundColor: null,
-						reflow: true
-					},
-					title: {
-						text: 'Balance index'
-					},
-					xAxis: {
-						type: 'datetime',
-						tickInterval: 24 * 3600 * 1000 // How frequent a tick is displayed on the axis (set in milliseconds)
-					},
-					yAxis: {
-						title: {
-							enabled: false
-						},
-						//max: 1, // The ceiling value of the y-axis
-						min: 0, // The floor of the y-axis
-			            endOnTick: false,
-						alternateGridColor: '#DEE0E3',
-						tickInterval: 0.1 // How frequent a tick is displayed on the axis
-					},
-					legend: {
-			            enabled: false // Hides the legend showing the name and toggle option for the series
-			        },
-			        credits: {
-			            enabled: false // Hides the Highcharts credits
-			        },
-					series: [{
-						/*color: {
-			                linearGradient: {
-			                    x1: 0,
-			                    y1: 0,
-			                    x2: 0,
-			                    y2: 1
-			                },
-			                stops: [
-			                    [0, 'grey'],
-			                    [0.5, 'grey'],
-			                    [1, '#ED1E24']
-			                ]
-			            },
-			            lineWidth: 0,
-			            enableMouseTracking: false*/
-					}]
-				};
-
-				/*colorMaxMI = getMIChartData($currentMobilityIdx).color; // todo: define correlation between BI and MI
-				colorMidMI = getMIChartData($currentMobilityIdx/2).color;
-
-				balanceChartOptions.series[0].color.stops[0][1] = "#" + colorMaxMI;
-				balanceChartOptions.series[0].color.stops[1][1] = "#" + colorMidMI;*/
-
-				balanceChartOptions.series[0].data = balanceChartData;
-
-				balanceChart = new Highcharts.Chart(balanceChartOptions);
-				$("#balanceChartContainer").show(); // Shows the MI chart in the DOM
-			} else {
-				$("#balanceChartContainer").hide(); // Hides the chart if no MI data is found
-				//$("#balanceChart").html("<h3>Det er ikke registrert noen data om din balanse ennå.</h3>");
-			}
 		}
 	})).then(function(data, textStatus, jqXHR) {
-		$.ajax({
+
+		$.when($.ajax({
+			//********************************************************************
+			//********** Get mobility indexes to populate the MI chart ***********
+			//********************************************************************
+			url: "http://vavit.no/adapt-staging/api/getMobilityIdxs.php?seniorUserID=" + userID,
+			type: 'GET',
+			beforeSend: function (request) {
+				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+			},
+			error: function(data, status) {
+				console.log("Error attempting to call API getMobilityIdxs.php with parameter seniorUserID=" + userID);
+				hideLoader(); // Hides the loading widget
+			}, 
+			success: function(data, status) { // If the API request is successful
+				var chartDataJSON = data.data;
+				if ($activeUserData == null) $activeUserData = {}; // Create empty object if $activeUserData has not been created yet
+				$activeUserData.mobilityIdxs = chartDataJSON; // Store the MI values in $activeUserData
+
+				if (data.data != null) { // Check if API returned any MI values
+					var chartData = [];
+					for (var i=0; i<chartDataJSON.length; i++) {
+						if (i != 0) {
+							// Draws an extra data point right before each data point (except the first) 
+							// to get a flat line instead of a straight, diagonal line between the points.
+							// Needs to be commented out if the chart is switched to a column chart.
+							var dataPointPre = [];
+							var datePre = new Date(chartDataJSON[i].timeDataCollected);
+							datePre.setSeconds(datePre.getSeconds() - 1);
+							dataPointPre.push(datePre.getTime());
+							dataPointPre.push(parseFloat(chartDataJSON[i-1].value));
+							chartData.push(dataPointPre);
+						}
+
+						var dataPoint = [];
+						var date = Date.parse(chartDataJSON[i].timeDataCollected);
+						dataPoint.push(date);
+						dataPoint.push(parseFloat(chartDataJSON[i].value));
+						chartData.push(dataPoint);
+
+						// If last data point from db, add a final data point at the current datetime
+						if (i+1 == chartDataJSON.length) {
+							var dataPointFinal = [];
+							dataPointFinal.push(new Date().getTime());
+							dataPointFinal.push(parseFloat(chartDataJSON[i].value));
+							chartData.push(dataPointFinal);
+						}
+					}
+
+					mobilityChartOptions = {
+						chart: {
+							renderTo: 'mobilityChart', // ID of div where the chart is to be rendered
+							type: 'area', // Chart type. Can e.g. be set to 'column' or 'area'
+							zoomType: 'x', // The chart is zoomable along the x-axis by clicking and draging over a portion of the chart
+							backgroundColor: null,
+							reflow: true
+						},
+						title: {
+							text: 'Mobility index'
+						},
+						xAxis: {
+							type: 'datetime',
+							tickInterval: 24 * 3600 * 1000 // How frequent a tick is displayed on the axis (set in milliseconds)
+						},
+						yAxis: {
+							title: {
+								enabled: false
+							},
+							max: 1, // The ceiling value of the y-axis
+							min: 0, // The floor of the y-axis
+							alternateGridColor: '#DEE0E3',
+							tickInterval: 0.1 // How frequent a tick is displayed on the axis
+						},
+						legend: {
+							enabled: false // Hides the legend showing the name and toggle option for the series
+						},
+						credits: {
+							enabled: false // Hides the Highcharts credits
+						},
+						series: [{}]
+					};
+
+					// Sets global options for the charts
+					Highcharts.setOptions({
+						// Defines Norwegian text strings used in the charts
+						lang: {
+							months: ['januar', 'februar', 'mars', 'april', 'mai', 'juni',  'juli', 'august', 'september', 'oktober', 'november', 'desember'],
+							shortMonths: ['jan', 'feb', 'mars', 'apr', 'mai', 'juni',  'juli', 'aug', 'sep', 'okt', 'nov', 'des'],
+							weekdays: ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'],
+							shortWeekdays: ['sø', 'ma', 'ti', 'on', 'to', 'fr', 'lø']
+						}/*,
+						// Adjusts time values in data points to match Norwegian timezone (handles DST automatically).
+						// Commented out as all the charts currently display date values only, not time of day,
+						// and this code caused all values to be displayed at 2am instead of midnight.
+						global: {
+							getTimezoneOffset: function (timestamp) {
+								var zone = 'Europe/Oslo',
+									timezoneOffset = -moment.tz(timestamp, zone).utcOffset();
+
+								return timezoneOffset;
+							}
+						}*/
+					});
+
+					mobilityChartOptions.series[0].data = chartData;
+					mobilityChart = new Highcharts.Chart(mobilityChartOptions);
+				}
+			}
+		}), $.ajax({
+			//********************************************************************
+			//********** Get balance indexes to populate the BI chart ************
+			//********************************************************************
+			url: "http://vavit.no/adapt-staging/api/getBalanceIdxs.php?seniorUserID=" + userID,
+			type: 'GET',
+			beforeSend: function (request) {
+				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+			},
+			error: function(data, status) {
+				console.log("Error attempting to call API getBalanceIdxs.php with parameter seniorUserID=" + userID);
+			}, 
+			success: function(data, status) { // If the API request is successful
+				var balanceChartDataJSON = data.data;
+				var balanceChartData = [];
+
+				if (balanceChartDataJSON != null) {
+					var maxMI = 0;
+					for (var i=0; i<balanceChartDataJSON.length; i++) {
+						// Comment out if chart is changed to a column chart!
+						if (i != 0) {
+							// Draws an extra data point right before each data point (except the first) 
+							// to get a flat line instead of a straight, diagonal line between the points.
+							// Needs to be commented out if the chart is switched to a column chart.
+							var dataPointPre = [];
+							var datePre = new Date(balanceChartDataJSON[i].timeDataCollected);
+							datePre.setSeconds(datePre.getSeconds() - 1);
+							dataPointPre.push(datePre.getTime());
+							dataPointPre.push(parseFloat(balanceChartDataJSON[i-1].value));
+							balanceChartData.push(dataPointPre);
+						}
+
+						var mi = parseFloat(balanceChartDataJSON[i].value);
+						if (mi > maxMI) maxMI = mi;
+
+						var dataPoint = [];
+						var date = Date.parse(balanceChartDataJSON[i].timeDataCollected);
+						dataPoint.push(date);
+						dataPoint.push(mi);
+						balanceChartData.push(dataPoint);
+
+						// Comment out if chart is changed to a column chart!
+						// If last data point from db, add a final data point at the current datetime
+						if (i+1 == balanceChartDataJSON.length) {
+							var dataPointFinal = [];
+							dataPointFinal.push(new Date().getTime());
+							dataPointFinal.push(parseFloat(balanceChartDataJSON[i].value));
+							balanceChartData.push(dataPointFinal);
+						}
+					}
+
+					balanceChartOptions = {
+						chart: {
+							renderTo: 'balanceChart', // ID of div where the chart is to be rendered
+							type: 'area', // Chart type. Can e.g. be set to 'column' or 'area'
+							zoomType: 'x', // The chart is zoomable along the x-axis by clicking and draging over a portion of the chart
+							backgroundColor: null,
+							reflow: true
+						},
+						title: {
+							text: 'Balance index'
+						},
+						xAxis: {
+							type: 'datetime',
+							tickInterval: 24 * 3600 * 1000 // How frequent a tick is displayed on the axis (set in milliseconds)
+						},
+						yAxis: {
+							title: {
+								enabled: false
+							},
+							//max: 1, // The ceiling value of the y-axis
+							min: 0, // The floor of the y-axis
+							endOnTick: false,
+							alternateGridColor: '#DEE0E3',
+							tickInterval: 0.1 // How frequent a tick is displayed on the axis
+						},
+						legend: {
+							enabled: false // Hides the legend showing the name and toggle option for the series
+						},
+						credits: {
+							enabled: false // Hides the Highcharts credits
+						},
+						series: [{
+							/*color: {
+								linearGradient: {
+									x1: 0,
+									y1: 0,
+									x2: 0,
+									y2: 1
+								},
+								stops: [
+									[0, 'grey'],
+									[0.5, 'grey'],
+									[1, '#ED1E24']
+								]
+							},
+							lineWidth: 0,
+							enableMouseTracking: false*/
+						}]
+					};
+
+					/*colorMaxMI = getMIChartData($currentMobilityIdx).color; // todo: define correlation between BI and MI
+					colorMidMI = getMIChartData($currentMobilityIdx/2).color;
+
+					balanceChartOptions.series[0].color.stops[0][1] = "#" + colorMaxMI;
+					balanceChartOptions.series[0].color.stops[1][1] = "#" + colorMidMI;*/
+
+					balanceChartOptions.series[0].data = balanceChartData;
+					balanceChart = new Highcharts.Chart(balanceChartOptions);
+				}
+			}
+		}), $.ajax({
 			//********************************************************************
 			//********** Get activity indexes to populate the AI chart ***********
 			//********************************************************************
@@ -740,10 +884,9 @@ function setActiveUser(userID, changePage) {
 			url: "http://vavit.no/adapt-staging/api/getActivityIdxs.php?seniorUserID=" + userID,
 			type: 'GET',
 			beforeSend: function (request) {
-	            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-	        },
-			error : function(data, status) {
-				$("#activityChartContainer").hide();
+				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+			},
+			error: function(data, status) {
 				console.log("Error attempting to call API getActivityIdxs.php with parameter seniorUserID=" + userID);
 				hideLoader();
 			}, 
@@ -804,23 +947,35 @@ function setActiveUser(userID, changePage) {
 							tickInterval: 1 // How frequent a tick is displayed on the axis
 						},
 						legend: {
-				            enabled: false // Hides the legend showing the name and toggle option for the series
-				        },
-				        credits: {
-				            enabled: false // Hides the Highcharts credits
-				        },
+							enabled: false // Hides the legend showing the name and toggle option for the series
+						},
+						credits: {
+							enabled: false // Hides the Highcharts credits
+						},
 						series: [{}]
 					};
 
 					activityChartOptions.series[0].data = activityChartData;
 
 					activityChart = new Highcharts.Chart(activityChartOptions);
-					$("#activityChartContainer").show(); // Shows the MI chart in the DOM
-				} else {
-					$("#activityChartContainer").hide(); // Hides the chart if no MI data is found
-					//$("#activityChart").html("<h3>Det er ikke registrert noen aktivitetsdata ennå.</h3>");
 				}
 				hideLoader();
+			}
+		})).then(function(data, textStatus, jqXHR) {
+			 // Displays the charts in the DOM if they have been set
+			if (mobilityChartOptions) {
+				$("#mobilityChartContainer").show();
+				mobilityChart = new Highcharts.Chart(mobilityChartOptions);
+			}
+
+			if (balanceChartOptions) {
+				$("#balanceChartContainer").show();
+				balanceChart = new Highcharts.Chart(balanceChartOptions);
+			}
+
+			if (activityChartOptions) {
+				$("#activityChartContainer").show();
+				activityChart = new Highcharts.Chart(activityChartOptions);
 			}
 		});
 	});
@@ -829,23 +984,29 @@ function setActiveUser(userID, changePage) {
 
 
 //********************************************************************
-//*********** Call API with a submitted feedback message *************
+//***** Call API with a submitted personalized feedback message ******
 //********************************************************************
-function submitFeedbackMsg(formData, toastID) {
+function submitCustomFeedbackMsg(formData, toastID, isAI) {
 	// Append the senior user ID to the form data
 	formData += "&userID=" + $activeUserData.userID;
 	
 	$.ajax({
 		type: "POST",
 		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-        },
+			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+		},
 		url: "http://vavit.no/adapt-staging/api/postFeedbackMsgCustom.php",
 		data: formData,
 		success: function(data, status) { // If the API request is successful
 			hideLoader(); // Hides the loading widget
-			getFeedbackMsgs($activeUserData.userID); // Fetches feedback messages for the senior user from DB
+			getCustomFeedbackMsgs($activeUserData.userID); // Fetches personalized feedback messages from DB to update the tables
 			showToast(toastID, true, data.status_message); // Shows toast with success msg
+
+			if (isAI) {
+				$("#flipPersonalizedAI").flipswitch("enable");
+			} else {
+				$("#flipPersonalizedBI").flipswitch("enable");
+			}
 		},
 		error: function(data, status) {
 			hideLoader(); // Hides the loading widget
@@ -878,8 +1039,8 @@ function writeNewMI(formData, update) {
 	$.ajax({
 		type: "POST",
 		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-        },
+			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+		},
 		url: "http://vavit.no/adapt-staging/api/" + urlPart + "MobilityIdx.php",
 		data: formData,
 		success: function(data, status) { // If the API request is successful
@@ -896,11 +1057,11 @@ function writeNewMI(formData, update) {
 			if ($currentNewestMIDate == null || parseDate($inputMIDate) > parseDate($currentNewestMIDate)) {
 				// Updates DOM if the date of the created MI is more recent than the newest MI value
 				$("#cellMobilityIdx").html($mobilityIdxValue);
-				$activeUserData['mobilityIdx'] = $mobilityIdxValue;
-				$activeUserData['mobilityIdxTimeDataCollected'] = $inputMIDate;
+				$activeUserData.mobilityIdx = $mobilityIdxValue;
+				$activeUserData.mobilityIdxTimeDataCollected = $inputMIDate;
+				updateUsersTableRow(); // Updates the values in the row in the user overview table corresponding to the active user
 			}
 			
-			getUserOverview(); // Updates the main page DOM with new data from db
 			setActiveUser($activeUserData.userID, false); // Sets the active user, which in turn updates the active user data and charts
 		},
 		error: function(data, status) {
@@ -923,9 +1084,9 @@ function deleteUser() {
 		url: "http://vavit.no/adapt-staging/api/putSeniorUserInactive.php?seniorUserID=" + userID,
 		type: 'GET',
 		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-        },
-		error : function(data, status) {
+			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+		},
+		error: function(data, status) {
 			hideLoader(); // Hides the loading widget
 			console.log("Error writing to db through API putSeniorUserInactive.php with parameter seniorUserID=" + userID);
 		}, 
@@ -937,7 +1098,11 @@ function deleteUser() {
 				}
 			});
 
-			getUserOverview(); // Updates the DOM with new data from db
+			$('#usersTable tbody tr').each(function() {
+				if ($(this)[0].cells[0].childNodes[0].innerText == $activeUserData.userID) {
+					$(this).remove();
+				}
+			});
 
 			$.mobile.back(); // Returns to the main page
 		}
@@ -947,17 +1112,17 @@ function deleteUser() {
 
 
 //********************************************************************
-//****** Calls API to fetch feedback messages for a given user. ******
+//*** Calls API to fetch custom feedback messages for a given user. **
 //********************************************************************
-function getFeedbackMsgs(userID) {
+function getCustomFeedbackMsgs(userID) {
 	$.ajax({
-		url: "http://vavit.no/adapt-staging/api/getFeedbackMsgs.php?userID=" + userID,
+		url: "http://vavit.no/adapt-staging/api/getFeedbackMsgsCustom.php?userID=" + userID,
 		type: 'GET',
 		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-        },
-		error : function(data, status) {
-			console.log("Error fetching data from API getFeedbackMsgs.");
+			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+		},
+		error: function(data, status) {
+			console.log("Error fetching data from API getFeedbackMsgsCustom.");
 		},
 		success: function(data, status) { // If the API request is successful
 			var feedbackData = data.data;
@@ -977,6 +1142,8 @@ function getFeedbackMsgs(userID) {
 				}
 
 				if (AIFeedbackMsgs.length > 0) {
+					$activeUserData.customAIFeedback = AIFeedbackMsgs;
+
 					// Creates HTML for inserting into AI feedback table
 					var htmlAI = '';
 					for (var i=0; i<AIFeedbackMsgs.length; i++) {
@@ -986,15 +1153,18 @@ function getFeedbackMsgs(userID) {
 						htmlAI += "<tr>"
 						+ "<td>" + timeCreated.format('YYYY-MM-DD HH:mm') + "</td>"
 						+ "<td>" + AIFeedbackMsgs[i].feedbackText + "</td>"
+						+ "<td>" + getExerciseTitle(AIFeedbackMsgs[i].exerciseID) + "</td>"
 						+ "</tr>";
 					}
-					$('#tableAIFeedbackMsgs tbody tr').remove(); // Removes all exisitng rows from table body
-					$('#tableAIFeedbackMsgs tbody').append(htmlAI); // Inserts the generated HTML
-					$('#AIFeedbackMsgsContainer').show(); // Makes table visible
+					$('#tablePersonalizedAIFeedbackMsgs tbody tr').remove(); // Removes all exisitng rows from table body
+					$('#tablePersonalizedAIFeedbackMsgs tbody').append(htmlAI); // Inserts the generated HTML
+					$('#personalizedAIFeedbackMsgsContainer').show(); // Makes table visible
 				}
 				
 				if (BIFeedbackMsgs.length > 0) {
-					// Created HTML for inserting into BI feedback table
+					$activeUserData.customBIFeedback = BIFeedbackMsgs;
+
+					// Creates HTML for inserting into BI feedback table
 					var htmlBI = '';
 					for (var i=0; i<BIFeedbackMsgs.length; i++) {
 						var timeCreated = moment(BIFeedbackMsgs[i].timeCreated + "Z");
@@ -1003,11 +1173,12 @@ function getFeedbackMsgs(userID) {
 						htmlBI += "<tr>"
 						+ "<td>" + timeCreated.format('YYYY-MM-DD HH:mm') + "</td>"
 						+ "<td>" + BIFeedbackMsgs[i].feedbackText + "</td>"
+						+ "<td>" + getExerciseTitle(BIFeedbackMsgs[i].exerciseID) + "</td>";
 						+ "</tr>";
 					}
-					$('#tableBIFeedbackMsgs tbody tr').remove(); // Removes all exisitng rows from table body
-					$('#tableBIFeedbackMsgs tbody').append(htmlBI); // Inserts the generated HTML
-					$('#BIFeedbackMsgsContainer').show(); // Makes table visible
+					$('#tablePersonalizedBIFeedbackMsgs tbody tr').remove(); // Removes all exisitng rows from table body
+					$('#tablePersonalizedBIFeedbackMsgs tbody').append(htmlBI); // Inserts the generated HTML
+					$('#personalizedBIFeedbackMsgsContainer').show(); // Makes table visible
 				}
 			} else {
 				//console.log("No feedback data returned from API.");
@@ -1016,6 +1187,92 @@ function getFeedbackMsgs(userID) {
 	});
 }
 
+
+//********************************************************************
+//********** Sets current values and adds change listeners  **********
+//******** to the flip switches on personalized-feedback-page ********
+//********************************************************************
+function initCustomFeedbackFlipSwitches() {	
+	$("#flipPersonalizedAI").prop("checked", $activeUserData.showPersonalizedAIFeedback);
+	$("#flipPersonalizedBI").prop("checked", $activeUserData.showPersonalizedBIFeedback);
+
+	$("#flipPersonalizedAI").on("change", function (e) {
+		showLoader();
+		var flipSwitchState = e.currentTarget.checked;
+		var flipSwitchStateBinary = flipSwitchState ? "1" : "0";
+
+		var url = "http://vavit.no/adapt-staging/api/putShowCustomFeedback.php?category=0&seniorUserID=" 
+			+ $activeUserData.userID + "&value=" + flipSwitchStateBinary;
+
+		$.ajax({
+			url: url,
+			type: 'GET',
+			beforeSend: function (request) {
+				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+			},
+			error: function(data, status) {
+				console.log("Error writing to db through API putShowCustomFeedback.php with parameter category=0 and seniorUserID=" 
+					+ $activeUserData.userID);
+				showToast("#toastPersonalizedFeedback", false, "Det oppstod en feil under skriving til databasen.");
+
+				hideLoader(); // Hides the loading widget
+			}, 
+			success: function(data, status) { // If the API request is successful
+				var toastSuccessText = (flipSwitchState ? "på" : "av");
+				$activeUserData.showPersonalizedAIFeedback = flipSwitchState;
+				showToast("#toastPersonalizedFeedback", true, "Personaliserte AI-råd er nå " 
+					+ toastSuccessText + "slått for denne brukeren.");
+				hideLoader(); // Hides the loading widget
+			}
+		});
+	});
+
+	$("#flipPersonalizedBI").on("change", function (e) {
+		showLoader();
+		var flipSwitchState = e.currentTarget.checked;
+		var flipSwitchStateBinary = flipSwitchState ? "1" : "0";
+
+		var url = "http://vavit.no/adapt-staging/api/putShowCustomFeedback.php?category=1&seniorUserID=" 
+				+ $activeUserData.userID + "&value=" + flipSwitchStateBinary;
+
+		$.ajax({
+			url: url,
+			type: 'GET',
+			beforeSend: function (request) {
+				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+			},
+			error: function(data, status) {
+				console.log("Error writing to db through API putShowCustomFeedback.php with parameter category=1 and seniorUserID=" 
+					+ $activeUserData.userID);
+				showToast("#toastPersonalizedFeedback", false, "Det oppstod en feil under skriving til databasen.");
+				hideLoader(); // Hides the loading widget
+			}, 
+			success: function(data, status) { // If the API request is successful
+				var toastSuccessText = (flipSwitchState ? "på" : "av");
+				$activeUserData.showPersonalizedBIFeedback = flipSwitchState;
+				showToast("#toastPersonalizedFeedback", true, "Personaliserte BI-råd er nå " 
+					+ toastSuccessText + "slått for denne brukeren.");
+				hideLoader(); // Hides the loading widget
+			}
+		});
+	});
+}
+
+
+
+//********************************************************************
+//******* Fetches the title of an exercise given a certain ID  *******
+//********************************************************************
+function getExerciseTitle(exerciseID) {
+	if (exercises != null || exerciseID != null) {
+		for (var i=0; i<exercises.length; i++) {
+			if (exercises[i].exerciseID == exerciseID) {
+				return exercises[i].title;
+			}
+		}
+	}
+	return "";
+}
 
 
 //********************************************************************
@@ -1122,9 +1379,19 @@ function readCSVFile(isAI) {
 
 		// Exclude empty lines and other invalid entries
 		for (var i=0; i<data.length; i++) {
+			// check valid date
 			if ((typeof data[i].dato != 'undefined') && (data[i].dato != null) && (data[i].dato != '')) {
-				validData.push(data[i]);
+				// check valid value
+				var value = (isAI ? data[i].ai : data[i].bi);
+				if ($.isNumeric(value) && value >= 0 && value <= 5) {
+					validData.push(data[i]);	
+				}
 			}
+		}
+
+		if (validData.length == 0) {
+			var toastID = (isAI ? "#toastActivityIdxFileUpload" : "#toastBalanceIdxFileUpload");
+			showToast(toastID, false, "Ingen gyldige verdier ble funnet i filen.");
 		}
 			
 		callAjaxPostAcitivtyIdx(validData, 0, 0, 0, isAI); // Call function to send data to API
@@ -1155,13 +1422,15 @@ function callAjaxPostAcitivtyIdx(inputData, idx, successCounter, errorCounter, i
 	}
 	
 	// Builds form data string
-	var formData = "userID=" + $activeUserData.userID + "&timeDataCollected=" + dateSplit[2] + "-" + dateSplit[1] + "-" + dateSplit[0] + "&" + valueFieldName + "=" + inputData[idx].ai;
+	var formData = "userID=" + $activeUserData.userID 
+		+ "&timeDataCollected=" + dateSplit[2] + "-" + dateSplit[1] + "-" + dateSplit[0] 
+		+ "&" + valueFieldName + "=" + inputData[idx].ai;
 	
 	$.when($.ajax({
 		type: "POST",
 		beforeSend: function (request) {
-            request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-        },
+			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+		},
 		url: apiUrl,
 		data: formData,
 		success: function(data, status) { // If the API request is successful
@@ -1185,12 +1454,7 @@ function callAjaxPostAcitivtyIdx(inputData, idx, successCounter, errorCounter, i
 /*Shows a toast when the data from file upload is done being processed/
 /*********************************************************************/
 function showNotificationActivityIdxFileUpload(successCounter, errorCounter, isAI) {
-	var toastID = null;
-	if (isAI) {
-		toastID = "#toastActivityIdxFileUpload";
-	} else {
-		toastID = "#toastBalanceIdxFileUpload";
-	}
+	var toastID = (isAI ? "#toastActivityIdxFileUpload" : "#toastBalanceIdxFileUpload");
 
 	hideLoader(); // Hides the loading widget
 
@@ -1223,7 +1487,7 @@ function parseDate(input) {
 /*********************************************************************/
 function clearUserDetailsTable() {
 	$("#activeUserName").html("");
-	$("#headerTitleDetailView").html("");
+	$("#headerTitleDetailPage").html("");
 	
 	$("#cellMobilityIdx").html("");
 	$("#cellBirthDate").html("");
@@ -1233,55 +1497,11 @@ function clearUserDetailsTable() {
 	$("#cellGender").html("");
 	$("#cellWeight").html("");
 	$("#cellHeight").html("");
-	$("#cellFalls6").html("");
+	$("#cellFalls3").html("");
 	$("#cellFall12").html("");
 	$("#cellWalkingAid").html("");
 	$("#cellLivingIndependently").html("");
 }
-
-
-
-/*********************************************************************/
-/********* Clears all the input fields in the new user form **********/
-/*********************************************************************/
-function clearNewUserForm() {
-	$("#inputFieldNewFirstName").val("");
-	$("#inputFieldNewLastName").val("");
-	$("#inputFieldNewEmail").val("");
-	$("#inputFieldNewPassword").val("");
-	$("#inputFieldNewBirthDate").val("");
-	$("#inputFieldNewAddress").val("");
-	$("#inputFieldNewZipCode").val("");
-	$("#inputFieldNewCity").val("");
-	$("#inputFieldNewPhone").val("");
-	$("#inputFieldNewWeight").val("");
-	$("#inputFieldNewHeight").val("");
-	$("#inputFieldNewUsesWalkingAid").prop('checked', false).checkboxradio('refresh');
-	$("#inputFieldNewLivingIndependently").prop('checked', false).checkboxradio('refresh');
-}
-
-
-
-/*********************************************************************/
-/********* Clears all the input fields in the edit user form *********/
-/*********************************************************************/
-function clearEditUserForm() {
-	$("#inputFieldEditFirstName").val("");
-	$("#inputFieldEditLastName").val("");
-	$("#inputFieldEditEmail").val("");
-	$("#inputFieldEditAddress").val("");
-	$("#inputFieldEditZipCode").val("");
-	$("#inputFieldEditCity").val("");
-	$("#inputFieldEditPhone").val("");
-	$("#inputFieldEditWeight").val("");
-	$("#inputFieldEditHeight").val("");
-	$("#inputFieldEditNumFalls6Mths").val("");
-	$("#inputFieldEditNumFalls12Mths").val("");
-	$("#inputFieldEditUsesWalkingAid").val("");
-	$("#inputFieldEditLivingIndependently").val("");
-}
-
-
 
 
 
@@ -1319,26 +1539,26 @@ function updateDOM() {
 	/*********************** are checked for this. ***********************/
 	/*********************************************************************/
 	if ($activeUserData != null) {
-		$fullName = $activeUserData["firstName"] + " " + $activeUserData["lastName"];
-		$genderStr = ($activeUserData['isMale'] == 1) ? 'Mann' :'Kvinne';
+		$fullName = $activeUserData.firstName + " " + $activeUserData.lastName;
+		$genderStr = ($activeUserData.isMale == 1) ? 'Mann' :'Kvinne';
 
-		$usesWalkingAidBool = ($activeUserData['usesWalkingAid'] == 1);
+		$usesWalkingAidBool = ($activeUserData.usesWalkingAid == 1);
 		$usesWalkingAidStr = ($usesWalkingAidBool) ? 'Ja' :'Nei';
 
-		$livingIndependentlyBool = ($activeUserData['livingIndependently'] == 1);
+		$livingIndependentlyBool = ($activeUserData.livingIndependently == 1);
 		$livingIndependentlyStr = ($livingIndependentlyBool) ? 'Ja' :'Nei';
 
 		
 		/******** Update user detail page ********/
 
 		$("#activeUserName").html($fullName);
-		$("#headerTitleDetailView").html("Brukerdetaljer - " + $fullName);
+		$("#headerTitleDetailPage").html("Brukerdetaljer - " + $fullName);
 		
-		$("#cellMobilityIdx").html($activeUserData["mobilityIdx"]);
+		$("#cellMobilityIdx").html($activeUserData.mobilityIdx);
 
-		$age = calculateAge($activeUserData["birthDate"]);
+		$age = calculateAge($activeUserData.birthDate);
 		if ($age != "") {
-			$("#cellBirthDate").html($activeUserData["birthDate"] + " (" + $age + " år)");
+			$("#cellBirthDate").html($activeUserData.birthDate + " (" + $age + " år)");
 		}
 
 		// Builds a string containing the full address for the user
@@ -1346,17 +1566,17 @@ function updateDOM() {
 		// taking into account that some parts of it might not be set.
 		$fullAddress = "";
 		$isZipSet = false;
-		if ($activeUserData["address"] != null) {
-			$fullAddress += $activeUserData["address"];
+		if ($activeUserData.address != null) {
+			$fullAddress += $activeUserData.address;
 		}
-		if ($activeUserData["zipCode"] != null) {
+		if ($activeUserData.zipCode != null) {
 			$isZipSet = true;
 			if ($fullAddress != "") {
 				$fullAddress += ", ";
 			}
-			$fullAddress += $activeUserData["zipCode"] + " ";
+			$fullAddress += $activeUserData.zipCode + " ";
 		}
-		if ($activeUserData["city"] != null) {
+		if ($activeUserData.city != null) {
 			if ($fullAddress != "") {
 				if ($isZipSet) {
 					$fullAddress += " ";
@@ -1364,48 +1584,75 @@ function updateDOM() {
 					$fullAddress += ", ";
 				}
 			}
-			$fullAddress += $activeUserData["city"];
+			$fullAddress += $activeUserData.city;
 		}
+
+		// Insert values into user details table and edit user data form
+
+		$("#inputFieldEditFirstName").val($activeUserData.firstName);
+		$("#inputFieldEditLastName").val($activeUserData.lastName);
+		$("#inputFieldEditEmail").val($activeUserData.email);
 
 		$("#cellAddress").html($fullAddress);
-		$("#cellPhoneNr").html($activeUserData["phoneNumber"]);
-		$("#cellDateJoined").html($activeUserData["dateJoinedAdapt"]);
+		$("#inputFieldEditAddress").val($activeUserData.address);
+		$("#inputFieldEditZipCode").val($activeUserData.zipCode);
+		$("#inputFieldEditCity").val($activeUserData.city);
+		
+		$("#cellPhoneNr").html($activeUserData.phoneNumber);
+		$("#inputFieldEditPhone").val($activeUserData.phoneNumber);
+
+		$("#cellDateJoined").html($activeUserData.dateJoinedAdapt);
+		
 		$("#cellGender").html($genderStr);
 
-		if ($activeUserData["weight"] != null) {
-			$("#cellWeight").html($activeUserData["weight"] + " kg");
+		if ($activeUserData.weight != null) {
+			$("#cellWeight").html($activeUserData.weight + " kg");
+			$("#inputFieldEditWeight").val($activeUserData.weight);
 		}
 
-		if ($activeUserData["height"] != null) {
-			$("#cellHeight").html($activeUserData["height"] + " cm");
+		if ($activeUserData.height != null) {
+			$("#cellHeight").html($activeUserData.height + " cm");
+			$("#inputFieldEditHeight").val($activeUserData.height);
 		}
 		
-		if ($activeUserData["numFalls6Mths"] != null) {
-			$("#cellFalls6").html($activeUserData["numFalls6Mths"]);
+		if ($activeUserData.numFalls3Mths != null) {
+			$("#cellFalls3").html($activeUserData.numFalls3Mths);
+			$("#inputFieldEditNumFalls3Mths").val($activeUserData.numFalls3Mths);
 		}
 
-		if ($activeUserData["numFalls12Mths"] != null) {
-			$("#cellFall12").html($activeUserData["numFalls12Mths"]);
+		if ($activeUserData.numFalls12Mths != null) {
+			$("#cellFall12").html($activeUserData.numFalls12Mths);
+			$("#inputFieldEditNumFalls12Mths").val($activeUserData.numFalls12Mths);
+		}
+
+		if ($activeUserData.comment != null) {
+			$("#cellComment").html($activeUserData.comment);
+			$("#inputFieldEditComment").val($activeUserData.comment);
 		}
 		
 		$("#cellWalkingAid").html($usesWalkingAidStr);
-		$("#cellLivingIndependently").html($livingIndependentlyStr);
-
-
-		/******** Update edit user data form ********/
-
-		$("#inputFieldEditFirstName").val($activeUserData["firstName"]);
-		$("#inputFieldEditLastName").val($activeUserData["lastName"]);
-		$("#inputFieldEditEmail").val($activeUserData["email"]);
-		$("#inputFieldEditAddress").val($activeUserData["address"]);
-		$("#inputFieldEditZipCode").val($activeUserData["zipCode"]);
-		$("#inputFieldEditCity").val($activeUserData["city"]);
-		$("#inputFieldEditPhone").val($activeUserData["phoneNumber"]);
-		$("#inputFieldEditWeight").val($activeUserData["weight"]);
-		$("#inputFieldEditHeight").val($activeUserData["height"]);
-		$("#inputFieldEditNumFalls6Mths").val($activeUserData["numFalls6Mths"]);
-		$("#inputFieldEditNumFalls12Mths").val($activeUserData["numFalls12Mths"]);
 		$("#inputFieldEditUsesWalkingAid").prop('checked', $usesWalkingAidBool);
+
+		$("#cellLivingIndependently").html($livingIndependentlyStr);
 		$("#inputFieldEditLivingIndependently").prop('checked', $livingIndependentlyBool);
+	}
+}
+
+
+//  
+function updateUsersTableRow() {
+	/*********************************************************************/
+	/******** Updates the values in the row in the user overview *********/
+	/************** table corresponding to the active user ***************/
+	/*********************************************************************/
+	if ($activeUserData) {
+		$('#usersTable tbody tr').each(function() {
+			if ($(this)[0].cells[0].childNodes[0].innerText == $activeUserData.userID) {
+				$(this)[0].cells[1].childNodes[0].innerText = $activeUserData.lastName;
+				$(this)[0].cells[2].childNodes[0].innerText = $activeUserData.firstName;
+				$(this)[0].cells[3].childNodes[0].innerText = calculateAge($activeUserData.birthDate);
+				$(this)[0].cells[4].childNodes[0].innerText = $activeUserData.mobilityIdx;
+			}
+		});
 	}
 }

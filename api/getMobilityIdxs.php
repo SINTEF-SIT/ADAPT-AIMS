@@ -8,7 +8,7 @@
 		// If the userID in the token belongs to an expert user, check that this expert is allowed to access this senior user's data
 		if ($tokenUserID != $seniorUserID) {
 			if (checkExpertSeniorLink($conn, $tokenUserID, $seniorUserID) == false) {
-				return false;
+				return null;
 			}
 		}
 

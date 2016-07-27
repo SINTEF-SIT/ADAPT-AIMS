@@ -1,30 +1,36 @@
 /***************************
 ** Global
 ***************************/
+
+/*
+[data-role=page]{height: 100% !important; position:relative !important;}
+[data-role=footer]{bottom:0; position:absolute !important; top: auto !important; width:100%;} */
+
 body {
 	text-align: center;
 }
 
 .pageMainElement {
-  position: absolute;
+  /*position: absolute;*/
   width: 100%;
   max-width: 900px;
   padding-left: 20px;
   padding-right: 20px;
   left: 0;
   right: 0;
-  margin: 0 auto;
+  margin: 0 auto 30px auto;
 }
 
 .well {
-    height: 100%;
+	height: 100%;
 	width: 100%;
 	padding: 2px !important;
 	margin: 0 !important;
 }
 
-[data-role=page]{height: 100% !important; position:relative !important;}
-[data-role=footer]{bottom:0; position:absolute !important; top: auto !important; width:100%;}
+[data-role=page] {
+	position: relative !important;
+}
 
 
 
@@ -32,15 +38,17 @@ body {
 ** Mobility Index Image
 ***************************/
 #MIImgOuterWrapper {
+	margin-top:	15px;
 	height: 25%;
-	top: 2%;
+	min-height: 200px;
+	/*top: 2%;*/
 }
 
 #MIImgWell {
 	background-image: -webkit-linear-gradient(top,#DAE6F2 0,#D5E0EB 100%) !important;
-    background-image: -o-linear-gradient(top,#DAE6F2 0,#D5E0EB 100%) !important;
-    background-image: -webkit-gradient(linear,left top,left bottom,from(#DAE6F2),to(#D5E0EB)) !important;
-    background-image: linear-gradient(to bottom,#DAE6F2 0,#D5E0EB 100%) !important;
+	background-image: -o-linear-gradient(top,#DAE6F2 0,#D5E0EB 100%) !important;
+	background-image: -webkit-gradient(linear,left top,left bottom,from(#DAE6F2),to(#D5E0EB)) !important;
+	background-image: linear-gradient(to bottom,#DAE6F2 0,#D5E0EB 100%) !important;
 }
 
 /*#MIImgHeader {
@@ -60,21 +68,21 @@ body {
 	/*height: 85%;*/
 	height: 100%;
 	width: 100%;
-    vertical-align: middle;
-    padding: 10px 0;
+	vertical-align: middle;
+	padding: 10px 0;
 }
 
 .verticalAlignHelper {
-    display: inline-block;
-    height: 100%;
-    vertical-align: middle;
+	display: inline-block;
+	height: 100%;
+	vertical-align: middle;
 }
 
 #MIImg {
 	vertical-align: middle;
-    max-height: 100%;
-    max-width: 100%;
-    margin: 0 auto;
+	max-height: 100%;
+	max-width: 100%;
+	margin: 0 auto;
 }
 
 
@@ -85,24 +93,28 @@ body {
 
 .chartWell {
 	background-image: -webkit-linear-gradient(top,#EBF1F5 0,#DAE6F2 100%) !important;
-    background-image: -o-linear-gradient(top,#EBF1F5 0,#DAE6F2 100%) !important;
-    background-image: -webkit-gradient(linear,left top,left bottom,from(#EBF1F5),to(#DAE6F2)) !important;
-    background-image: linear-gradient(to bottom,#EBF1F5 0,#DAE6F2 100%) !important;
+	background-image: -o-linear-gradient(top,#EBF1F5 0,#DAE6F2 100%) !important;
+	background-image: -webkit-gradient(linear,left top,left bottom,from(#EBF1F5),to(#DAE6F2)) !important;
+	background-image: linear-gradient(to bottom,#EBF1F5 0,#DAE6F2 100%) !important;
 }
 
 #balanceChart, #activityChart {
 	margin: 0 auto;
 	height: 100%;
 	width: 100%;
-    max-width: 1000px;
-    padding: 0 20px !important;
+	max-width: 1000px;
+	padding: 0 20px !important;
 }
 
 #balanceChartContainer, #activityChartContainer {
 	height: 22%;
+	min-height: 200px;
 }
 
-.highcharts-container{width:100% !important; height:100% !important;}
+.highcharts-container {
+	width: 100% !important;
+	height: 100% !important;
+}
 
 
 
@@ -111,7 +123,7 @@ body {
 ***************************/
 
 #balanceChartContainer {
-    top: 32%;
+	/*top: 32%;*/
 }
 
 
@@ -120,25 +132,32 @@ body {
 ***************************/
 
 #activityChartContainer {
-    top: 58%;
+	/*top: 58%;*/
 }
 
 
 
 /***************************
-** Motivating message
+** Feedback message
 ***************************/
-#messageWrapper {
-	max-height: 10%;
-	top: 82%;
+.messageWrapper {
+	/*max-height: 10%;*/
+	/*top: 82%;*/
 	font-size: 18px;
+	margin-bottom: 10px;
 }
 
-#messageWrapper .alert {
+.messageWrapper .alert {
 	padding-bottom: 1%;
+	margin-bottom: 0;
 }
 
-#messageWrapper * {
+.messageWrapper .clickableFeedback:hover {
+	background-image: linear-gradient(to bottom,#E5F2DF 0,#D3EBCA 100%);
+	cursor: pointer;
+}
+
+.messageWrapper * {
 	margin-bottom: 0;
 }
 
@@ -147,17 +166,17 @@ body {
 ** Footer
 ***************************/
 
-.footer {
+#footer {
 	height: 60px;
 }
 
-.footer p {
+#footer p {
 	position: relative;
 	top: 50%;
 	transform: translateY(-50%);
-    font-weight: 100;
-    text-align: left;
-    padding-left: 10px;
+	font-weight: 100;
+	text-align: left;
+	padding-left: 10px;
 }
 
 #lastUpdatedValue {
@@ -166,9 +185,50 @@ body {
 
 #settingsBtn {
 	position: fixed;
-    bottom: 0;
-    right: 0;
+	bottom: 0;
+	right: 0;
 }
+
+@media (max-width: 350px) { 
+	#footer p { 
+		display: none; 
+	} 
+}
+
+
+
+/***************************
+** Exercise info dialog
+***************************/
+.ui-dialog-contain {
+	max-width: 900px !important;
+	margin-top: 5% !important;
+}
+
+.exerciseInfoHeader {
+	color: #1b1b1b !important;
+}
+
+.exerciseImg {
+	display: block;
+	max-width: 95%;
+	max-height: 500px;
+	margin: 0 auto;
+}
+
+.exerciseDesc {
+	display: block;
+	width: 85%;
+	margin: 0 auto;
+	padding: 30px 10px 0 10px;
+	text-align: left;
+	font-size: 1.3em;
+}
+
+.exerciseDesc ul {
+	padding-left: 20px;
+}
+
 
 
 /***************************
@@ -188,8 +248,8 @@ body {
 
 /*#backBtnHeader {
 	position: fixed;
-    top: 0;
-    left: 0;
+	top: 0;
+	left: 0;
 }*/
 
 #MIImgSelectionHeader {
