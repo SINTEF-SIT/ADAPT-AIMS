@@ -21,12 +21,61 @@ body {
   margin: 0 auto 30px auto;
 }
 
+* {
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+
 .well {
 	height: 100%;
 	width: 100%;
 	padding: 2px !important;
 	margin: 0 !important;
+	
+	background-image: -webkit-linear-gradient(top,#e8e8e8 0,#f5f5f5 100%);
+	background-image: -o-linear-gradient(top,#e8e8e8 0,#f5f5f5 100%);
+	background-image: -webkit-gradient(linear,left top,left bottom,from(#e8e8e8),to(#f5f5f5));
+	background-image: linear-gradient(to bottom,#e8e8e8 0,#f5f5f5 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffe8e8e8', endColorstr='#fff5f5f5', GradientType=0);
+	background-repeat: repeat-x;
+	border-color: #dcdcdc;
+	-webkit-box-shadow: inset 0 1px 3px rgba(0,0,0,.05),0 1px 0 rgba(255,255,255,.1);
+	box-shadow: inset 0 1px 3px rgba(0,0,0,.05),0 1px 0 rgba(255,255,255,.1);
+	min-height: 20px;
+	padding: 19px;
+	margin-bottom: 20px;
+	background-color: #f5f5f5;
+	border: 1px solid #e3e3e3;
+	border-radius: 4px;
+	-webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
+	box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
 }
+
+.alert {
+	text-shadow: 0 1px 0 rgba(255,255,255,.2);
+	-webkit-box-shadow: inset 0 1px 0 rgba(255,255,255,.25),0 1px 2px rgba(0,0,0,.05);
+	box-shadow: inset 0 1px 0 rgba(255,255,255,.25),0 1px 2px rgba(0,0,0,.05);
+	padding: 15px;
+	margin-bottom: 20px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+}
+
+.alert-success {
+	background-image: -webkit-linear-gradient(top,#dff0d8 0,#c8e5bc 100%);
+	background-image: -o-linear-gradient(top,#dff0d8 0,#c8e5bc 100%);
+	background-image: -webkit-gradient(linear,left top,left bottom,from(#dff0d8),to(#c8e5bc));
+	background-image: linear-gradient(to bottom,#dff0d8 0,#c8e5bc 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffdff0d8', endColorstr='#ffc8e5bc', GradientType=0);
+	background-repeat: repeat-x;
+	border-color: #b2dba1;
+	color: #3c763d;
+	background-color: #dff0d8;
+	border-color: #d6e9c6;
+}
+
 
 [data-role=page] {
 	position: relative !important;
@@ -138,6 +187,16 @@ body {
 
 
 /***************************
+** Mobility chart
+***************************/
+#mobilityChartContainer {
+	width: 80%;
+	margin: 0 auto;
+}
+
+
+
+/***************************
 ** Feedback message
 ***************************/
 .messageWrapper {
@@ -173,6 +232,10 @@ body {
 #footer p {
 	position: relative;
 	top: 50%;
+	-ms-transform: translateY(-50%);
+	-webkit-transform: translateY(-50%);
+	-moz-transform: translateY(-50%);
+	-o-transform: translateY(-50%);
 	transform: translateY(-50%);
 	font-weight: 100;
 	text-align: left;
@@ -198,6 +261,49 @@ body {
 
 
 /***************************
+** Video tutorial
+***************************/
+#videoPopup-popup {
+	width: 100%;
+	max-width: 800px !important;
+}
+
+#videoPopup {
+	margin: 0 20px;
+}
+
+#iframeWrapper {
+	position: relative;
+	padding-bottom: 56.25%;
+	padding-top: 35px;
+	height: 0;
+	overflow: hidden;
+}
+
+#iframeWrapper iframe {
+	position: absolute;
+	top:0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	max-height: 600px;
+	margin: 0 auto;
+}
+
+#videoPopupCloseBtn {
+	/*position: fixed;
+	margin: 0 auto;
+	margin-bottom: 75px;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	width: 400px;
+	max-width: 100%;*/
+}
+
+
+
+/***************************
 ** Exercise info dialog
 ***************************/
 .ui-dialog-contain {
@@ -205,7 +311,7 @@ body {
 	margin-top: 5% !important;
 }
 
-.exerciseInfoHeader {
+.popupHeader {
 	color: #1b1b1b !important;
 }
 

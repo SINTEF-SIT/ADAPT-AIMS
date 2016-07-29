@@ -1082,7 +1082,7 @@ function deleteUser() {
 	userID = $activeUserData.userID;
 	$.ajax({
 		url: "http://vavit.no/adapt-staging/api/putSeniorUserInactive.php?seniorUserID=" + userID,
-		type: 'GET',
+		type: 'PUT',
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 		},
@@ -1116,7 +1116,7 @@ function deleteUser() {
 //********************************************************************
 function getCustomFeedbackMsgs(userID) {
 	$.ajax({
-		url: "http://vavit.no/adapt-staging/api/getFeedbackMsgsCustom.php?userID=" + userID,
+		url: "http://vavit.no/adapt-staging/api/getFeedbackMsgsCustom.php?seniorUserID=" + userID,
 		type: 'GET',
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
@@ -1206,7 +1206,7 @@ function initCustomFeedbackFlipSwitches() {
 
 		$.ajax({
 			url: url,
-			type: 'GET',
+			type: 'PUT',
 			beforeSend: function (request) {
 				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 			},
@@ -1237,7 +1237,7 @@ function initCustomFeedbackFlipSwitches() {
 
 		$.ajax({
 			url: url,
-			type: 'GET',
+			type: 'PUT',
 			beforeSend: function (request) {
 				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 			},
@@ -1501,6 +1501,7 @@ function clearUserDetailsTable() {
 	$("#cellFall12").html("");
 	$("#cellWalkingAid").html("");
 	$("#cellLivingIndependently").html("");
+	$("#cellComment").html("");
 }
 
 

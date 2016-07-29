@@ -3,7 +3,8 @@
 		header("HTTP/1.1 $status $status_message");
 		
 		// Todo: remove after development phase:
-		header('Access-Control-Allow-Origin: http://localhost');
+		//header('Access-Control-Allow-Origin: http://localhost');
+
 		//header('Content-type: text/plain; charset=utf-8');
 		header("Content-Type:application/json");
 		

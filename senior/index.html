@@ -7,14 +7,14 @@
 		<link rel="stylesheet" href="style.css">
 
 		<!-- jQuery -->
-		<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.0/jquery.mobile-1.4.0.min.css" />
-		<script src="https://code.jquery.com/jquery-2.2.3.min.js"></script>
-		<script src="http://code.jquery.com/mobile/1.4.0/jquery.mobile-1.4.0.min.js"></script>
+		<link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+		<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+		<script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
 
 		<!-- Bootstrap -->
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+		<!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
-		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>-->
 
 		<!-- Highcharts -->
 		<script src="https://code.highcharts.com/highcharts.js"></script>
@@ -25,11 +25,27 @@
 
 		<!-- JS -->
 		<script src="../common.js"></script>
-		<script src="script.js" async></script>
+		<script src="script.js"></script>
 
 		<title>Adapt frontend test</title>
 	</head>
 	<body>
+
+		<!-- Instruction video popup -->
+		<div data-role="popup" id="videoPopup" class="ui-content" data-overlay-theme="b" data-theme="a" data-dismissible="false" >
+			<div>
+				<h1>Velkommen som bruker av AIMS!</h1>
+				<h3>Nedenfor er en video som viser hvordan systemet brukes.</h3>
+				<br>
+				<div id="iframeWrapper">
+					<iframe id="tutorialVideoiFrame" src="http://player.vimeo.com/video/107469289?autoplay=1" width="497" height="298" seamless webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+				</div>
+				
+				<a id="videoPopupCloseBtn" onclick="closeVideoPopup()" class="ui-btn ui-btn-inline ui-icon-arrow-r ui-btn-icon-right ui-btn-a">Begynn å bruke systemet</a>
+			</div>
+		</div>
+
+		<!-- Main page -->
 		<div data-role="page" id="mainPage">
 			<div data-role="content">
 				<!-- Mobility index image (MIImg) -->
@@ -39,6 +55,7 @@
 						<div id="MIImgInnerWrapper">
 							<span class="verticalAlignHelper"></span><img src="//:0" alt="Mobility index" id="MIImg"/>
 						</div>
+						<br>
 					</div>
 				</div>
 
@@ -75,14 +92,31 @@
 				</p>
 				<a href="#settingsPage" id="settingsBtn" class="ui-btn ui-corner-all ui-btn-inline ui-icon-gear ui-btn-icon-left greyBtn" data-transition="flip">Innstillinger</a>
 			</div>
-			
 		</div>
 
 
+		<!-- MI chart popup -->
+		<div data-role="page" data-dialog="true" data-close-btn="right" id="michart">
+			<div class="popupHeader" data-role="header" data-theme="b">
+				<h1>-</h1>
+			</div>
+			<div role="main" data-role="content">
+				<!-- Mobility idx chart -->
+				<div id="mobilityChartContainer" class="pageMainElement">
+					<div class="well chartWell">
+						<div id="mobilityChart"></div>
+					</div>
+				</div>
+				<br>
+				<a data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Tilbake</a>
+			</div>
+		</div>
+
+			
 
 		<!--  Exercise info page, AI  -->
 		<div data-role="page" data-dialog="true" data-close-btn="right" id="exercise-info-page-AI">
-			<div class="exerciseInfoHeader" data-role="header" data-theme="b">
+			<div class="popupHeader" data-role="header" data-theme="b">
 				<h1>-</h1>
 			</div>
 
@@ -96,12 +130,11 @@
 		</div> <!-- /exercise info page, AI -->
 
 
-		<<!--  Exercise info page, BI  -->
+		<!--  Exercise info page, BI  -->
 		<div data-role="page" data-dialog="true" data-close-btn="right" id="exercise-info-page-BI">
-			<div class="exerciseInfoHeader" data-role="header" data-theme="b">
+			<div class="popupHeader" data-role="header" data-theme="b">
 				<h1>-</h1>
 			</div>
-
 			<div role="main" class="ui-content">
 				<h1 id="exerciseHeaderBI"></h1>
 				<img id="exerciseImgBI" class="exerciseImg" src="//:0"/>
@@ -130,6 +163,9 @@
 
 				<div id="settingsBtnGroup">
 					<a href="#mainPage" onclick="closeSettingsView()" id="backBtn" class="ui-btn ui-corner-all ui-icon-back ui-btn-icon-left greyBtn" data-transition="flip">Tilbake</a>
+					<a onclick="openVideoPopup()" data-rel="popup" class="ui-btn ui-corner-all ui-icon-info ui-btn-icon-left greyBtn">Hjelp</a>
+					<!--<a onclick="openMIChartPopup()" data-rel="popup" class="ui-btn ui-corner-all ui-icon-info ui-btn-icon-left" id="michartOpenBtn">Mobilitetsindeks over tid</a>-->
+					
 					<!--<a href="#mainPage" onclick="saveChanges()" id="saveBtn" class="ui-btn ui-corner-all ui-icon-check ui-btn-icon-left greenBtn" data-transition="flip">Lagre endringer</a>
 					<a href="#popupDialog" id="cancelBtn" data-rel="popup" data-position-to="window" class="ui-btn ui-corner-all ui-icon-delete ui-btn-icon-left greyBtn">Lukk uten å lagre</a>-->
 					<a href="" onclick="logout()" id="logoutBtn" class="ui-btn ui-corner-all ui-icon-power ui-btn-icon-left redBtn">Logg ut</a>

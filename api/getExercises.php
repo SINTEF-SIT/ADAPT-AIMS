@@ -5,7 +5,7 @@
 	function readDB() {
 		include('../inc/db.inc.php');
 
-		if ($stmt = $conn->prepare("SELECT * FROM  Exercises;")) {
+		if ($stmt = $conn->prepare("SELECT * FROM Exercises;")) {
 			$stmt->execute();
 			$result = $stmt->get_result();
 			$stmt->close();

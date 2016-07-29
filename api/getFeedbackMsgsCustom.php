@@ -43,8 +43,8 @@
 
 	if ($tokenUserID != null) {	
 
-		if (isset($_GET["userID"])) {
-			$res = readDB($_GET["userID"], $tokenUserID);
+		if (isset($_GET["seniorUserID"])) {
+			$res = readDB($_GET["seniorUserID"], $tokenUserID);
 
 			if (empty($res)) {
 				deliver_response(200, "Ingen feedback-meldinger er lagret i databasen.", NULL);

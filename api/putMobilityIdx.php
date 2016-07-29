@@ -10,30 +10,24 @@
 			$stmt->execute();
 			$result = $stmt->get_result();
 			$stmt->close();
-			$conn->close();
 
 			if (mysqli_num_rows($result) > 0) {
 				$row = mysqli_fetch_assoc($result);
 				if (checkExpertSeniorLink($conn, $expertUserID, $row["userID"])) {
 
-					if ($stmt = $conn->prepare("UPDATE MobilityIndexes SET timeCalculated=NOW(), value=? WHERE mobilityIndexID=?;")) {
+					if ($stmt = $conn->prepare("UPDATE MobilityIndexes SET timeCalculated=UTC_TIMESTAMP(), value=? WHERE mobilityIndexID=?;")) {
 						$stmt->bind_param("di", $mobilityIdx, $mobilityIndexID);
 						$stmt->execute();
 
 						$stmt->close();
 						$conn->close();
 						return true;
-					} else {
-						$conn->close();
-						return false;
 					}
-				} else {
-					return false;
 				}
-			} else {
-				return false;
 			}
-		}		
+		}
+		$conn->close();
+		return false;		
 	}
 
 	$tokenUserID = validateToken();

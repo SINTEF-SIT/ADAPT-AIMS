@@ -47,7 +47,7 @@
 						}
 					}
 				} else { // Fetch default feedback msg based on current AI/BI value 
-					if ($stmt = $conn->prepare("SELECT fmd.msgID, fmd.feedbackText, fmd.category, fmd.idx, e.* 
+					if ($stmt = $conn->prepare("SELECT fmd.msgID, fmd.feedbackText, fmd.category, e.* 
 						FROM FeedbackMsgDefault AS fmd 
 						LEFT JOIN Exercises AS e ON fmd.exerciseID = e.exerciseID
 						WHERE fmd.category=? AND fmd.idx=?

@@ -13,6 +13,7 @@
 		$height = isset($_POST["height"]) ? $_POST["height"] : NULL;
 		$falls3Mths = isset($_POST["falls3Mths"]) ? $_POST["falls3Mths"] : NULL;
 		$falls12Mths = isset($_POST["falls12Mths"]) ? $_POST["falls12Mths"] : NULL;
+		$comment = isset($_POST["comment"]) ? encrypt($_POST["comment"]) : NULL;
 
 		$usesWalkingAid = isset($_POST["walkingAid"]) ? "1" : "0";
 		$livingIndependently = isset($_POST["livingIndependently"]) ? "1" : "1";
@@ -26,8 +27,8 @@
 
 			$seniorUserID = (int) mysqli_insert_id($conn);
 
-			if ($stmt = $conn->prepare("INSERT INTO SeniorUsers (userID, address, zipCode, city, phoneNumber, birthDate, isMale, weight, height, usesWalkingAid, livingIndependently, numFalls3Mths, numFalls12Mths, dateJoinedAdapt, active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?, NOW(), b'1')")) {
-				$stmt->bind_param("isssssiiiiiii", $seniorUserID, $address, $zipCode, $city, $phone, encrypt($_POST["birthDate"]), $_POST["isMale"], $weight, $height, $usesWalkingAid, $livingIndependently, $falls3Mths, $falls12Mths);
+			if ($stmt = $conn->prepare("INSERT INTO SeniorUsers (userID, address, zipCode, city, phoneNumber, birthDate, isMale, weight, height, usesWalkingAid, livingIndependently, numFalls3Mths, numFalls12Mths, comment, dateJoinedAdapt, active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?, NOW(), b'1')")) {
+				$stmt->bind_param("isssssiiiiiiis", $seniorUserID, $address, $zipCode, $city, $phone, encrypt($_POST["birthDate"]), $_POST["isMale"], $weight, $height, $usesWalkingAid, $livingIndependently, $falls3Mths, $falls12Mths, $comment);
 				$stmt->execute();
 
 				if ($stmt = $conn->prepare("INSERT INTO ExpertSeniorLink (expertUserID, seniorUserID) VALUES (?,?)")) {

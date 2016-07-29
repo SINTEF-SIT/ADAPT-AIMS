@@ -9,7 +9,7 @@
 			
 			$exerciseID = (isset($_POST["exerciseID"]) && $_POST["exerciseID"] != "-1") ? $_POST["exerciseID"] : NULL;
 
-			if ($stmt = $conn->prepare("INSERT INTO FeedbackMsgCustom (userID, feedbackText, timeCreated, category, exerciseID) VALUES (?, ?, NOW(), ?, ?);")) {
+			if ($stmt = $conn->prepare("INSERT INTO FeedbackMsgCustom (userID, feedbackText, timeCreated, category, exerciseID) VALUES (?, ?, UTC_TIMESTAMP(), ?, ?);")) {
 				$stmt->bind_param("isii", $seniorUserID, encrypt($feedbackText), $category, $exerciseID);
 				$stmt->execute();
 

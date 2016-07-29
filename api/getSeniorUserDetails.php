@@ -12,11 +12,7 @@
 			}
 		}
 
-		if ($stmt = $conn->prepare("SELECT u.userID, u.firstName, u.lastName, u.email, 
-				su.address, su.zipCode, su.city, su.phoneNumber, su.birthDate, su.isMale, 
-				su.weight, su.height, su.numFalls3Mths, su.numFalls12Mths, su.usesWalkingAid, 
-				su.livingIndependently, su.dateJoinedAdapt, su.showPersonalizedAIFeedback, 
-				su.showPersonalizedBIFeedback, su.comment
+		if ($stmt = $conn->prepare("SELECT su.*, u.firstName, u.lastName, u.email
 				FROM Users AS u
 				INNER JOIN SeniorUsers AS su ON u.userID = su.userID
 				WHERE u.userID = ?;")) {

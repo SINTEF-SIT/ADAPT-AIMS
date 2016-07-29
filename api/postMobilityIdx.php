@@ -6,7 +6,7 @@
 		include('../inc/db.inc.php');
 
 		if (checkExpertSeniorLink($conn, $expertUserID, $seniorUserID)) {
-			if ($stmt = $conn->prepare("INSERT INTO MobilityIndexes (userID, timeCalculated, timeDataCollected, value) VALUES (?, NOW(), ?, ?);")) {
+			if ($stmt = $conn->prepare("INSERT INTO MobilityIndexes (userID, timeCalculated, timeDataCollected, value) VALUES (?, UTC_TIMESTAMP(), ?, ?);")) {
 				$stmt->bind_param("isd", $seniorUserID, $timeDataCollected, $mobilityIdx);
 				$stmt->execute();
 
