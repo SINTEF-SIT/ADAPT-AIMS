@@ -2,11 +2,11 @@
 	include('deliver_response.inc.php');
 	include('../inc/jwt.inc.php');
 
-	function wirteDB($mobilityIdx, $mobilityIndexID, $expertUserID) {
+	function wirteDB($balanceIdx, $balanceIndexID, $expertUserID) {
 		include('../inc/db.inc.php');
 
-		if ($stmt = $conn->prepare("SELECT userID FROM MobilityIndexes WHERE mobilityIndexID = ?;")) {
-			$stmt->bind_param("i", $mobilityIndexID);
+		if ($stmt = $conn->prepare("SELECT userID FROM BalanceIndexes WHERE balanceIndexID = ?;")) {
+			$stmt->bind_param("i", $balanceIndexID);
 			$stmt->execute();
 			$result = $stmt->get_result();
 			$stmt->close();
@@ -15,8 +15,8 @@
 				$row = mysqli_fetch_assoc($result);
 				if (checkExpertSeniorLink($conn, $expertUserID, $row["userID"])) {
 
-					if ($stmt = $conn->prepare("UPDATE MobilityIndexes SET timeCalculated=UTC_TIMESTAMP(), value=? WHERE mobilityIndexID=?;")) {
-						$stmt->bind_param("di", $mobilityIdx, $mobilityIndexID);
+					if ($stmt = $conn->prepare("UPDATE BalanceIndexes SET timeCalculated=UTC_TIMESTAMP(), value=? WHERE balanceIndexID=?;")) {
+						$stmt->bind_param("di", $balanceIdx, $balanceIndexID);
 						$stmt->execute();
 
 						$stmt->close();
@@ -33,14 +33,14 @@
 	$tokenUserID = validateToken();
 
 	if ($tokenUserID != null) {
-		if (isset($_POST["mobilityIdx"]) && isset($_POST["mobilityIndexID"])) {
-			$mobilityIdx = $_POST["mobilityIdx"];
-	    	$mobilityIndexID = $_POST["mobilityIndexID"];
+		if (isset($_POST["balanceIdx"]) && isset($_POST["balanceIndexID"])) {
+			$balanceIdx = $_POST["balanceIdx"];
+	    	$balanceIndexID = $_POST["balanceIndexID"];
 
-			$dbWriteSuccess = wirteDB($mobilityIdx, $mobilityIndexID, $tokenUserID);
+			$dbWriteSuccess = wirteDB($balanceIdx, $balanceIndexID, $tokenUserID);
 
 			if ($dbWriteSuccess) {
-				deliver_response(200, "Verdien MI=" . $mobilityIdx . " ble lagret i databasen.", true);
+				deliver_response(200, "Verdien BI=" . $balanceIdx . " ble lagret i databasen.", true);
 			} else {
 				deliver_response(200, "Det ble ikke opprettet forbindelse med databasen.", false);
 			}

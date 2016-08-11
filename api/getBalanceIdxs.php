@@ -12,7 +12,7 @@
 			}
 		}
 
-		if ($stmt = $conn->prepare("SELECT value, timeDataCollected, timeCalculated
+		if ($stmt = $conn->prepare("SELECT balanceIndexID, value, timeDataCollected, timeCalculated
 				FROM BalanceIndexes
 				WHERE userID=?
 				ORDER BY timeDataCollected ASC;")) {

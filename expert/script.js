@@ -15,10 +15,12 @@ var token; // The JWT used for communicating with the API
 
 var exercises; // Data about the exercises that can be recommended to the senior users
 
-// If expert user tries to submit a new MI with a date that already has an MI
+// If expert user tries to submit a new MI/BI/AI with a date that already has an MI/BI/AI
 // for this senior user, a prompt appears asking to confirm overwrite. The form
 // data is stored here temporarily.
 var tempMIFormData = null;
+var tempBIFormData = null;
+var tempAIFormData = null;
 
 // The chart objects and options for these
 var mobilityChart = null;
@@ -169,6 +171,7 @@ $(document).ready(function() {
 		}
 
 		// Empty the MI input field
+		$('#mobilityIdxDatePicker').val("");
 		$('#mobilityIdxInputField').val("");
 
 		return false; // Returns false to stop the default form behaviour
@@ -188,23 +191,29 @@ $(document).ready(function() {
 		// Serialize the form data and append the senior user ID
 		formData = $("#balanceIdxForm").serialize();
 		formData += "&userID=" + $activeUserData.userID;
-		
-		$.ajax({
-			type: "POST",
-			beforeSend: function (request) {
-				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-			},
-			url: "http://vavit.no/adapt-staging/api/postBalanceIdx.php",
-			data: formData,
-			success: function(data, status) { // If the API request is successful
-				setActiveUser($activeUserData.userID, false); // Sets the active user, which in turn updates the active user data and charts
-				showToast("#toastBalanceIdxManualForm", true, data.status_message); // Shows toast with success msg
-			},
-			error: function(data, status) { // If the API request fails
-				hideLoader(); // Hides the loading widget
-				showToast("#toastBalanceIdxManualForm", false, data.status_message); // Shows toast with error msg
+
+		// Check if a BI value is already registered for the given date
+		var match = null;
+		for (var i=0; i<$activeUserData.balanceIdxs.length; i++) {
+			if ($activeUserData.balanceIdxs[i].timeDataCollected == $("#balanceIdxDatePicker").val()) {
+				match = $activeUserData.balanceIdxs[i];
 			}
-		});
+		}
+
+		if (match == null) {
+			// No conflicting dates. Form data is sent to DB.
+			writeNewBI(formData, false);
+		} else {
+			// A match was found for the submitted date in the DB.
+			// Page for confirming overwrite is prepared and displayed.
+			formData += "&balanceIndexID=" + match.balanceIndexID;
+			tempBIFormData = formData;
+			$("#overwriteBIDialogOldValue").html(match.value);
+			$("#overwriteBIDialogDate").html(match.timeDataCollected);
+			$("#overwriteBIDialogNewValue").html($balanceIdxValue);
+			
+			$.mobile.changePage( "index.html#confirm-overwrite-bi-dialog", { transition: "pop" });
+		}
 
 		// Empties the form
 		$('#balanceIdxDatePicker').val("");
@@ -228,22 +237,29 @@ $(document).ready(function() {
 		// Serialize the form data and append the senior user ID
 		formData = $("#activityIdxForm").serialize();
 		formData += "&userID=" + $activeUserData.userID;
-		$.ajax({
-			type: "POST",
-			beforeSend: function (request) {
-				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-			},
-			url: "http://vavit.no/adapt-staging/api/postActivityIdx.php",
-			data: formData,
-			success: function(data, status) { // If the API request is successful
-				setActiveUser($activeUserData.userID, false); // Sets the active user, which in turn updates the active user data and charts
-				showToast("#toastActivityIdxManualForm", true, data.status_message); // Shows toast with success msg
-			},
-			error: function(data, status) {
-				hideLoader(); // Hides the loading widget
-				showToast("#toastActivityIdxManualForm", false, data.status_message); // Shows toast with error msg
+		
+		// Check if an AI value is already registered for the given date
+		var match = null;
+		for (var i=0; i<$activeUserData.activityIdxs.length; i++) {
+			if ($activeUserData.activityIdxs[i].timeDataCollected == $("#activityIdxDatePicker").val()) {
+				match = $activeUserData.activityIdxs[i];
 			}
-		});
+		}
+
+		if (match == null) {
+			// No conflicting dates. Form data is sent to DB.
+			writeNewAI(formData, false);
+		} else {
+			// A match was found for the submitted date in the DB.
+			// Page for confirming overwrite is prepared and displayed.
+			formData += "&activityIndexID=" + match.activityIndexID;
+			tempAIFormData = formData;
+			$("#overwriteAIDialogOldValue").html(match.value);
+			$("#overwriteAIDialogDate").html(match.timeDataCollected);
+			$("#overwriteAIDialogNewValue").html($activityIdxValue);
+			
+			$.mobile.changePage( "index.html#confirm-overwrite-ai-dialog", { transition: "pop" });
+		}
 		
 		// Empties the form
 		$('#activityIdxDatePicker').val("");
@@ -673,7 +689,6 @@ function setActiveUser(userID, changePage) {
 			}, 
 			success: function(data, status) { // If the API request is successful
 				var chartDataJSON = data.data;
-				if ($activeUserData == null) $activeUserData = {}; // Create empty object if $activeUserData has not been created yet
 				$activeUserData.mobilityIdxs = chartDataJSON; // Store the MI values in $activeUserData
 
 				if (data.data != null) { // Check if API returned any MI values
@@ -779,6 +794,7 @@ function setActiveUser(userID, changePage) {
 			}, 
 			success: function(data, status) { // If the API request is successful
 				var balanceChartDataJSON = data.data;
+				$activeUserData.balanceIdxs = balanceChartDataJSON; // Store the BI values in $activeUserData
 				var balanceChartData = [];
 
 				if (balanceChartDataJSON != null) {
@@ -892,6 +908,7 @@ function setActiveUser(userID, changePage) {
 			}, 
 			success: function(data, status) { // If the API request is successful
 				var activityChartDataJSON = data.data;
+				$activeUserData.activityIdxs = activityChartDataJSON; // Store the AI values in $activeUserData
 				if (activityChartDataJSON != null) {
 					var activityChartData = [];
 					for (var i=0; i<activityChartDataJSON.length; i++) {
@@ -1018,13 +1035,29 @@ function submitCustomFeedbackMsg(formData, toastID, isAI) {
 
 
 //********************************************************************
-//************** Called from the confirmation dialog *****************
-//*************  about overwriting existing MI value. ****************
+//* Called from the confirm dialog for overwriting existing MI value *
 //********************************************************************
 function updateMI(doUpdate) {
 	if (doUpdate) writeNewMI(tempMIFormData, true);
 	tempMIFormData = null;
 }
+
+//********************************************************************
+//* Called from the confirm dialog for overwriting existing BI value *
+//********************************************************************
+function updateBI(doUpdate) {
+	if (doUpdate) writeNewBI(tempBIFormData, true);
+	tempBIFormData = null;
+}
+
+//********************************************************************
+//* Called from the confirm dialog for overwriting existing MI value *
+//********************************************************************
+function updateAI(doUpdate) {
+	if (doUpdate) writeNewAI(tempAIFormData, true);
+	tempAIFormData = null;
+}
+
 
 //********************************************************************
 //****************** Writes new/updates MI to DB *********************
@@ -1067,6 +1100,74 @@ function writeNewMI(formData, update) {
 		error: function(data, status) {
 			hideLoader(); // Hides the loading widget
 			showToast("#toastMobilityIdxForm", false, data.status_message); // Shows toast with error msg
+		}
+	});
+}
+
+//********************************************************************
+//****************** Writes new/updates BI to DB *********************
+//********************************************************************
+function writeNewBI(formData, update) {
+	showLoader(); // Shows the loading widget
+
+	// Calls different API depending on whether the data is 
+	// stored as a new entry, or updating an existing entry
+	var urlPart = (update ? "put" : "post"); 
+	
+	$.ajax({
+		type: "POST",
+		beforeSend: function (request) {
+			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+		},
+		url: "http://vavit.no/adapt-staging/api/" + urlPart + "BalanceIdx.php",
+		data: formData,
+		success: function(data, status) { // If the API request is successful
+			hideLoader(); // Hides the loading widget
+			if (data.data) {
+				showToast("#toastBalanceIdxManualForm", true, data.status_message); // Shows toast with success msg
+			} else {
+				showToast("#toastBalanceIdxManualForm", false, data.status_message); // Shows toast with error msg
+			}
+			
+			setActiveUser($activeUserData.userID, false); // Sets the active user, which in turn updates the active user data and charts
+		},
+		error: function(data, status) {
+			hideLoader(); // Hides the loading widget
+			showToast("#toastBalanceIdxManualForm", false, data.status_message); // Shows toast with error msg
+		}
+	});
+}
+
+//********************************************************************
+//****************** Writes new/updates BI to DB *********************
+//********************************************************************
+function writeNewAI(formData, update) {
+	showLoader(); // Shows the loading widget
+
+	// Calls different API depending on whether the data is 
+	// stored as a new entry, or updating an existing entry
+	var urlPart = (update ? "put" : "post"); 
+	
+	$.ajax({
+		type: "POST",
+		beforeSend: function (request) {
+			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+		},
+		url: "http://vavit.no/adapt-staging/api/" + urlPart + "ActivityIdx.php",
+		data: formData,
+		success: function(data, status) { // If the API request is successful
+			hideLoader(); // Hides the loading widget
+			if (data.data) {
+				showToast("#toastActivityIdxManualForm", true, data.status_message); // Shows toast with success msg
+			} else {
+				showToast("#toastActivityIdxManualForm", false, data.status_message); // Shows toast with error msg
+			}
+			
+			setActiveUser($activeUserData.userID, false); // Sets the active user, which in turn updates the active user data and charts
+		},
+		error: function(data, status) {
+			hideLoader(); // Hides the loading widget
+			showToast("#toastActivityIdxManualForm", false, data.status_message); // Shows toast with error msg
 		}
 	});
 }
@@ -1349,7 +1450,9 @@ function handleBIFileSelect(evt) {
 function readCSVFile(isAI) {
 	showLoader(); // Shows the loading widget
 
+	var toastID = (isAI ? "#toastActivityIdxFileUpload" : "#toastBalanceIdxFileUpload");
 	var file = null;
+
 	if (isAI) {
 		if (CSVFileAI != null) {
 			file = CSVFileAI;
@@ -1384,18 +1487,43 @@ function readCSVFile(isAI) {
 				// check valid value
 				var value = (isAI ? data[i].ai : data[i].bi);
 				if ($.isNumeric(value) && value >= 0 && value <= 5) {
-					validData.push(data[i]);	
+					data[i].value = value;
+
+					// Change date format to YYYY-MM-DD
+					var dateSplit = data[i].dato.split(".");
+					var dateCorrectFormat = dateSplit[2] + "-" + dateSplit[1] + "-" + dateSplit[0];
+					data[i].timeDataCollected = dateCorrectFormat;
+
+					var isValid = true;
+
+					// Check if a value is already set for one of the dates in the file
+					var compareDates = $activeUserData.balanceIdxs;
+					if (isAI) {
+						compareDates = $activeUserData.activityIdxs;
+					}
+
+					if (compareDates != null) {
+						for (var j=0; j<compareDates.length; j++) {
+							if (dateCorrectFormat == compareDates[j].timeDataCollected) {
+								alert("Det er allerede registrert en verdi på datoen " + dateCorrectFormat + ". For å overskrive, bruk det manuelle skjemaet.");
+								isValid = false;
+							}
+						}
+					}
+
+					if (isValid) {
+						validData.push(data[i]);
+					}
 				}
 			}
 		}
 
 		if (validData.length == 0) {
-			var toastID = (isAI ? "#toastActivityIdxFileUpload" : "#toastBalanceIdxFileUpload");
+			hideLoader(); // Hides the loading widget
 			showToast(toastID, false, "Ingen gyldige verdier ble funnet i filen.");
+		} else {
+			callAjaxPostIdx(validData, 0, 0, 0, isAI); // Call function to send data to API
 		}
-			
-		callAjaxPostAcitivtyIdx(validData, 0, 0, 0, isAI); // Call function to send data to API
-
 	};
 	reader.onerror = function() {
 		alert('Kunne ikke lese filen ' + file.fileName);
@@ -1407,10 +1535,7 @@ function readCSVFile(isAI) {
 //********************************************************************
 //******** Recursive function that sends AI or BI data to API ********
 //********************************************************************
-function callAjaxPostAcitivtyIdx(inputData, idx, successCounter, errorCounter, isAI) {
-	var dateSplit = inputData[idx].dato.split(".");
-	//var date = new Date(dateSplit[2], dateSplit[1], dateSplit[0]);
-
+function callAjaxPostIdx(inputData, idx, successCounter, errorCounter, isAI) {
 	var apiUrl = null;
 	var valueFieldName = null;
 	if (isAI) {
@@ -1422,9 +1547,9 @@ function callAjaxPostAcitivtyIdx(inputData, idx, successCounter, errorCounter, i
 	}
 	
 	// Builds form data string
-	var formData = "userID=" + $activeUserData.userID 
-		+ "&timeDataCollected=" + dateSplit[2] + "-" + dateSplit[1] + "-" + dateSplit[0] 
-		+ "&" + valueFieldName + "=" + inputData[idx].ai;
+	var formData = "userID=" + $activeUserData.userID
+		+ "&timeDataCollected=" + inputData[idx].timeDataCollected
+		+ "&" + valueFieldName + "=" + inputData[idx].value;
 	
 	$.when($.ajax({
 		type: "POST",
@@ -1444,7 +1569,7 @@ function callAjaxPostAcitivtyIdx(inputData, idx, successCounter, errorCounter, i
 		if (nextIdx == inputData.length) { // If function has gone through all feedback messages: exit and show toast
 			showNotificationActivityIdxFileUpload(successCounter, errorCounter, isAI);
 		} else { // Recursively call the function with the next idx
-			callAjaxPostAcitivtyIdx(inputData, nextIdx, successCounter, errorCounter, isAI);
+			callAjaxPostIdx(inputData, nextIdx, successCounter, errorCounter, isAI);
 		}
 	});
 }
@@ -1468,6 +1593,8 @@ function showNotificationActivityIdxFileUpload(successCounter, errorCounter, isA
 		var successMsg = successCounter + " oppføring" + plural + " ble lagret i databasen.";
 		showToast(toastID, true, successMsg);
 	}
+
+	setActiveUser($activeUserData.userID, false); // Sets the active user, which in turn updates the DOM with new user data
 }
 
 

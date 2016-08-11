@@ -234,23 +234,6 @@
 
 
 		<!-- ******************************************************* -->
-		<!-- ************* CONFIRM OVERWRITE MI DIALOG ************* -->
-		<!-- ******************************************************* -->
-		<div data-role="page" data-dialog="true" data-close-btn="right" id="confirm-overwrite-mi-dialog">
-			<div data-role="header" data-theme="b">
-				<h1>Bekreft ny MI</h1>
-			</div>
-
-			<div role="main" class="ui-content">
-				<h1>Erstatt eksisterende verdi?</h1>
-				<p>Verdien <span id="overwriteMIDialogOldValue"></span> er allerede registrert på datoen <span id="overwriteMIDialogDate"></span>. Vil du overskrive denne verdien med MI=<span id="overwriteMIDialogNewValue"></span>?
-				<a id="confirmOverwriteMIBtn" onclick="updateMI(true);" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Ja, lagre ny verdi</a>
-				<a onclick="updateMI(false);" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Nei, avbryt</a>
-			</div>
-		</div> <!-- /confirm overwrite mi dialog -->
-
-
-		<!-- ******************************************************* -->
 		<!-- ************** REGISTER BALANCE IDX PAGE ************** -->
 		<!-- ******************************************************* -->
 		<div data-role="page" id="register-bi-page">
@@ -380,6 +363,58 @@
 
 			</div><!-- /content -->
 		</div><!-- /register-ai-manual-page -->
+
+
+
+		<!-- ******************************************************* -->
+		<!-- ************* CONFIRM OVERWRITE MI DIALOG ************* -->
+		<!-- ******************************************************* -->
+		<div data-role="page" data-dialog="true" data-close-btn="right" id="confirm-overwrite-mi-dialog">
+			<div data-role="header" data-theme="b">
+				<h1>Bekreft ny MI</h1>
+			</div>
+
+			<div role="main" class="ui-content">
+				<h1>Erstatt eksisterende MI-verdi?</h1>
+				<p>Verdien <span id="overwriteMIDialogOldValue"></span> er allerede registrert på datoen <span id="overwriteMIDialogDate"></span>. Vil du overskrive denne verdien med MI=<span id="overwriteMIDialogNewValue"></span>?
+				<a id="confirmOverwriteMIBtn" onclick="updateMI(true);" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Ja, lagre ny verdi</a>
+				<a onclick="updateMI(false);" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Nei, avbryt</a>
+			</div>
+		</div> <!-- /confirm overwrite mi dialog -->
+
+
+		<!-- ******************************************************* -->
+		<!-- ************* CONFIRM OVERWRITE BI DIALOG ************* -->
+		<!-- ******************************************************* -->
+		<div data-role="page" data-dialog="true" data-close-btn="right" id="confirm-overwrite-bi-dialog">
+			<div data-role="header" data-theme="b">
+				<h1>Bekreft ny BI</h1>
+			</div>
+
+			<div role="main" class="ui-content">
+				<h1>Erstatt eksisterende BI-verdi?</h1>
+				<p>Verdien <span id="overwriteBIDialogOldValue"></span> er allerede registrert på datoen <span id="overwriteBIDialogDate"></span>. Vil du overskrive denne verdien med BI=<span id="overwriteBIDialogNewValue"></span>?
+				<a id="confirmOverwriteBIBtn" onclick="updateBI(true);" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Ja, lagre ny verdi</a>
+				<a onclick="updateBI(false);" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Nei, avbryt</a>
+			</div>
+		</div> <!-- /confirm overwrite bi dialog -->
+
+
+		<!-- ******************************************************* -->
+		<!-- ************* CONFIRM OVERWRITE AI DIALOG ************* -->
+		<!-- ******************************************************* -->
+		<div data-role="page" data-dialog="true" data-close-btn="right" id="confirm-overwrite-ai-dialog">
+			<div data-role="header" data-theme="b">
+				<h1>Bekreft ny AI</h1>
+			</div>
+
+			<div role="main" class="ui-content">
+				<h1>Erstatt eksisterende AI-verdi?</h1>
+				<p>Verdien <span id="overwriteAIDialogOldValue"></span> er allerede registrert på datoen <span id="overwriteAIDialogDate"></span>. Vil du overskrive denne verdien med AI=<span id="overwriteAIDialogNewValue"></span>?
+				<a id="confirmOverwriteAIBtn" onclick="updateAI(true);" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Ja, lagre ny verdi</a>
+				<a onclick="updateAI(false);" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Nei, avbryt</a>
+			</div>
+		</div> <!-- /confirm overwrite ai dialog -->
 
 
 		<!-- ******************************************************* -->
