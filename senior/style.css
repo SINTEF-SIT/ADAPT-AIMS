@@ -28,6 +28,10 @@ body {
 }
 
 
+#mainPage .ui-content {
+    padding: 0.5em 1em !important;
+}
+
 .well {
 	height: 100%;
 	width: 100%;
@@ -132,6 +136,12 @@ body {
 	max-height: 100%;
 	max-width: 100%;
 	margin: 0 auto;
+	cursor: pointer;
+}
+
+
+#michartOpenBtn {
+	margin: 30px;
 }
 
 
@@ -190,6 +200,7 @@ body {
 ** Mobility chart
 ***************************/
 #mobilityChartContainer {
+	height: 400px;
 	width: 80%;
 	margin: 0 auto;
 }
@@ -240,6 +251,7 @@ body {
 	font-weight: 100;
 	text-align: left;
 	padding-left: 10px;
+	margin-top: 0;
 }
 
 #lastUpdatedValue {

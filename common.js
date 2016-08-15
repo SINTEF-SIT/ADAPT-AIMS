@@ -22,16 +22,20 @@ function showToast(formID, success, msg) {
 
 function showLoader() {
 	// Displays a loading widget. Mainly used while doing ajax API calls.
-	$.mobile.loading( "show"/*, {
+	$('div.ui-loader').show();
+
+	/*$.mobile.loading( "show", {
 		text: '',
 		textVisible: false,
 		theme: 'a',
 		textonly: false,
 		html: ''
-    }*/);
+    });*/
 }
 
 function hideLoader() {
+	$('div.ui-loader').hide();
+	
 	// Hides the loading widget.
-	$.mobile.loading( "hide" );
+	//$.mobile.loading( "hide" );
 }

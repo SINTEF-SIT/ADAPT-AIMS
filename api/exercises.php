@@ -2,10 +2,10 @@
 	include('deliver_response.inc.php');
 	include('../inc/jwt.inc.php');
 
-	function readDB() {
+	function getData() {
 		include('../inc/db.inc.php');
 
-		if ($stmt = $conn->prepare("SELECT fmd.msgID, fmd.feedbackText, fmd.category, fmd.idx, e.* FROM FeedbackMsgDefault AS fmd LEFT JOIN Exercises AS e ON fmd.exerciseID = e.exerciseID;")) {
+		if ($stmt = $conn->prepare("SELECT * FROM Exercises;")) {
 			$stmt->execute();
 			$result = $stmt->get_result();
 			$stmt->close();
@@ -30,13 +30,23 @@
 	$tokenUserID = validateToken();
 
 	if ($tokenUserID != null) {	
-		
-		$res = readDB();
 
-		if (empty($res)) {
-			deliver_response(200, "Ingen feedback-meldinger er lagret i databasen.", NULL);
-		} else {
-			deliver_response(200, "Feedback funnet.", $res);
+		$method = $_SERVER['REQUEST_METHOD'];
+
+		switch ($method) {
+			case 'GET':
+				// Get data about physical exercises
+				$res = getData($seniorUserID, $tokenUserID);
+
+				if (empty($res)) {
+					deliver_response(200, "Ingen øvelser er funnet i databasen.", NULL);
+				} else {
+					deliver_response(200, "Øvelser funnet.", $res);
+				}
+				break;
+			default:
+				deliver_response(400, "Ugyldig forespørsel. Aksepterte forespørsel-typer: GET", NULL);
+				break;
 		}
 	} else {
 		deliver_response(401, "Autentisering feilet.", NULL);

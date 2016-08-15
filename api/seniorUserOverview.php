@@ -2,7 +2,7 @@
 	include('deliver_response.inc.php');
 	include('../inc/jwt.inc.php');
 
-	function readDB($expertUserID) {
+	function getData($expertUserID) {
 		include('../inc/db.inc.php');
 
 		if ($stmt = $conn->prepare("SELECT u.userID, u.firstName, u.lastName, su.birthDate
@@ -60,15 +60,24 @@
 	$tokenExpertUserID = validateToken();
 
 	if ($tokenExpertUserID != null) {
-		
-		$seniorUsers = readDB($tokenExpertUserID);
 
-		if (empty($seniorUsers)) {
-			deliver_response(200, "No results found.", NULL);
-		} else {
-			deliver_response(200, "Senior users found. Deccrypted birth date: " . $test, $seniorUsers);
+		$method = $_SERVER['REQUEST_METHOD'];
+
+		switch ($method) {
+			case 'GET':
+				// Get a summary of user data for all senior users an expert user has access to
+				$seniorUsers = getData($tokenExpertUserID);
+
+				if (empty($seniorUsers)) {
+					deliver_response(200, "No results found.", NULL);
+				} else {
+					deliver_response(200, "Senior users found. Deccrypted birth date: " . $test, $seniorUsers);
+				}
+				break;
+			default:
+				deliver_response(400, "Ugyldig forespørsel. Aksepterte forespørsel-typer: GET", NULL);
+				break;
 		}
-		
 	} else {
 		deliver_response(401, "Autentisering feilet.", NULL);
 	}

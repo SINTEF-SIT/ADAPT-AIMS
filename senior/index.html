@@ -53,7 +53,13 @@
 					<div id="MIImgWell" class="well">
 						<div id="MIImgHeader"></div>
 						<div id="MIImgInnerWrapper">
-							<span class="verticalAlignHelper"></span><img src="//:0" alt="Mobility index" id="MIImg"/>
+							<span class="verticalAlignHelper"></span><img src="//:0" alt="Mobility index" id="MIImg" onclick="openConfirmOpenMIChartPopup()">
+
+							<!-- Confirm open MI chart popup -->
+							<div data-role="popup" data-transition="pop" id="confirmOpenMIChartPopup">
+								<a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+								<a onclick="openMIChartPopup()" data-rel="popup" class="ui-btn ui-corner-all ui-icon-clock ui-btn-icon-left greyBtn" id="michartOpenBtn">Vis mobilitetsindeks over tid</a>
+							</div>
 						</div>
 						<br>
 					</div>
@@ -164,7 +170,6 @@
 				<div id="settingsBtnGroup">
 					<a href="#mainPage" onclick="closeSettingsView()" id="backBtn" class="ui-btn ui-corner-all ui-icon-back ui-btn-icon-left greyBtn" data-transition="flip">Tilbake</a>
 					<a onclick="openVideoPopup()" data-rel="popup" class="ui-btn ui-corner-all ui-icon-info ui-btn-icon-left greyBtn">Hjelp</a>
-					<!--<a onclick="openMIChartPopup()" data-rel="popup" class="ui-btn ui-corner-all ui-icon-info ui-btn-icon-left" id="michartOpenBtn">Mobilitetsindeks over tid</a>-->
 					
 					<!--<a href="#mainPage" onclick="saveChanges()" id="saveBtn" class="ui-btn ui-corner-all ui-icon-check ui-btn-icon-left greenBtn" data-transition="flip">Lagre endringer</a>
 					<a href="#popupDialog" id="cancelBtn" data-rel="popup" data-position-to="window" class="ui-btn ui-corner-all ui-icon-delete ui-btn-icon-left greyBtn">Lukk uten å lagre</a>-->
@@ -182,6 +187,12 @@
 					</div>
 				</div>
 			</div>
+		</div>
+
+		<div class="ui-loader ui-corner-all ui-body-a ui-loader-default" style="display: block;">
+			<span class="ui-icon ui-icon-loading">
+			</span>
+			<h1>loading</h1>
 		</div>
 
 	</body>

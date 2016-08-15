@@ -2,10 +2,13 @@ $(document).ready(function() {
 	// Listens for the submit of the login form
 	$("#loginForm").submit(function(e) {
 
+		var url = window.location.href;
+		url = url.substring(0, url.lastIndexOf("/") + 1);
+
 		formData = $("#loginForm").serialize();
 		$.ajax({
 			type: "POST",
-			url: "http://vavit.no/adapt-staging/api/login.php",
+			url: "api/login.php",
 			data: formData,
 			success: function(data, status) {
 				// If API call returns data (successful login):

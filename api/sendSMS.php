@@ -11,8 +11,6 @@
 			$msg = $_POST["msg"];
 			$phone = $_POST["phone"];
 
-			$username = '';
-			$authKey = ''; // api key, generated in-app
 
 			$keysms = new KeySMS;
 			$keysms->auth($username, $authKey);

@@ -40,7 +40,8 @@ $(document).delegate('#mainPage', 'pageshow', function () {
 	if (activityChart != null) activityChart.reflow();
 });
 
-$(document).delegate('#user-detail-page', 'pageshow', function () {
+
+$(document).delegate('#michart', 'pageshow', function () {
 	if (mobilityChart != null) mobilityChart.reflow();
 });
 
@@ -73,13 +74,13 @@ $(document).ready(function() {
 		/***************************
 		** Get user details
 		***************************/
-		url: "http://vavit.no/adapt-staging/api/getSeniorUserDetails.php?seniorUserID=" + seniorUserID,
+		url: "../api/seniorUserData.php?seniorUserID=" + seniorUserID,
 		type: 'GET',
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 		},
 		error: function(data, status) { // If the API request fails
-			console.log("Error attempting to call API getSeniorUserDetails.php with parameter seniorUserID=" + seniorUserID);
+			console.log("Error attempting to call API: GET request to seniorUserData.php with parameter seniorUserID=" + seniorUserID);
 		}, 
 		success: function(data, status) { // If the API request is successful
 			if (data.data) {
@@ -92,13 +93,13 @@ $(document).ready(function() {
 						/***************************
 						** Get user details
 						***************************/
-						url: "http://vavit.no/adapt-staging/api/putHasAccessedSystem.php?seniorUserID=" + seniorUserID,
+						url: "../api/hasAccessedSystem.php?seniorUserID=" + seniorUserID,
 						type: 'PUT',
 						beforeSend: function (request) {
 							request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 						},
 						error: function(data, status) { // If the API request fails
-							console.log("Error attempting to call API putHasAccessedSystem.php with parameter seniorUserID=" + seniorUserID);
+							console.log("Error attempting to call API: PUT request to hasAccessedSystem.php with parameter seniorUserID=" + seniorUserID);
 						}, 
 						success: function(data, status) { // If the API request is successful
 							console.log(data.status_message);
@@ -116,13 +117,13 @@ $(document).ready(function() {
 		/***************************
 		** Timestamp of most recent update
 		***************************/
-		url: "http://vavit.no/adapt-staging/api/getNewestChangeTime.php?seniorUserID=" + seniorUserID,
+		url: "../api/newestChangeTime.php?seniorUserID=" + seniorUserID,
 		type: 'GET',
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 		},
 		error: function(data, status) { // If the API request fails
-			console.log("Error attempting to call API getNewestChangeTime.php with parameter seniorUserID=" + seniorUserID);
+			console.log("Error attempting to call API: GET request to newestChangeTime.php with parameter seniorUserID=" + seniorUserID);
 		}, 
 		success: function(data, status) { // If the API request is successful
 			if (data.data) {
@@ -136,13 +137,13 @@ $(document).ready(function() {
 		//********************************************************************
 		//********** Get mobility indexes to populate the MI chart ***********
 		//********************************************************************
-		url: "http://vavit.no/adapt-staging/api/getMobilityIdxs.php?seniorUserID=" + seniorUserID,
+		url: "../api/mobilityIdx.php?seniorUserID=" + seniorUserID,
 		type: 'GET',
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 		},
 		error: function(data, status) {
-			console.log("Error attempting to call API getMobilityIdxs.php with parameter seniorUserID=" + seniorUserID);
+			console.log("Error attempting to call API: GET request to mobilityIdx.php with parameter seniorUserID=" + seniorUserID);
 			hideLoader(); // Hides the loading widget
 		}, 
 		success: function(data, status) { // If the API request is successful
@@ -196,7 +197,7 @@ $(document).ready(function() {
 					},
 					xAxis: {
 						type: 'datetime',
-						tickInterval: 24 * 3600 * 1000 // How frequent a tick is displayed on the axis (set in milliseconds)
+						minTickInterval: 24 * 3600 * 1000 // How frequent a tick is displayed on the axis (set in milliseconds)
 					},
 					yAxis: {
 						title: {
@@ -216,7 +217,9 @@ $(document).ready(function() {
 					tooltip: {
 						enabled: false // Hides the tooltip from being displayed while hovering
 					},
-					series: [{}]
+					series: [{
+						enableMouseTracking: false
+					}]
 				};
 
 				mobilityChartOptions.series[0].data = chartData;
@@ -225,7 +228,9 @@ $(document).ready(function() {
 				// No MI registered for this user yet
 				$("#MIImgHeader").html("<h3>Det er ikke registrert noen mobilitetsindeks ennå.</h3>"); // Writes to DOM
 				$("#MIImgInnerWrapper").hide(); // Hides the MI image
-				$("#michartOpenBtn").hide(); // Hides the button for opening the MI chart popup
+
+				// Hides the button for opening the MI chart popup
+				$("#michartOpenBtnSettingsPage").hide();
 			}
 		}
 	})).then(function(data, textStatus, jqXHR) {
@@ -233,14 +238,14 @@ $(document).ready(function() {
 			/***************************
 			** Balance chart
 			***************************/
-			url: "http://vavit.no/adapt-staging/api/getBalanceIdxs.php?seniorUserID=" + seniorUserID,
+			url: "../api/balanceIdx.php?seniorUserID=" + seniorUserID,
 			type: 'GET',
 			beforeSend: function (request) {
 				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 			},
 			error: function(data, status) { // If the API request fails
 				$("#balanceChartContainer").hide(); // Hide BI chart
-				console.log("Error attempting to call API getBalanceIdxs.php with parameter seniorUserID=" + seniorUserID);
+				console.log("Error attempting to call API: GET request to balanceIdx.php with parameter seniorUserID=" + seniorUserID);
 			}, 
 			success: function(data, status) { // If the API request is successful
 				var balanceChartDataJSON = data.data;
@@ -367,14 +372,14 @@ $(document).ready(function() {
 				/***************************
 				** Activity chart
 				***************************/
-				url: "http://vavit.no/adapt-staging/api/getActivityIdxs.php?seniorUserID=" + seniorUserID,
+				url: "../api/activityIdx.php?seniorUserID=" + seniorUserID,
 				type: 'GET',
 				beforeSend: function (request) {
 					request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 				},
 				error: function(data, status) { // If the API request fails
 					$("#activityChartContainer").hide(); // Hide AI chart
-					console.log("Error attempting to call API getActivityIdxs.php with parameter seniorUserID=" + seniorUserID);
+					console.log("Error attempting to call API: GET request to activityIdx.php with parameter seniorUserID=" + seniorUserID);
 				}, 
 				success: function(data, status) { // If the API request is successful
 					var activityChartDataJSON = data.data;
@@ -501,14 +506,14 @@ $(document).ready(function() {
 						/***************************
 						** Gets first feedback msg (if any)
 						***************************/
-						url: "http://vavit.no/adapt-staging/api/getFeedbackMsg.php?seniorUserID=" + seniorUserID 
+						url: "../api/feedback.php?seniorUserID=" + seniorUserID 
 							+ "&idx=" + firstFeedbackAjaxCall.idx + "&category=" + firstFeedbackAjaxCall.category,
 						type: 'GET',
 						beforeSend: function (request) {
 							request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 						},
 						error: function(data, status) { // If the API request fails
-							console.log("Error attempting to call API getFeedbackMsg.php with parameters idx=" 
+							console.log("Error attempting to call API: GET request to feedback.php with parameters idx=" 
 								+ firstFeedbackAjaxCall.idx + " and category=" + firstFeedbackAjaxCall.category);
 						}, 
 						success: function(data, status) { // If the API request is successful
@@ -536,7 +541,7 @@ $(document).ready(function() {
 								/***************************
 								** Gets the other feedback msg (if any)
 								***************************/
-								url: "http://vavit.no/adapt-staging/api/getFeedbackMsg.php?seniorUserID=" + seniorUserID 
+								url: "../api/feedback.php?seniorUserID=" + seniorUserID 
 								+ "&idx=" + secondFeedbackAjaxCall.idx + "&category=" + secondFeedbackAjaxCall.category,
 								type: 'GET',
 								beforeSend: function (request) {
@@ -544,7 +549,7 @@ $(document).ready(function() {
 								},
 								error: function(data, status) { // If the API request fails
 									hideLoader(); // Hides the loading widget
-									console.log("Error attempting to call API getFeedbackMsg.php with parameters idx=" 
+									console.log("Error attempting to call API: GET request to feedback.php with parameters idx=" 
 										+ secondFeedbackAjaxCall.idx + " and category=" + secondFeedbackAjaxCall.category);
 								}, 
 								success: function(data, status) { // If the API request is successful
@@ -953,6 +958,10 @@ function openVideoPopup() {
 function closeVideoPopup() {
 	$("#videoPopup").popup("close", {transition:"slidedown"});
 	$('#tutorialVideoiFrame').attr('src', "http://player.vimeo.com/video/107469289"); // Stops video playback
+}
+
+function openConfirmOpenMIChartPopup() {
+	$("#confirmOpenMIChartPopup").popup("open");
 }
 
 function openMIChartPopup() {

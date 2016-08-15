@@ -141,9 +141,11 @@ $(document).ready(function() {
 
 				// Check if an MI value is already registered for the given date
 				var match = null;
-				for (var i=0; i<$activeUserData.mobilityIdxs.length; i++) {
-					if ($activeUserData.mobilityIdxs[i].timeDataCollected == $("#mobilityIdxDatePicker").val()) {
-						match = $activeUserData.mobilityIdxs[i];
+				if ($activeUserData.mobilityIdxs) {
+					for (var i=0; i<$activeUserData.mobilityIdxs.length; i++) {
+						if ($activeUserData.mobilityIdxs[i].timeDataCollected == $("#mobilityIdxDatePicker").val()) {
+							match = $activeUserData.mobilityIdxs[i];
+						}
 					}
 				}
 
@@ -194,9 +196,11 @@ $(document).ready(function() {
 
 		// Check if a BI value is already registered for the given date
 		var match = null;
-		for (var i=0; i<$activeUserData.balanceIdxs.length; i++) {
-			if ($activeUserData.balanceIdxs[i].timeDataCollected == $("#balanceIdxDatePicker").val()) {
-				match = $activeUserData.balanceIdxs[i];
+		if ($activeUserData.balanceIdxs) {
+			for (var i=0; i<$activeUserData.balanceIdxs.length; i++) {
+				if ($activeUserData.balanceIdxs[i].timeDataCollected == $("#balanceIdxDatePicker").val()) {
+					match = $activeUserData.balanceIdxs[i];
+				}
 			}
 		}
 
@@ -240,9 +244,11 @@ $(document).ready(function() {
 		
 		// Check if an AI value is already registered for the given date
 		var match = null;
-		for (var i=0; i<$activeUserData.activityIdxs.length; i++) {
-			if ($activeUserData.activityIdxs[i].timeDataCollected == $("#activityIdxDatePicker").val()) {
-				match = $activeUserData.activityIdxs[i];
+		if ($activeUserData.activityIdxs) {
+			for (var i=0; i<$activeUserData.activityIdxs.length; i++) {
+				if ($activeUserData.activityIdxs[i].timeDataCollected == $("#activityIdxDatePicker").val()) {
+					match = $activeUserData.activityIdxs[i];
+				}
 			}
 		}
 
@@ -312,11 +318,11 @@ $(document).ready(function() {
 		formData += "&seniorUserID=" + $activeUserData.userID;
 		
 		$.ajax({
-			type: "POST",
+			type: "PUT",
 			beforeSend: function (request) {
 				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 			},
-			url: "http://vavit.no/adapt-staging/api/putUserData.php",
+			url: "../api/seniorUserData.php",
 			data: formData,
 			success: function(data, status) { // If the API request is successful
 				
@@ -357,7 +363,7 @@ $(document).ready(function() {
 			beforeSend: function (request) {
 				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 			},
-			url: "http://vavit.no/adapt-staging/api/postSeniorUser.php",
+			url: "../api/seniorUserData.php",
 			data: formData,
 			success: function(data, status) { // If the API request is successful
 				hideLoader(); // Hides the loading widget
@@ -385,11 +391,11 @@ $(document).ready(function() {
 		formData = $("#registerDefaultFeedbackForm").serialize(); // Serialize the form data
 
 		$.ajax({
-			type: "POST",
+			type: "PUT",
 			beforeSend: function (request) {
 				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 			},
-			url: "http://vavit.no/adapt-staging/api/putFeedbackMsgDefault.php",
+			url: "../api/feedbackDefault.php",
 			data: formData,
 			success: function(data, status) { // If the API request is successful
 				hideLoader(); // Hides the loading widget
@@ -417,14 +423,14 @@ function getDefaultFeedbackMsgs() {
 	showLoader(); // Shows the loading widget
 
 	$.when($.ajax({
-		url: "http://vavit.no/adapt-staging/api/getExercises.php",
+		url: "../api/exercises.php",
 		type: 'GET',
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 		},
 		error: function(data, status) {
 			hideLoader(); // Hides the loading widget
-			console.log("Error fetching data from API getSeniorUserOverview.");
+			console.log("Error fetching data from API: GET request to exercises.php");
 		},
 		success: function(data, status) { // If the API request is successful
 			exercises = data.data;
@@ -437,14 +443,14 @@ function getDefaultFeedbackMsgs() {
 	})).then(function(data, textStatus, jqXHR) {
 		if (exercises != null) {
 			$.ajax({
-				url: "http://vavit.no/adapt-staging/api/getFeedbackMsgsDefault.php",
+				url: "../api/feedbackDefault.php",
 				type: 'GET',
 				beforeSend: function (request) {
 					request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 				},
 				error: function(data, status) {
 					hideLoader(); // Hides the loading widget
-					console.log("Error fetching data from API getSeniorUserOverview.");
+					console.log("Error fetching data from API: GET request to feedbackDefault.");
 				},
 				success: function(data, status) { // If the API request is successful
 					hideLoader(); // Hides the loading widget
@@ -517,14 +523,14 @@ function generateExerciseDropdownOptionHTML(selectedID) {
 function getUserOverview() {
 	showLoader(); // Shows the loading widget
 	$.ajax({
-		url: "http://vavit.no/adapt-staging/api/getSeniorUserOverview.php",
+		url: "../api/seniorUserOverview.php",
 		type: 'GET',
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 		},
 		error: function(data, status) {
 			hideLoader(); // Hides the loading widget
-			console.log("Error fetching data from API getSeniorUserOverview.");
+			console.log("Error fetching data from API seniorUserOverview.");
 		},
 		success: function(data, status) { // If the API request is successful
 			hideLoader(); // Hides the loading widget
@@ -582,14 +588,14 @@ function getUserOverview() {
 /*function getNewestMobilityIdx(userID) {
 	showLoader(); // Shows the loading widget
 	$.ajax({
-		url: "http://vavit.no/adapt-staging/api/getNewestMobilityIdx.php?seniorUserID=" + userID,
+		url: "../api/mobilityIdx.php?seniorUserID=" + userID + "&getNewest=1",
 		type: 'GET',
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 		},
 		error: function(data, status) {
 			hideLoader(); // Hides the loading widget
-			console.log("Error fetching data from API getNewestMobilityIdx.");
+			console.log("Error fetching data from API mobilityIdx.");
 			return null;
 		},
 		success: function(data, status) { // If the API request is successful
@@ -648,7 +654,7 @@ function setActiveUser(userID, changePage) {
 		//********************************************************************
 		//**************** Get details about the senior user *****************
 		//********************************************************************
-		url: "http://vavit.no/adapt-staging/api/getSeniorUserDetails.php?seniorUserID=" + userID,
+		url: "../api/seniorUserData.php?seniorUserID=" + userID,
 		type: 'GET',
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
@@ -678,13 +684,13 @@ function setActiveUser(userID, changePage) {
 			//********************************************************************
 			//********** Get mobility indexes to populate the MI chart ***********
 			//********************************************************************
-			url: "http://vavit.no/adapt-staging/api/getMobilityIdxs.php?seniorUserID=" + userID,
+			url: "../api/mobilityIdx.php?seniorUserID=" + userID,
 			type: 'GET',
 			beforeSend: function (request) {
 				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 			},
 			error: function(data, status) {
-				console.log("Error attempting to call API getMobilityIdxs.php with parameter seniorUserID=" + userID);
+				console.log("Error attempting to call API: GET request to mobilityIdx.php with parameter seniorUserID=" + userID);
 				hideLoader(); // Hides the loading widget
 			}, 
 			success: function(data, status) { // If the API request is successful
@@ -784,13 +790,13 @@ function setActiveUser(userID, changePage) {
 			//********************************************************************
 			//********** Get balance indexes to populate the BI chart ************
 			//********************************************************************
-			url: "http://vavit.no/adapt-staging/api/getBalanceIdxs.php?seniorUserID=" + userID,
+			url: "../api/balanceIdx.php?seniorUserID=" + userID,
 			type: 'GET',
 			beforeSend: function (request) {
 				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 			},
 			error: function(data, status) {
-				console.log("Error attempting to call API getBalanceIdxs.php with parameter seniorUserID=" + userID);
+				console.log("Error attempting to call API: GET request to balanceIdx.php with parameter seniorUserID=" + userID);
 			}, 
 			success: function(data, status) { // If the API request is successful
 				var balanceChartDataJSON = data.data;
@@ -897,13 +903,13 @@ function setActiveUser(userID, changePage) {
 			//********** Get activity indexes to populate the AI chart ***********
 			//********************************************************************
 
-			url: "http://vavit.no/adapt-staging/api/getActivityIdxs.php?seniorUserID=" + userID,
+			url: "../api/activityIdx.php?seniorUserID=" + userID,
 			type: 'GET',
 			beforeSend: function (request) {
 				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 			},
 			error: function(data, status) {
-				console.log("Error attempting to call API getActivityIdxs.php with parameter seniorUserID=" + userID);
+				console.log("Error attempting to call API: GET request to activityIdx.php with parameter seniorUserID=" + userID);
 				hideLoader();
 			}, 
 			success: function(data, status) { // If the API request is successful
@@ -1012,7 +1018,7 @@ function submitCustomFeedbackMsg(formData, toastID, isAI) {
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 		},
-		url: "http://vavit.no/adapt-staging/api/postFeedbackMsgCustom.php",
+		url: "../api/feedbackCustom.php",
 		data: formData,
 		success: function(data, status) { // If the API request is successful
 			hideLoader(); // Hides the loading widget
@@ -1067,14 +1073,14 @@ function writeNewMI(formData, update) {
 
 	// Calls different API depending on whether the data is 
 	// stored as a new entry, or updating an existing entry
-	var urlPart = (update ? "put" : "post"); 
+	var requestType = (update ? "PUT" : "POST"); 
 	
 	$.ajax({
-		type: "POST",
+		type: requestType,
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 		},
-		url: "http://vavit.no/adapt-staging/api/" + urlPart + "MobilityIdx.php",
+		url: "../api/mobilityIdx.php",
 		data: formData,
 		success: function(data, status) { // If the API request is successful
 			hideLoader(); // Hides the loading widget
@@ -1112,14 +1118,14 @@ function writeNewBI(formData, update) {
 
 	// Calls different API depending on whether the data is 
 	// stored as a new entry, or updating an existing entry
-	var urlPart = (update ? "put" : "post"); 
+	var requestType = (update ? "PUT" : "POST"); 
 	
 	$.ajax({
-		type: "POST",
+		type: requestType,
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 		},
-		url: "http://vavit.no/adapt-staging/api/" + urlPart + "BalanceIdx.php",
+		url: "../api/balanceIdx.php",
 		data: formData,
 		success: function(data, status) { // If the API request is successful
 			hideLoader(); // Hides the loading widget
@@ -1146,14 +1152,14 @@ function writeNewAI(formData, update) {
 
 	// Calls different API depending on whether the data is 
 	// stored as a new entry, or updating an existing entry
-	var urlPart = (update ? "put" : "post"); 
+	var requestType = (update ? "PUT" : "POST"); 
 	
 	$.ajax({
-		type: "POST",
+		type: requestType,
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 		},
-		url: "http://vavit.no/adapt-staging/api/" + urlPart + "ActivityIdx.php",
+		url: "../api/activityIdx.php",
 		data: formData,
 		success: function(data, status) { // If the API request is successful
 			hideLoader(); // Hides the loading widget
@@ -1182,14 +1188,14 @@ function deleteUser() {
 	showLoader(); // Shows the loading widget
 	userID = $activeUserData.userID;
 	$.ajax({
-		url: "http://vavit.no/adapt-staging/api/putSeniorUserInactive.php?seniorUserID=" + userID,
+		url: "../api/seniorUserActiveStatus.php?seniorUserID=" + userID,
 		type: 'PUT',
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 		},
 		error: function(data, status) {
 			hideLoader(); // Hides the loading widget
-			console.log("Error writing to db through API putSeniorUserInactive.php with parameter seniorUserID=" + userID);
+			console.log("Error accessing API: PUT request to seniorUserActiveStatus.php with parameter seniorUserID=" + userID);
 		}, 
 		success: function(data, status) { // If the API request is successful
 			hideLoader(); // Hides the loading widget
@@ -1217,13 +1223,13 @@ function deleteUser() {
 //********************************************************************
 function getCustomFeedbackMsgs(userID) {
 	$.ajax({
-		url: "http://vavit.no/adapt-staging/api/getFeedbackMsgsCustom.php?seniorUserID=" + userID,
+		url: "../api/feedbackCustom.php?seniorUserID=" + userID,
 		type: 'GET',
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 		},
 		error: function(data, status) {
-			console.log("Error fetching data from API getFeedbackMsgsCustom.");
+			console.log("Error fetching data from API: GET request to feedbackCustom.php.");
 		},
 		success: function(data, status) { // If the API request is successful
 			var feedbackData = data.data;
@@ -1302,7 +1308,7 @@ function initCustomFeedbackFlipSwitches() {
 		var flipSwitchState = e.currentTarget.checked;
 		var flipSwitchStateBinary = flipSwitchState ? "1" : "0";
 
-		var url = "http://vavit.no/adapt-staging/api/putShowCustomFeedback.php?category=0&seniorUserID=" 
+		var url = "../api/showCustomFeedback.php?category=0&seniorUserID=" 
 			+ $activeUserData.userID + "&value=" + flipSwitchStateBinary;
 
 		$.ajax({
@@ -1312,7 +1318,7 @@ function initCustomFeedbackFlipSwitches() {
 				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 			},
 			error: function(data, status) {
-				console.log("Error writing to db through API putShowCustomFeedback.php with parameter category=0 and seniorUserID=" 
+				console.log("Error accessing API: PUT request to showCustomFeedback.php with parameter category=0 and seniorUserID=" 
 					+ $activeUserData.userID);
 				showToast("#toastPersonalizedFeedback", false, "Det oppstod en feil under skriving til databasen.");
 
@@ -1333,7 +1339,7 @@ function initCustomFeedbackFlipSwitches() {
 		var flipSwitchState = e.currentTarget.checked;
 		var flipSwitchStateBinary = flipSwitchState ? "1" : "0";
 
-		var url = "http://vavit.no/adapt-staging/api/putShowCustomFeedback.php?category=1&seniorUserID=" 
+		var url = "../api/showCustomFeedback.php?category=1&seniorUserID=" 
 				+ $activeUserData.userID + "&value=" + flipSwitchStateBinary;
 
 		$.ajax({
@@ -1343,7 +1349,7 @@ function initCustomFeedbackFlipSwitches() {
 				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 			},
 			error: function(data, status) {
-				console.log("Error writing to db through API putShowCustomFeedback.php with parameter category=1 and seniorUserID=" 
+				console.log("Error accessing API: PUT request to showCustomFeedback.php with parameter category=1 and seniorUserID=" 
 					+ $activeUserData.userID);
 				showToast("#toastPersonalizedFeedback", false, "Det oppstod en feil under skriving til databasen.");
 				hideLoader(); // Hides the loading widget
@@ -1539,10 +1545,10 @@ function callAjaxPostIdx(inputData, idx, successCounter, errorCounter, isAI) {
 	var apiUrl = null;
 	var valueFieldName = null;
 	if (isAI) {
-		apiUrl = "http://vavit.no/adapt-staging/api/postActivityIdx.php";
+		apiUrl = "../api/activityIdx.php";
 		valueFieldName = "activityIdx";
 	} else {
-		apiUrl = "http://vavit.no/adapt-staging/api/postBalanceIdx.php";
+		apiUrl = "../api/balanceIdx.php";
 		valueFieldName = "balanceIdx";
 	}
 	

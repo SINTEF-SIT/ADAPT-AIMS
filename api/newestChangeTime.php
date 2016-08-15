@@ -2,7 +2,7 @@
 	include('deliver_response.inc.php');
 	include('../inc/jwt.inc.php');
 
-	function readDB($seniorUserID, $tokenUserID) {
+	function getData($seniorUserID, $tokenUserID) {
 		include('../inc/db.inc.php');
 
 		// If the userID in the token belongs to an expert user, check that this expert is allowed to access this senior user's data
@@ -37,17 +37,28 @@
 	$tokenUserID = validateToken();
 
 	if ($tokenUserID != null) {
-		if (isset($_GET["seniorUserID"])) {
-			
-			$time = readDB($_GET["seniorUserID"], $tokenUserID);
 
-			if (empty($time)) {
-				deliver_response(200, "Ingen data er registrert ennå.", NULL);
-			} else {
-				deliver_response(200, "Timestamp funnet.", $time);
-			}
-		} else {
-			deliver_response(400, "Ugyldig forespørsel.", NULL);
+		$method = $_SERVER['REQUEST_METHOD'];
+
+		switch ($method) {
+			case 'GET':
+				// Get the most recent timeCalculated value for either MI, AI, BI or custom feedback.
+				if (isset($_GET["seniorUserID"])) {
+					
+					$time = getData($_GET["seniorUserID"], $tokenUserID);
+
+					if (empty($time)) {
+						deliver_response(200, "Ingen data er registrert ennå.", NULL);
+					} else {
+						deliver_response(200, "Timestamp funnet.", $time);
+					}
+				} else {
+					deliver_response(400, "Ugyldig GET-forespørsel: mangler parameter.", NULL);
+				}
+				break;
+			default:
+				deliver_response(400, "Ugyldig forespørsel. Aksepterte forespørsel-typer: GET", NULL);
+				break;
 		}
 	} else {
 		deliver_response(401, "Autentisering feilet.", NULL);
