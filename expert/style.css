@@ -67,7 +67,7 @@
 	border-bottom: 1px solid #ccc;
 }
 
-#activeUserName {
+#activeUserFullName {
 	text-align: center;
 }
 
@@ -174,4 +174,8 @@
 #registerDefaultFeedbackForm table th {
 	text-align: center;
 	font-size: 1.5em;
+}
+
+#charNum {
+	color: gray;
 }

@@ -39,3 +39,17 @@ function hideLoader() {
 	// Hides the loading widget.
 	//$.mobile.loading( "hide" );
 }
+
+
+function logout() {
+	// Removes localStorage values,
+	// and redirects to the login page.
+	localStorage.removeItem("firstname");
+	localStorage.removeItem("lastname");
+	localStorage.removeItem("userid");
+	localStorage.removeItem("username");
+	localStorage.removeItem("isexpert");
+	localStorage.removeItem("token");
+
+	window.location.replace("index.html");
+}

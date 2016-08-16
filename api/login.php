@@ -1,16 +1,16 @@
 <?php
 	include('deliver_response.inc.php');
 
-	function readDB($email, $password) {
+	function readDB($username, $password) {
 
 		include('../inc/db.inc.php');
 		include('../inc/jwt.inc.php');
 
-		$emailEncrypted = encrypt($email);
+		$usernameEncrypted = encrypt($username);
 		$passwordHashed = hashword($password);
 
-		if ($stmt = $conn->prepare("SELECT userID, firstName, lastName FROM Users WHERE email = ? and password = ? LIMIT 1")) {
-			$stmt->bind_param("ss", $emailEncrypted, $passwordHashed);
+		if ($stmt = $conn->prepare("SELECT userID, firstName, lastName FROM Users WHERE username = ? and password = ? LIMIT 1")) {
+			$stmt->bind_param("ss", $usernameEncrypted, $passwordHashed);
 			$stmt->execute();
 			$result = $stmt->get_result();
 			$stmt->close();
@@ -58,17 +58,18 @@
 			}
 			$stmt->close();
 		}
+		return null;
 	}
 
-	if (isset($_POST['email']) && isset($_POST['password'])) {
+	if (isset($_POST['username']) && isset($_POST['password'])) {
 
-		$email = $_POST['email'];
+		$username = $_POST['username'];
 		$password = $_POST['password'];
 
-		$userData = readDB($email, $password);
+		$userData = readDB($username, $password);
 
 		if (empty($userData)) {
-			deliver_response(200, "Ugyldig epost/passord.", NULL);
+			deliver_response(200, "Ugyldig brukernavn/passord.", NULL);
 		} else {
 			deliver_response(200, "Bruker funnet.", $userData);
 		}

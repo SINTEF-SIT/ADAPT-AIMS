@@ -11,12 +11,14 @@
 			$msg = $_POST["msg"];
 			$phone = $_POST["phone"];
 
+			$username = '99286869';
+			$authKey = '47ee61e1c5491d85af46dad9ffb29978'; // API key, generated in app.keysms.no
 
 			$keysms = new KeySMS;
 			$keysms->auth($username, $authKey);
 			$response = $keysms->sms($msg, array($phone));
 
-			deliver_response(200, "Følgende tekst ble sendt som SMS til " . $phone . ": '" . $msg . "'", true);
+			deliver_response(200, "SMSen ble sendt.", $response);
 			
 		} else {
 			deliver_response(400, "Ugyldig forespørsel.", NULL);

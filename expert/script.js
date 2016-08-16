@@ -10,7 +10,7 @@ var CSVFileBI = null; // Stores a CSV file for BI values when uploaded
 var expertUserID;
 var expertFirstName;
 var expertLastName;
-var expertEmail;
+var expertUsername;
 var token; // The JWT used for communicating with the API
 
 var exercises; // Data about the exercises that can be recommended to the senior users
@@ -93,13 +93,13 @@ $(document).on("pagebeforeshow", "#personalized-feedback-page", function () {
 //********************************************************************
 $(document).ready(function() {
 	// Checks if the token and user data exist in localStorage
-	if (localStorage.token && localStorage.userid && localStorage.firstname && localStorage.lastname && localStorage.email) {
+	if (localStorage.token && localStorage.userid && localStorage.firstname && localStorage.lastname && localStorage.username) {
 		// Fetches token and data about the logged in user from localStorage
 		token = localStorage.token;
 		expertUserID = localStorage.userid;
 		expertFirstName = localStorage.firstname;
 		expertLastName = localStorage.lastname;
-		expertEmail = localStorage.email;
+		expertUsername = localStorage.username;
 	} else {
 		// Redirect to login page
 		window.location.replace("../index.html");
@@ -312,35 +312,67 @@ $(document).ready(function() {
 	//********************************************************************
 	$("#editUserDataForm").submit(function(e){
 		showLoader(); // Shows the loading widget
-		
+
+		var username = $("#inputFieldEditUsername").val();
+		var usernameUnique = false;
+			
 		// Serialize the form data and append the senior user ID
 		formData = $("#editUserDataForm").serialize();
 		formData += "&seniorUserID=" + $activeUserData.userID;
-		
-		$.ajax({
-			type: "PUT",
+
+		$.when($.ajax({
+			type: "GET",
 			beforeSend: function (request) {
 				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 			},
-			url: "../api/seniorUserData.php",
-			data: formData,
+			url: "../api/checkUsernameAvailability.php?username=" + username,
 			success: function(data, status) { // If the API request is successful
 				
 				if (data.data) {
-					$activeUserData.firstName = $("#inputFieldEditFirstName").val();
-					$activeUserData.lastName = $("#inputFieldEditLastName").val();
-
-					setActiveUser($activeUserData.userID, false); // Sets the active user, which in turn updates the DOM with new user data
-					updateUsersTableRow(); // Updates the values in the row in the user overview table corresponding to the active user
-
-					showToast("#toastEditUserDataForm", true, data.status_message); // Shows toast with success msg
+					if (data.data == -1 || data.data == $activeUserData.userID) {
+						usernameUnique = true;
+					} else {
+						showToast("#toastEditUserDataForm", false, "Brukernavnet er allerede i bruk"); // Shows toast with error msg
+					}
 				} else {
-					showToast("#toastEditUserDataForm", false, data.status_message); // Shows toast with error msg
+					showToast("#toastEditUserDataForm", false, "Det ble ikke opprettet forbindelse med databasen"); // Shows toast with error msg
 				}
 			},
 			error: function(data, status) {
 				hideLoader(); // Hides the loading widget
-				showToast("#toastEditUserDataForm", false, data.status_message); // Shows toast with error msg
+				showToast("#toastEditUserDataForm", false, "Det oppstod en feil"); // Shows toast with error msg
+			}
+		})).then(function(data, textStatus, jqXHR) {
+
+			if (usernameUnique) {
+				$.ajax({
+					type: "PUT",
+					beforeSend: function (request) {
+						request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+					},
+					url: "../api/seniorUserData.php",
+					data: formData,
+					success: function(data, status) { // If the API request is successful
+						
+						if (data.data) {
+							$activeUserData.firstName = $("#inputFieldEditFirstName").val();
+							$activeUserData.lastName = $("#inputFieldEditLastName").val();
+
+							setActiveUser($activeUserData.userID, false); // Sets the active user, which in turn updates the DOM with new user data
+							updateUsersTableRow(); // Updates the values in the row in the user overview table corresponding to the active user
+
+							showToast("#toastEditUserDataForm", true, data.status_message); // Shows toast with success msg
+						} else {
+							showToast("#toastEditUserDataForm", false, data.status_message); // Shows toast with error msg
+						}
+					},
+					error: function(data, status) {
+						hideLoader(); // Hides the loading widget
+						showToast("#toastEditUserDataForm", false, data.status_message); // Shows toast with error msg
+					}
+				});
+			} else {
+				hideLoader(); // Hides the loading widget
 			}
 		});
 
@@ -353,27 +385,60 @@ $(document).ready(function() {
 	//********************************************************************
 	$("#newUserForm").submit(function(e){
 		showLoader(); // Shows the loading widget
-		
+
+		var username = $("#inputFieldNewUsername").val();
+		var usernameUnique = false;
+
 		// Serialize the form data and append the senior user ID
 		formData = $("#newUserForm").serialize();
 		formData += ("&expertUserID=" + expertUserID);
 
-		$.ajax({
-			type: "POST",
+
+		$.when($.ajax({
+			type: "GET",
 			beforeSend: function (request) {
 				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 			},
-			url: "../api/seniorUserData.php",
-			data: formData,
+			url: "../api/checkUsernameAvailability.php?username=" + username,
 			success: function(data, status) { // If the API request is successful
-				hideLoader(); // Hides the loading widget
-				$.mobile.back();
-				getUserOverview(); // Updates the DOM with new data from db
-				document.getElementById("newUserForm").reset(); // Clears all the input fields in the new user form
+				
+				if (data.data) {
+					if (data.data == -1) { // no match found for the given username
+						usernameUnique = true;
+					} else {
+						showToast("#toastEditUserDataForm", false, "Brukernavnet er allerede i bruk"); // Shows toast with error msg
+					}
+				} else {
+					showToast("#toastEditUserDataForm", false, "Det ble ikke opprettet forbindelse med databasen"); // Shows toast with error msg
+				}
 			},
 			error: function(data, status) {
 				hideLoader(); // Hides the loading widget
-				showToast("#toastNewUserForm", false, data.status_message); // Shows toast with error msg
+				showToast("#toastEditUserDataForm", false, "Det oppstod en feil"); // Shows toast with error msg
+			}
+		})).then(function(data, textStatus, jqXHR) {
+
+			if (usernameUnique) {
+				$.ajax({
+					type: "POST",
+					beforeSend: function (request) {
+						request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+					},
+					url: "../api/seniorUserData.php",
+					data: formData,
+					success: function(data, status) { // If the API request is successful
+						hideLoader(); // Hides the loading widget
+						$.mobile.back();
+						getUserOverview(); // Updates the DOM with new data from db
+						document.getElementById("newUserForm").reset(); // Clears all the input fields in the new user form
+					},
+					error: function(data, status) {
+						hideLoader(); // Hides the loading widget
+						showToast("#toastNewUserForm", false, data.status_message); // Shows toast with error msg
+					}
+				});
+			} else {
+				hideLoader(); // Hides the loading widget
 			}
 		});
 
@@ -406,6 +471,44 @@ $(document).ready(function() {
 				showToast("#toastDefaultFeedbackForm", false, data.status_message); // Shows toast with error msg
 			}
 		});
+
+		return false; // Returns false to stop the default form behaviour
+	});
+	
+
+
+	//********************************************************************
+	//******** Submit form for updating default feedback messages ********
+	//********************************************************************
+	$("#sendSMSForm").submit(function(e){
+		if ($("#SMSContentField").val().length <= 1224) {
+			showLoader(); // Shows the loading widget
+			formData = $("#sendSMSForm").serialize(); // Serialize the form data
+
+			$.ajax({
+				type: "POST",
+				beforeSend: function (request) {
+					request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+				},
+				url: "../api/sendSMS.php",
+				data: formData,
+				success: function(data, status) { // If the API request is successful
+					if (data.data.ok) {
+						$("#SMSContentField").val("");
+						showToast("#toastSendSMS", true, data.status_message); // Shows toast with success msg
+					} else {
+						showToast("#toastSendSMS", false, "Kunne ikke sende SMS."); // Shows toast with error msg
+					}
+					hideLoader(); // Hides the loading widget
+				},
+				error: function(data, status) {
+					hideLoader(); // Hides the loading widget
+					showToast("#toastSendSMS", false, data.status_message); // Shows toast with error msg
+				}
+			});
+		} else {
+			showToast("#toastSendSMS", false, "Meldingen er for lang!"); // Shows toast with error msg
+		}
 
 		return false; // Returns false to stop the default form behaviour
 	});
@@ -611,7 +714,6 @@ function getUserOverview() {
 }*/
 
 
-
 //********************************************************************
 //** Feches data about a specific senior user and writes to the DOM **
 //********************************************************************
@@ -636,6 +738,8 @@ function setActiveUser(userID, changePage) {
 	$("#mobilityChartContainer").hide();
 	$("#balanceChartContainer").hide();
 	$("#activityChartContainer").hide();
+
+	countSMSChar(document.getElementById("SMSContentField")); // Displays the initial character count for SMS sending
 
 
 	clearUserDetailsTable(); // Removes existing content (if any) from the user details table
@@ -1382,21 +1486,6 @@ function getExerciseTitle(exerciseID) {
 }
 
 
-//********************************************************************
-//*************** Called when clicking the logout btn. ***************
-//******* Empties localstorage and redirects to the login page. ******
-//********************************************************************
-function logout() {
-	localStorage.removeItem("firstname");
-	localStorage.removeItem("lastname");
-	localStorage.removeItem("userid");
-	localStorage.removeItem("email");
-	localStorage.removeItem("isexpert");
-	localStorage.removeItem("token");
-
-	window.location.replace("../index.html");
-}
-
 
 //********************************************************************
 //************ Checks if the browser supports file upload ************
@@ -1619,7 +1708,7 @@ function parseDate(input) {
 /********* Clears all the content in the user details table **********/
 /*********************************************************************/
 function clearUserDetailsTable() {
-	$("#activeUserName").html("");
+	$("#activeUserFullName").html("");
 	$("#headerTitleDetailPage").html("");
 	
 	$("#cellMobilityIdx").html("");
@@ -1685,7 +1774,7 @@ function updateDOM() {
 		
 		/******** Update user detail page ********/
 
-		$("#activeUserName").html($fullName);
+		$("#activeUserFullName").html($fullName);
 		$("#headerTitleDetailPage").html("Brukerdetaljer - " + $fullName);
 		
 		$("#cellMobilityIdx").html($activeUserData.mobilityIdx);
@@ -1725,7 +1814,7 @@ function updateDOM() {
 
 		$("#inputFieldEditFirstName").val($activeUserData.firstName);
 		$("#inputFieldEditLastName").val($activeUserData.lastName);
-		$("#inputFieldEditEmail").val($activeUserData.email);
+		$("#inputFieldEditUsername").val($activeUserData.username);
 
 		$("#cellAddress").html($fullAddress);
 		$("#inputFieldEditAddress").val($activeUserData.address);
@@ -1769,6 +1858,10 @@ function updateDOM() {
 
 		$("#cellLivingIndependently").html($livingIndependentlyStr);
 		$("#inputFieldEditLivingIndependently").prop('checked', $livingIndependentlyBool);
+
+
+		// SMS receiving phone number
+		$("#SMSReceiverField").val($activeUserData.phoneNumber);
 	}
 }
 
@@ -1790,3 +1883,29 @@ function updateUsersTableRow() {
 		});
 	}
 }
+
+
+function countSMSChar(val) {
+  var len = val.value.length;
+  var print;
+  if (len <= 1224) {
+  	var maxLengths = [160,146,153,153,153,153,153,153];
+    var tempCounter = 0;
+    for (var i=0; i<maxLengths.length; i++) {
+    	tempCounter += maxLengths[i];
+      if (len <= tempCounter) {
+      	var numSMS = i+1;
+        var remainingChars = tempCounter - len;
+        var SMSLengthText = numSMS + " SMS";
+        if (i>0) {
+        	SMSLengthText += "er";
+        }
+        SMSLengthText += ", " + remainingChars + " tegn til neste melding."
+        $('#charNum').text(SMSLengthText);
+        break;
+      }
+    }
+  } else {
+  	$('#charNum').text("Meldingen er for lang!");
+  }
+};

@@ -17,7 +17,7 @@ $(document).ready(function() {
 					localStorage.setItem("firstname", data.data.firstName);
 					localStorage.setItem("lastname", data.data.lastName);
 					localStorage.setItem("userid", data.data.userID);
-					localStorage.setItem("email", $("#emailField").val());
+					localStorage.setItem("username", $("#usernameField").val());
 					localStorage.setItem("isexpert", data.data.isExpert);
 					localStorage.setItem("token", data.data.token);
 

@@ -12,7 +12,7 @@
 			}
 		}
 
-		if ($stmt = $conn->prepare("SELECT su.*, u.firstName, u.lastName, u.email
+		if ($stmt = $conn->prepare("SELECT su.*, u.firstName, u.lastName, u.username
 				FROM Users AS u
 				INNER JOIN SeniorUsers AS su ON u.userID = su.userID
 				WHERE u.userID = ?;")) {
@@ -26,7 +26,7 @@
 
 				if ($row["firstName"] != null) $row["firstName"] = decrypt($row["firstName"]);
 				if ($row["lastName"] != null) $row["lastName"] = decrypt($row["lastName"]);
-				if ($row["email"] != null) $row["email"] = decrypt($row["email"]);
+				if ($row["username"] != null) $row["username"] = decrypt($row["username"]);
 				if ($row["address"] != null) $row["address"] = decrypt($row["address"]);
 				if ($row["zipCode"] != null) $row["zipCode"] = decrypt($row["zipCode"]);
 				if ($row["city"] != null) $row["city"] = decrypt($row["city"]);
@@ -86,8 +86,8 @@
 			$password = hashword($_POST["password"]);
 
 
-			if ($stmt = $conn->prepare("INSERT INTO Users (email, password, firstName, lastName) VALUES (?,?,?,?)")) {
-				$stmt->bind_param("ssss", encrypt($_POST["email"]), $password, encrypt($_POST["firstName"]), encrypt($_POST["lastName"]));
+			if ($stmt = $conn->prepare("INSERT INTO Users (username, password, firstName, lastName) VALUES (?,?,?,?)")) {
+				$stmt->bind_param("ssss", encrypt($_POST["username"]), $password, encrypt($_POST["firstName"]), encrypt($_POST["lastName"]));
 				$stmt->execute();
 
 				$seniorUserID = (int) mysqli_insert_id($conn);
@@ -139,13 +139,13 @@
 			$livingIndependently = isset($_POST["livingIndependently"]) ? "1" : "0";
 
 			if ($stmt = $conn->prepare("UPDATE Users AS u, SeniorUsers AS su
-					SET u.firstName=?, u.lastName=?, u.email=?,
+					SET u.firstName=?, u.lastName=?, u.username=?,
 					su.address=?, su.zipCode=?, su.city=?, su.phoneNumber=?,
 					su.weight=?, su.height=?, su.usesWalkingAid=?, 
 					su.livingIndependently=?, su.numFalls3Mths=?, 
 					su.numFalls12Mths=?, su.comment=?
 					WHERE su.userID = u.userID AND u.userID = ?;")) {
-				$stmt->bind_param("sssssssiiiiiisi", encrypt($_POST["firstName"]), encrypt($_POST["lastName"]), encrypt($_POST["email"]), $address, $zipCode, $city, $phone, $weight, $height, $usesWalkingAid, $livingIndependently, $falls3Mths, $falls12Mths, $comment, $_POST["seniorUserID"]);
+				$stmt->bind_param("sssssssiiiiiisi", encrypt($_POST["firstName"]), encrypt($_POST["lastName"]), encrypt($_POST["username"]), $address, $zipCode, $city, $phone, $weight, $height, $usesWalkingAid, $livingIndependently, $falls3Mths, $falls12Mths, $comment, $_POST["seniorUserID"]);
 				$stmt->execute();
 				$stmt->close();
 				$conn->close();
@@ -187,7 +187,7 @@
 
 			case 'POST':
 				// Store a new senior user to DB
-				if (isset($_POST["expertUserID"]) && isset($_POST["email"]) && isset($_POST["password"]) && isset($_POST["firstName"]) && isset($_POST["lastName"]) && isset($_POST["birthDate"]) && isset($_POST["isMale"])) {
+				if (isset($_POST["expertUserID"]) && isset($_POST["username"]) && isset($_POST["password"]) && isset($_POST["firstName"]) && isset($_POST["lastName"]) && isset($_POST["birthDate"]) && isset($_POST["isMale"])) {
 			
 					$dbWriteSuccess = postData($expertUserID);
 					
@@ -206,7 +206,7 @@
 				// Change user data for a senior user in DB
 				parse_str(file_get_contents('php://input'), $_POST);
 
-				if (isset($_POST["firstName"]) && isset($_POST["lastName"]) && isset($_POST["email"]) && isset($_POST["seniorUserID"])) {
+				if (isset($_POST["firstName"]) && isset($_POST["lastName"]) && isset($_POST["username"]) && isset($_POST["seniorUserID"])) {
 
 					$dbWriteSuccess = putData($tokenUserID);
 

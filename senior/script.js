@@ -17,7 +17,7 @@ var activityChartTooltips = ["Det er ikke registrert noe fysisk aktivitet denne 
 
 var token; // The JWT used for communicating with the API
 var seniorUserID; // The user id of the logged in user
-var seniorEmail; // The email of the logged in user
+var seniorUsername; // The username of the logged in user
 var seniorFirstName; // The first name of the logged in user
 var seniorLastName; // The last name of the logged in user
 
@@ -53,13 +53,13 @@ $(document).ready(function() {
 	showLoader(); // Displays the loading widget
 
 	// Checks if the token and user data exist in localStorage
-	if (localStorage.token && localStorage.userid && localStorage.firstname && localStorage.lastname && localStorage.email) {
+	if (localStorage.token && localStorage.userid && localStorage.firstname && localStorage.lastname && localStorage.username) {
 		// Fetches token and data about the logged in user from localStorage
 		token = localStorage.token;
 		seniorUserID = localStorage.userid;
 		seniorFirstName = localStorage.firstname;
 		seniorLastName = localStorage.lastname;
-		seniorEmail = localStorage.email;
+		seniorUsername = localStorage.username;
 	} else {
 		// Redirect to login page
 		window.location.replace("../index.html");
@@ -849,20 +849,6 @@ function setUpdateTimeDiff(timeCalculated) { // example: 2016-07-26 11:23:37
 /***************************
 ** Misc
 ***************************/
-function logout() {
-	// Removes localStorage values,
-	// and redirects to the login page.
-	localStorage.removeItem("firstname");
-	localStorage.removeItem("lastname");
-	localStorage.removeItem("userid");
-	localStorage.removeItem("email");
-	localStorage.removeItem("isexpert");
-	localStorage.removeItem("token");
-
-	window.location.replace("../index.html");
-}
-
-
 function getMIChartData($mi) {
 	// Returns a filename for the MI img and a hex color value for the BI chart
 	// that corresponds to a given MI value.

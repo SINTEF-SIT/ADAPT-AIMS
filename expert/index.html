@@ -45,7 +45,6 @@
 			<div data-role="header" data-backbtn="false">
 				<h1>Oversikt over brukere</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
-					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
 				</div>
 			</div><!-- /header -->
@@ -80,13 +79,12 @@
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
 				<h1 id="headerTitleDetailPage">Brukerdetaljer</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
-					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
 				</div>
 			</div><!-- /header -->
 
 			<div data-role="content" data-theme="a">
-				<h1 id="activeUserName"></h1>
+				<h1 id="activeUserFullName"></h1>
 
 				<div id="containerInfoAndBtns">
 					<div class="inner">
@@ -158,6 +156,7 @@
 							<a onclick="$.mobile.changePage('index.html#register-bi-page');" data-role="button" data-icon="plus">Registrer ny balance idx</a>
 							<a onclick="$.mobile.changePage('index.html#register-ai-page');" data-role="button" data-icon="plus">Registrer ny activity idx</a>
 							<a onclick="$.mobile.changePage('index.html#personalized-feedback-page');" data-role="button" data-icon="comment">Skriv personalisert råd</a>
+							<a onclick="$.mobile.changePage('index.html#send-sms-page');" data-role="button" data-icon="comment">Send SMS</a>
 							<a onclick="$.mobile.changePage('index.html#edit-data-page');" data-role="button" data-icon="edit">Rediger opplysninger</a>
 							<!--<a onclick="" data-role="button">Se brukerens visning</a>
 							<a onclick="" data-role="button">Administrer sensorenheter</a>-->
@@ -206,7 +205,6 @@
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
 				<h1>Registrer MI</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
-					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
 				</div>
 			</div><!-- /header -->
@@ -240,7 +238,6 @@
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
 				<h1>Registrer BI</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
-					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
 				</div>
 			</div><!-- /header -->
@@ -270,7 +267,6 @@
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
 				<h1>Registrer BI manuelt</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
-					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
 				</div>
 			</div><!-- /header -->
@@ -306,7 +302,6 @@
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
 				<h1>Registrer AI</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
-					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
 				</div>
 			</div><!-- /header -->
@@ -336,7 +331,6 @@
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
 				<h1>Registrer AI manuelt</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
-					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
 				</div>
 			</div><!-- /header -->
@@ -424,7 +418,6 @@
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
 				<h1>Rediger opplysninger</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
-					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
 				</div>
 			</div><!-- /header -->
@@ -442,8 +435,8 @@
 					</div>
 					
 					<div class="ui-field-contain">
-						<label for="inputFieldEditEmail">E-post:</label>
-						<input type="email" name="email" id="inputFieldEditEmail" required>
+						<label for="inputFieldEditUsername">Brukernavn:</label>
+						<input type="text" name="username" id="inputFieldEditUsername" required>
 					</div>
 					
 					<div class="ui-field-contain">
@@ -533,7 +526,6 @@
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
 				<h1>Registrer ny bruker</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
-					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
 				</div>
 			</div><!-- /header -->
@@ -551,13 +543,13 @@
 					</div>
 					
 					<div class="ui-field-contain">
-						<label for="inputFieldNewEmail">E-post (*):</label>
-						<input type="email" name="email" id="inputFieldNewEmail" required>
+						<label for="inputFieldNewUsername">Brukernavn (*):</label>
+						<input type="text" name="username" id="inputFieldNewUsername" autocomplete="new-username" required>
 					</div>
 					
 					<div class="ui-field-contain">
 						<label for="inputFieldNewPassword">Passord (*):</label>
-						<input type="password" name="password" id="inputFieldNewPassword" required>
+						<input type="password" name="password" id="inputFieldNewPassword" autocomplete="new-password" required>
 					</div>
 
 					<div class="ui-field-contain">
@@ -689,13 +681,47 @@
 
 
 		<!-- ******************************************************* -->
+		<!-- ******************** SEND SMS PAGE ******************** -->
+		<!-- ******************************************************* -->
+		<div data-role="page" id="send-sms-page">
+			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
+				<h1>Send SMS</h1>
+				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
+					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
+				</div>
+			</div><!-- /header -->
+
+			<div data-role="content" data-theme="a">
+
+				<h2>Send SMS</h2>
+				<form id="sendSMSForm" method="post">
+					<div class="ui-field-contain">
+						<label for="SMSContentField">Melding:</label>
+						<textarea name="msg" id="SMSContentField" onkeyup="countSMSChar(this)" required></textarea>
+						<div id="charNum"></div>
+					</div>
+
+					<input id="SMSReceiverField" type="hidden" name="phone">
+					<!--<a onclick="insertSMSLink()">Sett inn link</a>-->
+					<input type="submit" value="Send" data-icon="check" data-iconpos="right" data-theme="b">
+				</form>
+
+				<div id='toastSendSMS' class="toast">
+					<div class="toast-content">
+						<img id="toastSendSMSImg" class="toast-icon" src="//:0"/> <span id="toastSendSMSText"></span>
+					</div>
+				</div>
+			</div><!-- /content -->
+		</div><!-- /send-sms-page -->
+
+
+		<!-- ******************************************************* -->
 		<!-- ************* PERSONALIZED FEEDBACK PAGE ************** -->
 		<!-- ******************************************************* -->
 		<div data-role="page" id="personalized-feedback-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
 				<h1>Personaliserte råd</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
-					<!--<a href="#" class="ui-btn ui-icon-gear ui-btn-icon-left">Innstillinger</a>-->
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
 				</div>
 			</div><!-- /header -->
@@ -791,6 +817,8 @@
 			</div><!-- /content -->
 		</div><!-- /personalized-feedback-page -->
 
+
+		<!-- Loading widget -->
 		<div class="ui-loader ui-corner-all ui-body-a ui-loader-default" style="display: block;">
 			<span class="ui-icon ui-icon-loading">
 			</span>
