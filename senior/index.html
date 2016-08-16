@@ -66,27 +66,37 @@
 				</div>
 
 				<!-- Balance index chart -->
-				<div id="balanceChartContainer" class="pageMainElement">
+				<div id="balanceChartContainer" class="pageMainElement chartContainer">
 					<div class="well chartWell">
 						<div id="balanceChart"></div>
-					</div>
-				</div>
+						<a href="#BIChartTooltip" data-rel="popup" data-role="button" id="BIChartTooltipBtn" class="ui-link ui-btn ui-btn-a ui-icon-info ui-btn-icon-notext ui-btn-inline ui-shadow ui-corner-all" data-inline="true" data-transition="pop" data-icon="info" data-theme="a" data-iconpos="notext" data-corners="true" data-shadow="true" data-iconshadow="true" data-wrapperels="span" title="Forklaring av diagrammet"></a>
 
-				<!-- Activity index chart -->
-				<div id="activityChartContainer" class="pageMainElement">
-					<div class="well chartWell">
-						<div id="activityChart"></div>
+						<div data-role="popup" id="BIChartTooltip">
+							<p>Dette diagrammet viser hvordan balansen din har utviklet seg i løpet av den siste måneden.</p>
+						</div>
 					</div>
-				</div>
-
-				<!-- AI feedback message -->
-				<div id="messageWrapperAI" class="pageMainElement messageWrapper">
-					<div id="feedbackMsgAI" class="alert alert-success" role="alert"></div>
 				</div>
 
 				<!-- BI feedback message -->
 				<div id="messageWrapperBI" class="pageMainElement messageWrapper">
 					<div id="feedbackMsgBI" class="alert alert-success" role="alert"></div>
+				</div>
+
+				<!-- Activity index chart -->
+				<div id="activityChartContainer" class="pageMainElement chartContainer">
+					<div class="well chartWell">
+						<div id="activityChart"></div>
+						<a href="#AIChartTooltip" data-rel="popup" data-role="button" id="AIChartTooltipBtn" class="ui-link ui-btn ui-btn-a ui-icon-info ui-btn-icon-notext ui-btn-inline ui-shadow ui-corner-all" data-inline="true" data-transition="pop" data-icon="info" data-theme="a" data-iconpos="notext" data-corners="true" data-shadow="true" data-iconshadow="true" data-wrapperels="span" title="Forklaring av diagrammet"></a>
+					</div>
+
+						<div data-role="popup" id="AIChartTooltip">
+							<p>Dette diagrammet viser hvor fysisk aktiv du har vært den siste måneden, basert på hvor mange skritt du har gått.</p>
+						</div>
+				</div>
+
+				<!-- AI feedback message -->
+				<div id="messageWrapperAI" class="pageMainElement messageWrapper">
+					<div id="feedbackMsgAI" class="alert alert-success" role="alert"></div>
 				</div>
 			</div>
 

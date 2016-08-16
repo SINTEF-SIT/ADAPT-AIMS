@@ -50,6 +50,20 @@ $(document).ready(function() {
 
 	$( "#videoPopup" ).enhanceWithin().popup();
 
+	
+	// Automatically close the chart tooltip popups after 10 seconds
+	$('#BIChartTooltip').on('popupafteropen', function (e) {
+		setTimeout(function(){
+			$("#BIChartTooltip").popup("close");
+		}, 10000);
+	});
+
+	$('#AIChartTooltip').on('popupafteropen', function (e) {
+		setTimeout(function(){
+			$("#AIChartTooltip").popup("close");
+		}, 10000);
+	});
+
 	showLoader(); // Displays the loading widget
 
 	// Checks if the token and user data exist in localStorage
