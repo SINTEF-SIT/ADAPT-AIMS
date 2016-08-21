@@ -32,13 +32,13 @@
 	<body>
 
 		<!-- Instruction video popup -->
-		<div data-role="popup" id="videoPopup" class="ui-content" data-overlay-theme="b" data-theme="a" data-dismissible="false" >
+		<div data-role="popup" id="video-popup" class="ui-content" data-overlay-theme="b" data-theme="a" data-dismissible="false" >
 			<div>
 				<h1>Velkommen som bruker av AIMS!</h1>
 				<h3>Nedenfor er en video som viser hvordan systemet brukes.</h3>
 				<br>
-				<div id="iframeWrapper">
-					<iframe id="tutorialVideoiFrame" src="http://player.vimeo.com/video/107469289?autoplay=1" width="497" height="298" seamless webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+				<div class="iframeWrapper">
+					<iframe id="tutorialVideoiFramePopup" src="http://player.vimeo.com/video/107469289?autoplay=1" width="497" height="298" seamless webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
 				</div>
 				
 				<a id="videoPopupCloseBtn" onclick="closeVideoPopup()" class="ui-btn ui-btn-inline ui-icon-arrow-r ui-btn-icon-right ui-btn-a">Begynn å bruke systemet</a>
@@ -46,20 +46,20 @@
 		</div>
 
 		<!-- Main page -->
-		<div data-role="page" id="mainPage">
+		<div data-role="page" id="main-page">
 			<div data-role="content">
 				<!-- Mobility index image (MIImg) -->
 				<div id="MIImgOuterWrapper" class="pageMainElement">
 					<div id="MIImgWell" class="well">
 						<div id="MIImgHeader"></div>
 						<div id="MIImgInnerWrapper">
-							<span class="verticalAlignHelper"></span><img src="//:0" alt="Mobility index" id="MIImg" onclick="openConfirmOpenMIChartPopup()">
+							<span class="verticalAlignHelper"></span><img src="//:0" alt="Mobility index" id="MIImg">
 
 							<!-- Confirm open MI chart popup -->
-							<div data-role="popup" data-transition="pop" id="confirmOpenMIChartPopup">
+							<!--<div data-role="popup" data-transition="pop" id="confirmOpenMIChartPopup">
 								<a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
 								<a onclick="openMIChartPopup()" data-rel="popup" class="ui-btn ui-corner-all ui-icon-clock ui-btn-icon-left greyBtn" id="michartOpenBtn">Vis mobilitetsindeks over tid</a>
-							</div>
+							</div>-->
 						</div>
 						<br>
 					</div>
@@ -101,23 +101,84 @@
 			</div>
 
 			<!-- Footer -->
-			<div id="footer" data-role="footer" data-position="fixed" data-tap-toggle="false">
-				<p>
-					Innlogget som: <i><span id="userFullName"></span></i><br>
-					Sist oppdatert: <span id="lastUpdatedValue"></span>
-				</p>
-				<a href="#settingsPage" id="settingsBtn" class="ui-btn ui-corner-all ui-btn-inline ui-icon-gear ui-btn-icon-left greyBtn" data-transition="flip">Innstillinger</a>
+			<div data-role="footer" data-position="fixed" data-tap-toggle="false">
+				
+				<!--<a href="#settingsPage" id="settingsBtn" class="ui-btn ui-corner-all ui-btn-inline ui-icon-gear ui-btn-icon-left greyBtn" data-transition="flip">Innstillinger</a>-->
+				<div data-role="navbar">
+					<ul>
+						<li><a data-icon="grid" class="ui-btn-active ui-state-persist">Oversikt</a></li>
+						<li><a href="#details-page" data-icon="bars" data-transition="slidefade">Mer info</a></li>
+						<li><a href="#help-page" data-icon="info" data-transition="slidefade">Hjelp</a></li>
+						<li><a href="" onclick="logout()" data-icon="power">Logg ut</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+
+
+		<!-- Details page -->
+		<div data-role="page" id="details-page">
+			<div data-role="content">
+				<div id="mobilityChartContainer" class="pageMainElement">
+					<div class="well chartWell">
+						<div id="mobilityChart"></div>
+					</div>
+				</div>
+
+				<br><br><br><br>
+
+				<div id="userDataWrapper">
+					<div class="well">
+						<p>
+							Innlogget som: <i><span id="userFullName"></span></i><br>
+							Sist oppdatert: <span id="lastUpdatedValue"></span>
+						</p>
+					</div>
+				</div>
+
+			</div>
+
+			<!-- Footer -->
+			<div data-role="footer" data-position="fixed" data-tap-toggle="false">
+				<div data-role="navbar">
+					<ul>
+						<li><a href="#main-page" data-icon="grid" data-transition="slidefade" data-direction="reverse">Oversikt</a></li>
+						<li><a data-icon="bars" class="ui-btn-active ui-state-persist">Mer info</a></li>
+						<li><a href="#help-page" data-icon="info" data-transition="slidefade">Hjelp</a></li>
+						<li><a href="" onclick="logout()" data-icon="power">Logg ut</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+
+
+		<!-- Help page -->
+		<div data-role="page" id="help-page">
+			<div data-role="content">
+				<h1>Instruksjonsvideo:</h1>
+				<div id="tutorialVideoiFrameHelpPageWrapper"></div>
+			</div>
+
+			<!-- Footer -->
+			<div data-role="footer" data-position="fixed" data-tap-toggle="false">
+				<div data-role="navbar">
+					<ul>
+						<li><a href="#main-page" data-icon="grid" data-transition="slidefade" data-direction="reverse">Oversikt</a></li>
+						<li><a href="#details-page" data-icon="bars" data-transition="slidefade" data-direction="reverse">Mer info</a></li>
+						<li><a data-icon="info" class="ui-btn-active ui-state-persist">Hjelp</a></li>
+						<li><a href="" onclick="logout()" data-icon="power">Logg ut</a></li>
+					</ul>
+				</div>
 			</div>
 		</div>
 
 
 		<!-- MI chart popup -->
-		<div data-role="page" data-dialog="true" data-close-btn="right" id="michart">
+		<!--<div data-role="page" data-dialog="true" data-close-btn="right" id="mi-chart-popup">
 			<div class="popupHeader" data-role="header" data-theme="b">
 				<h1>-</h1>
 			</div>
 			<div role="main" data-role="content">
-				<!-- Mobility idx chart -->
 				<div id="mobilityChartContainer" class="pageMainElement">
 					<div class="well chartWell">
 						<div id="mobilityChart"></div>
@@ -126,7 +187,7 @@
 				<br>
 				<a data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Tilbake</a>
 			</div>
-		</div>
+		</div>-->
 
 			
 
@@ -167,7 +228,7 @@
 			<div id="settingsHeader" data-role="header">
 				<h1>Innstillinger</h1>
 			</div>
-			<!--<a href="#mainPage" id="backBtnHeader" class="ui-btn ui-corner-all ui-btn-inline ui-icon-back ui-btn-icon-left" data-transition="flip">Tilbake</a>-->
+			<!--<a href="#main-page" id="backBtnHeader" class="ui-btn ui-corner-all ui-btn-inline ui-icon-back ui-btn-icon-left" data-transition="flip">Tilbake</a>-->
 
 			<div data-role="main" class="ui-content">
 				<!--<h2 id="MIImgSelectionHeader">Representasjonsbilde for fallrisiko:</h2>
@@ -178,10 +239,10 @@
 				</div>-->
 
 				<div id="settingsBtnGroup">
-					<a href="#mainPage" onclick="closeSettingsView()" id="backBtn" class="ui-btn ui-corner-all ui-icon-back ui-btn-icon-left greyBtn" data-transition="flip">Tilbake</a>
+					<a href="#main-page" onclick="closeSettingsView()" id="backBtn" class="ui-btn ui-corner-all ui-icon-back ui-btn-icon-left greyBtn" data-transition="flip">Tilbake</a>
 					<a onclick="openVideoPopup()" data-rel="popup" class="ui-btn ui-corner-all ui-icon-info ui-btn-icon-left greyBtn">Hjelp</a>
 					
-					<!--<a href="#mainPage" onclick="saveChanges()" id="saveBtn" class="ui-btn ui-corner-all ui-icon-check ui-btn-icon-left greenBtn" data-transition="flip">Lagre endringer</a>
+					<!--<a href="#main-page" onclick="saveChanges()" id="saveBtn" class="ui-btn ui-corner-all ui-icon-check ui-btn-icon-left greenBtn" data-transition="flip">Lagre endringer</a>
 					<a href="#popupDialog" id="cancelBtn" data-rel="popup" data-position-to="window" class="ui-btn ui-corner-all ui-icon-delete ui-btn-icon-left greyBtn">Lukk uten å lagre</a>-->
 					<a href="" onclick="logout()" id="logoutBtn" class="ui-btn ui-corner-all ui-icon-power ui-btn-icon-left redBtn">Logg ut</a>
 

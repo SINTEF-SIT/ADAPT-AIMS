@@ -31,7 +31,7 @@ $currentActivityIdx = null; // The current activity index for the logged in user
 ** General
 ***************************/
 
-$(document).delegate('#mainPage', 'pageshow', function () {
+$(document).delegate('#main-page', 'pageshow', function () {
 	/************************************************************
 	** Every time the main page is shown: reflow the charts
 	** in case the window size has changed while on another page
@@ -41,14 +41,18 @@ $(document).delegate('#mainPage', 'pageshow', function () {
 });
 
 
-$(document).delegate('#michart', 'pageshow', function () {
+$(document).delegate('#details-page', 'pageshow', function () {
 	if (mobilityChart != null) mobilityChart.reflow();
+});
+
+$(document).delegate('#help-page', 'pagehide', function () {
+	$('#tutorialVideoiFrameHelpPage').attr('src', "http://player.vimeo.com/video/107469289"); // Stops video playback
 });
 
 
 $(document).ready(function() {
 
-	$( "#videoPopup" ).enhanceWithin().popup();
+	$( "#video-popup" ).enhanceWithin().popup();
 
 	
 	// Automatically close the chart tooltip popups after 10 seconds
@@ -161,36 +165,36 @@ $(document).ready(function() {
 			hideLoader(); // Hides the loading widget
 		}, 
 		success: function(data, status) { // If the API request is successful
-			var chartDataJSON = data.data;
+			var mobilityChartDataJSON = data.data;
 			
 			if (data.data != null) { // Check if API returned any MI values
-				var chartData = [];
-				for (var i=0; i<chartDataJSON.length; i++) {
+				var mobilityChartData = [];
+				for (var i=0; i<mobilityChartDataJSON.length; i++) {
 					if (i != 0) {
 						// Draws an extra data point right before each data point (except the first) 
 						// to get a flat line instead of a straight, diagonal line between the points.
 						// Needs to be commented out if the chart is switched to a column chart.
 						var dataPointPre = [];
-						var datePre = new Date(chartDataJSON[i].timeDataCollected);
+						var datePre = new Date(mobilityChartDataJSON[i].timeDataCollected);
 						datePre.setSeconds(datePre.getSeconds() - 1);
 						dataPointPre.push(datePre.getTime());
-						dataPointPre.push(parseFloat(chartDataJSON[i-1].value));
-						chartData.push(dataPointPre);
+						dataPointPre.push(parseFloat(mobilityChartDataJSON[i-1].value));
+						mobilityChartData.push(dataPointPre);
 					}
 
 					var dataPoint = [];
-					var date = Date.parse(chartDataJSON[i].timeDataCollected);
+					var date = Date.parse(mobilityChartDataJSON[i].timeDataCollected);
 					dataPoint.push(date);
-					dataPoint.push(parseFloat(chartDataJSON[i].value));
-					chartData.push(dataPoint);
+					dataPoint.push(parseFloat(mobilityChartDataJSON[i].value));
+					mobilityChartData.push(dataPoint);
 
 					// If last data point from db, add a final data point at the current datetime
-					if (i+1 == chartDataJSON.length) {
-						var finalMI = parseFloat(chartDataJSON[i].value);
+					if (i+1 == mobilityChartDataJSON.length) {
+						var finalMI = parseFloat(mobilityChartDataJSON[i].value);
 						var dataPointFinal = [];
 						dataPointFinal.push(new Date().getTime());
 						dataPointFinal.push(finalMI);
-						chartData.push(dataPointFinal);
+						mobilityChartData.push(dataPointFinal);
 
 						// Store the last data value as the current MI
 						$currentMobilityIdx = finalMI;
@@ -236,7 +240,7 @@ $(document).ready(function() {
 					}]
 				};
 
-				mobilityChartOptions.series[0].data = chartData;
+				mobilityChartOptions.series[0].data = mobilityChartData;
 				mobilityChart = new Highcharts.Chart(mobilityChartOptions);
 			} else {
 				// No MI registered for this user yet
@@ -292,14 +296,16 @@ $(document).ready(function() {
 						balanceChartData.push(dataPoint);
 
 						// If last data point from db, add a final data point at the current datetime
-						if (i+1 == balanceChartDataJSON.length) {
+						/*if (i+1 == balanceChartDataJSON.length) {
 							var dataPointFinal = [];
 							dataPointFinal.push(moment().valueOf());
 							dataPointFinal.push(parseFloat(balanceChartDataJSON[i].value));
 							balanceChartData.push(dataPointFinal);
-						}
+						}*/
 					}
 
+					balanceChartDataSplit = splitChartSeries(balanceChartData);
+					
 					balanceChartOptions = {
 						chart: {
 							renderTo: 'balanceChart', // ID of div where the chart is to be rendered
@@ -328,7 +334,12 @@ $(document).ready(function() {
 						},
 						plotOptions: {
 							series: {
-								pointWidth: 40
+								pointWidth: 40,
+								lineWidth: 0,
+								enableMouseTracking: false,
+								marker: {
+									enabled: false
+								}
 							}
 						},
 						legend: {
@@ -340,39 +351,12 @@ $(document).ready(function() {
 						tooltip: {
 							enabled: false // Hides the tooltip from being displayed while hovering
 						},
-						series: [{
-							/*color: {
-								// Defines the color gradient of the chart.
-								linearGradient: {
-									x1: 0,
-									y1: 0,
-									x2: 0,
-									y2: 1
-								},
-								stops: [
-									// The 'grey' color is temporary, as the top and middle colors are calculated later.
-									[0, 'grey'],
-									[0.5, 'grey'],
-									[1, '#ED1E24']
-								]
-							},*/
-							lineWidth: 0,
-							enableMouseTracking: false
-						}]
+						series: [{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}]
 					};
 
-					// Finds the color to use in the top and middle of the chart based on the current MI.
-					// todo: Need to iterate through all MI values and use the highest value to calculate color,
-					// or define another correlastion between BI and MI.
-					/*console.log("current MI: " + $currentMobilityIdx);
-					colorMaxBI = getMIChartData($currentMobilityIdx).color;
-					colorMidBI = getMIChartData($currentMobilityIdx/2).color;
-
-					balanceChartOptions.series[0].color.stops[0][1] = "#" + colorMaxBI;
-					balanceChartOptions.series[0].color.stops[1][1] = "#" + colorMidBI;
-					console.log("ColorMax: " + colorMaxBI + ", colorMid: " + colorMidBI);*/
-
-					balanceChartOptions.series[0].data = balanceChartData;
+					for (var i=0; i<balanceChartDataSplit.length && i<24; i++) {
+						balanceChartOptions.series[i].data = balanceChartDataSplit[i];
+					}
 
 					balanceChart = new Highcharts.Chart(balanceChartOptions);
 				} else {
@@ -600,26 +584,56 @@ $(document).ready(function() {
 
 	// Sets global options for the charts
 	Highcharts.setOptions({
-		// Defines Norwegian text strings used in the charts
-		lang: {
+		colors: ['#7CB5EC', '#66A6E3'], // Default series colors
+		lang: { // Defines Norwegian text strings used in the charts
 			months: ['januar', 'februar', 'mars', 'april', 'mai', 'juni',  'juli', 'august', 'september', 'oktober', 'november', 'desember'],
 			shortMonths: ['jan', 'feb', 'mars', 'apr', 'mai', 'juni',  'juli', 'aug', 'sep', 'okt', 'nov', 'des'],
 			weekdays: ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'],
 			shortWeekdays: ['sø', 'ma', 'ti', 'on', 'to', 'fr', 'lø']
-		}/*,
-		// Adjusts time values in data points to match Norwegian timezone (handles DST automatically).
-		// Commented out as all the charts currently display date values only, not time of day,
-		// and this code caused all values to be displayed at 2am instead of midnight.
-		global: {
-			getTimezoneOffset: function (timestamp) {
-				var zone = 'Europe/Oslo',
-					timezoneOffset = -moment.tz(timestamp, zone).utcOffset();
-
-				return timezoneOffset;
-			}
-		}*/
+		}
 	});
 });
+
+
+function splitChartSeries(chartData) {
+	// Splits the chart data into a separate serie for each month, in order to set alternating colors
+	if (chartData[0][0] != null) {
+		var chartDataSplit = [];
+		var firstDate = moment(chartData[0][0]);
+		var monthToCheck = firstDate.month();
+		var serie = [];
+
+		for (var i=0; i<chartData.length; i++) {
+			var date = moment(chartData[i][0]);
+			if (date.month() == monthToCheck) {
+				serie.push(chartData[i]);
+			} else {
+				monthToCheck = date.month();
+
+				var dateNewMonth = moment([date.year(), date.month()]).valueOf();
+
+				var dataPointNewMonth = [];
+				dataPointNewMonth.push(dateNewMonth);
+				dataPointNewMonth.push(chartData[i-1][1]);
+				serie.push(dataPointNewMonth);
+
+				chartDataSplit.push(serie);
+
+				serie = [];
+				dataPointNewMonth[0] += 1;
+				serie.push(dataPointNewMonth);
+				serie.push(chartData[i]);
+			}
+
+			if (i+1 == chartData.length) {
+				chartDataSplit.push(serie);
+			}
+		}
+		return chartDataSplit;
+	} else {
+		return chartData;
+	}
+}
 
 
 function setFeedbackMsgClickListnerer(textID) {
@@ -797,7 +811,7 @@ function cancelChanges() {
 	closeSettingsView();
 	setTimeout(function () {
 		// Returns to the main page 
-		$.mobile.changePage( "#mainPage", { transition: "flip"}); 
+		$.mobile.changePage( "#main-page", { transition: "flip"}); 
 	}, 1);
 }
 
@@ -951,19 +965,23 @@ function getNewestChartValue(chart) {
 }
 
 function openVideoPopup() {
-	$('#tutorialVideoiFrame').attr('src', "http://player.vimeo.com/video/107469289?autoplay=1"); // Starts video playback
-	$("#videoPopup").popup("open", {transition:"slideup"});
+	console.log("openVideoPopup");
+	$('#tutorialVideoiFramePopup').attr('src', "http://player.vimeo.com/video/107469289?autoplay=1"); // Starts video playback
+	$("#video-popup").popup("open", {transition:"slideup"});
 }
 
 function closeVideoPopup() {
-	$("#videoPopup").popup("close", {transition:"slidedown"});
-	$('#tutorialVideoiFrame').attr('src', "http://player.vimeo.com/video/107469289"); // Stops video playback
+	console.log("closeVideoPopup");
+	$("#video-popup").popup("close", {transition:"pop"});
+	$('#tutorialVideoiFramePopup').attr('src', "http://player.vimeo.com/video/107469289"); // Stops video playback
+	$('#tutorialVideoiFrameHelpPageWrapper').append("<iframe id='tutorialVideoiFrameHelpPage' src='http://player.vimeo.com/video/107469289' width='497' height='298' seamless webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>");
+	//$('tutorialVideoiFrameHelpPage').attr('src', "http://player.vimeo.com/video/107469289"); // Sets the url for the iframe on the help page
 }
 
-function openConfirmOpenMIChartPopup() {
+/*function openConfirmOpenMIChartPopup() {
 	$("#confirmOpenMIChartPopup").popup("open");
 }
 
 function openMIChartPopup() {
-	$.mobile.changePage( "#michart", { transition: "pop"}); 
-}
+	$.mobile.changePage( "#mi-chart-popup", { transition: "pop"}); 
+}*/
