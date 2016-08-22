@@ -61,6 +61,11 @@
 								<a onclick="openMIChartPopup()" data-rel="popup" class="ui-btn ui-corner-all ui-icon-clock ui-btn-icon-left greyBtn" id="michartOpenBtn">Vis mobilitetsindeks over tid</a>
 							</div>-->
 						</div>
+						<a href="#MIImgTooltip" data-rel="popup" data-role="button" id="MIImgTooltipBtn" class="tooltipBtn ui-link ui-btn ui-btn-a ui-icon-info ui-btn-icon-notext ui-btn-inline ui-shadow ui-corner-all" data-inline="true" data-transition="pop" data-icon="info" data-theme="a" data-iconpos="notext" data-corners="true" data-shadow="true" data-iconshadow="true" data-wrapperels="span" title="Forklaring av bildet"></a>
+
+						<div data-role="popup" id="MIImgTooltip">
+							<p>Dette er en representasjon av din mobilitetsindeks. Dette er en verdi som påvirkes både av <i>hvor mye</i> du beveger deg, og <i>hvordan</i> du beveger deg. En høy mobilitetsindeks vil bety lavere risiko for å falle. Grønt betyr høy mobilitetsindeks, rød betyr lav.</p>
+						</div>
 						<br>
 					</div>
 				</div>
@@ -69,7 +74,7 @@
 				<div id="balanceChartContainer" class="pageMainElement chartContainer">
 					<div class="well chartWell">
 						<div id="balanceChart"></div>
-						<a href="#BIChartTooltip" data-rel="popup" data-role="button" id="BIChartTooltipBtn" class="ui-link ui-btn ui-btn-a ui-icon-info ui-btn-icon-notext ui-btn-inline ui-shadow ui-corner-all" data-inline="true" data-transition="pop" data-icon="info" data-theme="a" data-iconpos="notext" data-corners="true" data-shadow="true" data-iconshadow="true" data-wrapperels="span" title="Forklaring av diagrammet"></a>
+						<a href="#BIChartTooltip" data-rel="popup" data-role="button" id="BIChartTooltipBtn" class="tooltipBtn ui-link ui-btn ui-btn-a ui-icon-info ui-btn-icon-notext ui-btn-inline ui-shadow ui-corner-all" data-inline="true" data-transition="pop" data-icon="info" data-theme="a" data-iconpos="notext" data-corners="true" data-shadow="true" data-iconshadow="true" data-wrapperels="span" title="Forklaring av diagrammet"></a>
 
 						<div data-role="popup" id="BIChartTooltip">
 							<p>Dette diagrammet viser hvordan balansen din har utviklet seg i løpet av den siste måneden.</p>
@@ -79,24 +84,24 @@
 
 				<!-- BI feedback message -->
 				<div id="messageWrapperBI" class="pageMainElement messageWrapper">
-					<div id="feedbackMsgBI" class="alert alert-success" role="alert"></div>
+					<div id="feedbackMsgBI" class="alert alert-gray" role="alert"></div>
 				</div>
 
 				<!-- Activity index chart -->
 				<div id="activityChartContainer" class="pageMainElement chartContainer">
 					<div class="well chartWell">
 						<div id="activityChart"></div>
-						<a href="#AIChartTooltip" data-rel="popup" data-role="button" id="AIChartTooltipBtn" class="ui-link ui-btn ui-btn-a ui-icon-info ui-btn-icon-notext ui-btn-inline ui-shadow ui-corner-all" data-inline="true" data-transition="pop" data-icon="info" data-theme="a" data-iconpos="notext" data-corners="true" data-shadow="true" data-iconshadow="true" data-wrapperels="span" title="Forklaring av diagrammet"></a>
-					</div>
+						<a href="#AIChartTooltip" data-rel="popup" data-role="button" id="AIChartTooltipBtn" class="tooltipBtn ui-link ui-btn ui-btn-a ui-icon-info ui-btn-icon-notext ui-btn-inline ui-shadow ui-corner-all" data-inline="true" data-transition="pop" data-icon="info" data-theme="a" data-iconpos="notext" data-corners="true" data-shadow="true" data-iconshadow="true" data-wrapperels="span" title="Forklaring av diagrammet"></a>
 
 						<div data-role="popup" id="AIChartTooltip">
 							<p>Dette diagrammet viser hvor fysisk aktiv du har vært den siste måneden, basert på hvor mange skritt du har gått.</p>
 						</div>
+					</div>
 				</div>
 
 				<!-- AI feedback message -->
 				<div id="messageWrapperAI" class="pageMainElement messageWrapper">
-					<div id="feedbackMsgAI" class="alert alert-success" role="alert"></div>
+					<div id="feedbackMsgAI" class="alert alert-gray" role="alert"></div>
 				</div>
 			</div>
 
@@ -107,9 +112,8 @@
 				<div data-role="navbar">
 					<ul>
 						<li><a data-icon="grid" class="ui-btn-active ui-state-persist">Oversikt</a></li>
-						<li><a href="#details-page" data-icon="bars" data-transition="slidefade">Mer info</a></li>
-						<li><a href="#help-page" data-icon="info" data-transition="slidefade">Hjelp</a></li>
-						<li><a href="" onclick="logout()" data-icon="power">Logg ut</a></li>
+						<li><a href="#details-page" data-icon="bars" data-transition="none">Mer</a></li>
+						<li><a href="#help-page" data-icon="info" data-transition="none">Hjelp</a></li>
 					</ul>
 				</div>
 			</div>
@@ -122,10 +126,13 @@
 				<div id="mobilityChartContainer" class="pageMainElement">
 					<div class="well chartWell">
 						<div id="mobilityChart"></div>
+						<a href="#MIChartTooltip" data-rel="popup" data-role="button" id="MIChartTooltipBtn" class="tooltipBtn ui-link ui-btn ui-btn-a ui-icon-info ui-btn-icon-notext ui-btn-inline ui-shadow ui-corner-all" data-inline="true" data-transition="pop" data-icon="info" data-theme="a" data-iconpos="notext" data-corners="true" data-shadow="true" data-iconshadow="true" data-wrapperels="span" title="Forklaring av diagrammet"></a>
+
+						<div data-role="popup" id="MIChartTooltip">
+							<p>Dette diagrammet viser hvordan din mobilitetsindeks har utviklet seg over tid. Høyere tall betyr høyere mobilitetsindeks, og mindre sannsynlighet for å falle.</p>
+						</div>
 					</div>
 				</div>
-
-				<br><br><br><br>
 
 				<div id="userDataWrapper">
 					<div class="well">
@@ -136,16 +143,19 @@
 					</div>
 				</div>
 
+				<div id="logoutBtnWrapper">
+					<a href="" onclick="logout()" id="logoutBtn" class="ui-btn ui-corner-all ui-icon-power ui-btn-icon-left redBtn">Logg ut</a>
+				</div>
+
 			</div>
 
 			<!-- Footer -->
 			<div data-role="footer" data-position="fixed" data-tap-toggle="false">
 				<div data-role="navbar">
 					<ul>
-						<li><a href="#main-page" data-icon="grid" data-transition="slidefade" data-direction="reverse">Oversikt</a></li>
-						<li><a data-icon="bars" class="ui-btn-active ui-state-persist">Mer info</a></li>
-						<li><a href="#help-page" data-icon="info" data-transition="slidefade">Hjelp</a></li>
-						<li><a href="" onclick="logout()" data-icon="power">Logg ut</a></li>
+						<li><a href="#main-page" data-icon="grid" data-transition="none" data-direction="reverse">Oversikt</a></li>
+						<li><a data-icon="bars" class="ui-btn-active ui-state-persist">Mer</a></li>
+						<li><a href="#help-page" data-icon="info" data-transition="none">Hjelp</a></li>
 					</ul>
 				</div>
 			</div>
@@ -163,10 +173,9 @@
 			<div data-role="footer" data-position="fixed" data-tap-toggle="false">
 				<div data-role="navbar">
 					<ul>
-						<li><a href="#main-page" data-icon="grid" data-transition="slidefade" data-direction="reverse">Oversikt</a></li>
-						<li><a href="#details-page" data-icon="bars" data-transition="slidefade" data-direction="reverse">Mer info</a></li>
+						<li><a href="#main-page" data-icon="grid" data-transition="none" data-direction="reverse">Oversikt</a></li>
+						<li><a href="#details-page" data-icon="bars" data-transition="none" data-direction="reverse">Mer</a></li>
 						<li><a data-icon="info" class="ui-btn-active ui-state-persist">Hjelp</a></li>
-						<li><a href="" onclick="logout()" data-icon="power">Logg ut</a></li>
 					</ul>
 				</div>
 			</div>

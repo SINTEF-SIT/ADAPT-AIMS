@@ -252,6 +252,8 @@ $(document).ready(function() {
 			}
 		}
 	})).then(function(data, textStatus, jqXHR) {
+		var maxBalanceChartRange = 1000 * 60 * 60 * 24 * 90; // The maximum range of the x axis in milliseconds
+		var numBalanceChartSeries = 0;
 		$.when($.ajax({
 			/***************************
 			** Balance chart
@@ -270,8 +272,6 @@ $(document).ready(function() {
 				var balanceChartData = [];
 
 				if (balanceChartDataJSON != null) {
-					//var maxBI = 0; // The highest BI value in the series
-					
 					for (var i=0; i<balanceChartDataJSON.length; i++) {
 						if (i != 0) {
 							// Draws an extra data point right before each data point (except the first) 
@@ -284,10 +284,8 @@ $(document).ready(function() {
 							dataPointPre.push(parseFloat(balanceChartDataJSON[i-1].value));
 							balanceChartData.push(dataPointPre);
 						}
-
 						
 						var bi = parseFloat(balanceChartDataJSON[i].value);
-						//if (bi > maxBI) maxBI = mi;
 
 						var dataPoint = [];
 						var date = moment.tz(balanceChartDataJSON[i].timeDataCollected, "UTC");
@@ -295,21 +293,27 @@ $(document).ready(function() {
 						dataPoint.push(bi);
 						balanceChartData.push(dataPoint);
 
-						// If last data point from db, add a final data point at the current datetime
-						/*if (i+1 == balanceChartDataJSON.length) {
+						// If last data point from db, add a final data point 24 hours after
+						// the last recorded value to make the last change visible in the chart.
+						if (i+1 == balanceChartDataJSON.length) {
 							var dataPointFinal = [];
-							dataPointFinal.push(moment().valueOf());
+							dataPointFinal.push(date.valueOf() + (1000 * 60 * 60 * 24));
 							dataPointFinal.push(parseFloat(balanceChartDataJSON[i].value));
 							balanceChartData.push(dataPointFinal);
-						}*/
+						}
+					}
+
+					var xAxisMinValue = null;
+					if (balanceChartData[balanceChartData.length-1][0] - balanceChartData[0][0] > maxBalanceChartRange) {
+						xAxisMinValue = moment().valueOf() - maxBalanceChartRange;
 					}
 
 					balanceChartDataSplit = splitChartSeries(balanceChartData);
+					numBalanceChartSeries = balanceChartDataSplit.length;
 					
 					balanceChartOptions = {
 						chart: {
 							renderTo: 'balanceChart', // ID of div where the chart is to be rendered
-							type: 'area', // Chart type. Can e.g. be set to 'column' or 'area'
 							//zoomType: 'x', // Uncomment to make the chart zoomable along the x-axis
 							backgroundColor: null,
 							reflow: true
@@ -319,8 +323,8 @@ $(document).ready(function() {
 						},
 						xAxis: {
 							type: 'datetime',
-							tickInterval: 7 * 24 * 3600 * 1000, // How frequent a tick is displayed on the axis (set in milliseconds)
-							min: new Date().getTime() - (90 * 24 * 3600 * 1000) // Set start of x-axis to 1 month ago
+							//tickInterval: 7 * 24 * 3600 * 1000, // How frequent a tick is displayed on the axis (set in milliseconds)
+							min: xAxisMinValue
 						},
 						yAxis: {
 							max: 5, // The ceiling value of the y-axis.
@@ -335,7 +339,6 @@ $(document).ready(function() {
 						plotOptions: {
 							series: {
 								pointWidth: 40,
-								lineWidth: 0,
 								enableMouseTracking: false,
 								marker: {
 									enabled: false
@@ -355,8 +358,27 @@ $(document).ready(function() {
 					};
 
 					for (var i=0; i<balanceChartDataSplit.length && i<24; i++) {
+						balanceChartOptions.series[i].type = 'area';
 						balanceChartOptions.series[i].data = balanceChartDataSplit[i];
 					}
+
+					// Generate values for the chart line of normal values
+					var normalValues = [];
+
+					var dataPointLineStart = [];
+					dataPointLineStart.push(balanceChartData[0][0]);
+					dataPointLineStart.push(0);
+					normalValues.push(dataPointLineStart);
+
+					var dataPointLineEnd = [];
+					dataPointLineEnd.push(moment().valueOf());
+					dataPointLineEnd.push(5);
+					normalValues.push(dataPointLineEnd);
+
+					balanceChartOptions.series[balanceChartDataSplit.length].type = 'spline';
+					balanceChartOptions.series[balanceChartDataSplit.length].color = '#4B78A3';
+					balanceChartOptions.series[balanceChartDataSplit.length].dashStyle = 'dash';
+					balanceChartOptions.series[balanceChartDataSplit.length].data = normalValues;
 
 					balanceChart = new Highcharts.Chart(balanceChartOptions);
 				} else {
@@ -474,7 +496,7 @@ $(document).ready(function() {
 				var secondFeedbackAjaxCall = null;
 
 				if (activityChart) {
-					var currentAI = getNewestChartValue(activityChart);
+					var currentAI = getNewestChartValue(activityChart, 0);
 					firstFeedbackAjaxCall = {
 						category: '0',
 						textID: 'AI',
@@ -484,7 +506,7 @@ $(document).ready(function() {
 				}
 
 				if (balanceChart) {
-					currentBI = getNewestChartValue(balanceChart);
+					currentBI = getNewestChartValue(balanceChart, numBalanceChartSeries-1);
 					var BITemp = {
 						category: '1',
 						textID: 'BI',
@@ -958,20 +980,18 @@ function getMIChartData($mi) {
 	}
 }
 
-function getNewestChartValue(chart) {
+function getNewestChartValue(chart, seriesIdx) {
 	// Returns the most recent data value from a given chart
-	var data = chart.series[0].data;
+	var data = chart.series[seriesIdx].data;
 	return data[data.length-1].y;
 }
 
 function openVideoPopup() {
-	console.log("openVideoPopup");
 	$('#tutorialVideoiFramePopup').attr('src', "http://player.vimeo.com/video/107469289?autoplay=1"); // Starts video playback
 	$("#video-popup").popup("open", {transition:"slideup"});
 }
 
 function closeVideoPopup() {
-	console.log("closeVideoPopup");
 	$("#video-popup").popup("close", {transition:"pop"});
 	$('#tutorialVideoiFramePopup').attr('src', "http://player.vimeo.com/video/107469289"); // Stops video playback
 	$('#tutorialVideoiFrameHelpPageWrapper').append("<iframe id='tutorialVideoiFrameHelpPage' src='http://player.vimeo.com/video/107469289' width='497' height='298' seamless webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>");
