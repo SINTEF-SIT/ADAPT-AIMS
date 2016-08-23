@@ -30,6 +30,7 @@
 				if ($row["address"] != null) $row["address"] = decrypt($row["address"]);
 				if ($row["zipCode"] != null) $row["zipCode"] = decrypt($row["zipCode"]);
 				if ($row["city"] != null) $row["city"] = decrypt($row["city"]);
+				if ($row["email"] != null) $row["email"] = decrypt($row["email"]);
 				if ($row["phoneNumber"] != null) $row["phoneNumber"] = decrypt($row["phoneNumber"]);
 				if ($row["birthDate"] != null) $row["birthDate"] = decrypt($row["birthDate"]);
 				if ($row["comment"] != null) $row["comment"] = decrypt($row["comment"]);
@@ -73,6 +74,7 @@
 			$address = isset($_POST["address"]) ? encrypt($_POST["address"]) : NULL;
 			$zipCode = isset($_POST["zipCode"]) ? encrypt($_POST["zipCode"]) : NULL;
 			$city = isset($_POST["city"]) ? encrypt($_POST["city"]) : NULL;
+			$email = isset($_POST["email"]) ? encrypt($_POST["email"]) : NULL;
 			$phone = isset($_POST["phone"]) ? encrypt($_POST["phone"]) : NULL;
 			$weight = isset($_POST["weight"]) ? $_POST["weight"] : NULL;
 			$height = isset($_POST["height"]) ? $_POST["height"] : NULL;
@@ -92,8 +94,8 @@
 
 				$seniorUserID = (int) mysqli_insert_id($conn);
 
-				if ($stmt = $conn->prepare("INSERT INTO SeniorUsers (userID, address, zipCode, city, phoneNumber, birthDate, isMale, weight, height, usesWalkingAid, livingIndependently, numFalls3Mths, numFalls12Mths, comment, dateJoinedAdapt, active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?, NOW(), b'1')")) {
-					$stmt->bind_param("isssssiiiiiiis", $seniorUserID, $address, $zipCode, $city, $phone, encrypt($_POST["birthDate"]), $_POST["isMale"], $weight, $height, $usesWalkingAid, $livingIndependently, $falls3Mths, $falls12Mths, $comment);
+				if ($stmt = $conn->prepare("INSERT INTO SeniorUsers (userID, address, zipCode, city, email, phoneNumber, birthDate, isMale, weight, height, usesWalkingAid, livingIndependently, numFalls3Mths, numFalls12Mths, comment, dateJoinedAdapt, active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, NOW(), b'1')")) {
+					$stmt->bind_param("issssssiiiiiiis", $seniorUserID, $address, $zipCode, $city, $email, $phone, encrypt($_POST["birthDate"]), $_POST["isMale"], $weight, $height, $usesWalkingAid, $livingIndependently, $falls3Mths, $falls12Mths, $comment);
 					$stmt->execute();
 
 					if ($stmt = $conn->prepare("INSERT INTO ExpertSeniorLink (expertUserID, seniorUserID) VALUES (?,?)")) {
@@ -128,6 +130,7 @@
 			$address = isset($_POST["address"]) ? encrypt($_POST["address"]) : NULL;
 			$zipCode = isset($_POST["zipCode"]) ? encrypt($_POST["zipCode"]) : NULL;
 			$city = isset($_POST["city"]) ? encrypt($_POST["city"]) : NULL;
+			$email = isset($_POST["email"]) ? encrypt($_POST["email"]) : NULL;
 			$phone = isset($_POST["phone"]) ? encrypt($_POST["phone"]) : NULL;
 			$weight = isset($_POST["weight"]) ? $_POST["weight"] : NULL;
 			$height = isset($_POST["height"]) ? $_POST["height"] : NULL;
@@ -140,12 +143,12 @@
 
 			if ($stmt = $conn->prepare("UPDATE Users AS u, SeniorUsers AS su
 					SET u.firstName=?, u.lastName=?, u.username=?,
-					su.address=?, su.zipCode=?, su.city=?, su.phoneNumber=?,
-					su.weight=?, su.height=?, su.usesWalkingAid=?, 
-					su.livingIndependently=?, su.numFalls3Mths=?, 
-					su.numFalls12Mths=?, su.comment=?
+					su.address=?, su.zipCode=?, su.city=?, su.email=?, 
+					su.phoneNumber=?, su.weight=?, su.height=?, 
+					su.usesWalkingAid=?, su.livingIndependently=?, 
+					su.numFalls3Mths=?, su.numFalls12Mths=?, su.comment=?
 					WHERE su.userID = u.userID AND u.userID = ?;")) {
-				$stmt->bind_param("sssssssiiiiiisi", encrypt($_POST["firstName"]), encrypt($_POST["lastName"]), encrypt($_POST["username"]), $address, $zipCode, $city, $phone, $weight, $height, $usesWalkingAid, $livingIndependently, $falls3Mths, $falls12Mths, $comment, $_POST["seniorUserID"]);
+				$stmt->bind_param("ssssssssiiiiiisi", encrypt($_POST["firstName"]), encrypt($_POST["lastName"]), encrypt($_POST["username"]), $address, $zipCode, $city, $email, $phone, $weight, $height, $usesWalkingAid, $livingIndependently, $falls3Mths, $falls12Mths, $comment, $_POST["seniorUserID"]);
 				$stmt->execute();
 				$stmt->close();
 				$conn->close();

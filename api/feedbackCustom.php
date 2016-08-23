@@ -12,7 +12,7 @@
 			}
 		}
 
-		if ($stmt = $conn->prepare("SELECT fmc.feedbackText, fmc.timeCreated, fmc.category, e.*
+		if ($stmt = $conn->prepare("SELECT fmc.msgID, fmc.feedbackText, fmc.timeCreated, fmc.category, e.*
 				FROM FeedbackMsgCustom AS fmc LEFT JOIN Exercises AS e ON fmc.exerciseID = e.exerciseID
 				WHERE userID=?
 				ORDER BY timeCreated DESC;")) {
@@ -85,6 +85,23 @@
 	}
 
 
+	function deleteData($msgID) {
+		include('../inc/db.inc.php');
+
+		$query = "DELETE FROM FeedbackMsgCustom WHERE msgID=?";
+
+		if ($stmt = $conn->prepare($query)) {
+			$stmt->bind_param("i", $msgID);
+			$stmt->execute();
+			$stmt->close();
+			$conn->close();
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+
 
 	$tokenUserID = validateToken();
 
@@ -133,7 +150,7 @@
 				// Edit a personalized feedback message for a senior user in DB
 
 				if (isset($_GET["seniorUserID"]) && isset($_GET["category"]) && isset($_GET["value"])) {
-					$dbWriteSuccess = wirteDB($_GET["seniorUserID"], $_GET["category"], $_GET["value"], $tokenUserID);
+					$dbWriteSuccess = putData($_GET["seniorUserID"], $_GET["category"], $_GET["value"], $tokenUserID);
 
 					if ($dbWriteSuccess) {
 						deliver_response(200, "Opplysningene ble lagret i databasen.", true);
@@ -144,8 +161,23 @@
 					deliver_response(400, "Ugyldig PUT-forespørsel: mangler parametre.", NULL);
 				}
 				break;
+
+			case 'DELETE':
+				// Deletes a custom feedback message
+				if (isset($_GET["msgID"])) {
+					$dbWriteSuccess = deleteData($_GET["msgID"]);
+
+					if ($dbWriteSuccess) {
+						deliver_response(200, "Rådet ble slettet fra databasen.", true);
+					} else {
+						deliver_response(200, "Det ble ikke opprettet forbindelse med databasen.", false);
+					}
+				} else {
+					deliver_response(400, "Ugyldig DELETE-forespørsel: mangler parameter.", NULL);
+				}
+				break;
 			default:
-				deliver_response(400, "Ugyldig forespørsel. Aksepterte forespørsel-typer: GET, POST, PUT", NULL);
+				deliver_response(400, "Ugyldig forespørsel. Aksepterte forespørsel-typer: GET, POST, PUT, DELETE", NULL);
 				break;
 		}
 	} else {

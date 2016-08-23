@@ -7,7 +7,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 
 		<!-- jQuery -->
-		<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+		<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
 
 		<!-- CSS -->
 		<link rel="stylesheet" href="style.css">
@@ -17,9 +17,9 @@
   		<link rel="stylesheet" href="../jquery-custom-theme/jquery.mobile.icons.min.css" />
 		
 		<!-- jQuery Mobile -->
-		<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile.structure-1.4.5.min.css" />
-		<!--<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">-->
-		<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+		<link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile.structure-1.4.5.min.css" />
+		<!--<link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">-->
+		<script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
 
 		<!-- Highcharts -->
 		<script src="https://code.highcharts.com/highcharts.js"></script>
@@ -106,6 +106,10 @@
 									<tr>
 										<td>Adresse</td>
 										<td id="cellAddress"></td>
+									</tr>
+									<tr>
+										<td>E-post</td>
+										<td id="cellEmail"></td>
 									</tr>
 									<tr>
 										<td>Tlf</td>
@@ -455,6 +459,11 @@
 					</div>
 					
 					<div class="ui-field-contain">
+						<label for="inputFieldEditEmail">E-post:</label>
+						<input type="email" name="email" id="inputFieldEditEmail" autocomplete="edit-email">
+					</div>
+					
+					<div class="ui-field-contain">
 						<label for="inputFieldEditPhone">Telefonnr:</label>
 						<input type="number" name="phone" id="inputFieldEditPhone" min="10000000" max="99999999">
 					</div>
@@ -743,6 +752,7 @@
 							<th>Dato</th>
 							<th>Tekst</th>
 							<th>Øvelse</th>
+							<th>Slett</th>
 						</thead>
 						<tbody>
 						</tbody>
@@ -785,6 +795,7 @@
 							<th>Dato</th>
 							<th>Tekst</th>
 							<th>Øvelse</th>
+							<th>Slett</th>
 						</thead>
 						<tbody>
 						</tbody>

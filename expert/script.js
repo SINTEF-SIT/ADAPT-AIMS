@@ -1365,10 +1365,12 @@ function getCustomFeedbackMsgs(userID) {
 						+ "<td>" + timeCreated.format('YYYY-MM-DD HH:mm') + "</td>"
 						+ "<td>" + AIFeedbackMsgs[i].feedbackText + "</td>"
 						+ "<td>" + getExerciseTitle(AIFeedbackMsgs[i].exerciseID) + "</td>"
-						+ "</tr>";
+						+ "<td><button data-role='button' data-inline='true' data-mini='true'"
+						+ "onclick='deleteFeedbackMsg(" + AIFeedbackMsgs[i].msgID + ")'>Slett</button>" 
+						+ "</td></tr>";
 					}
-					$('#tablePersonalizedAIFeedbackMsgs tbody tr').remove(); // Removes all exisitng rows from table body
-					$('#tablePersonalizedAIFeedbackMsgs tbody').append(htmlAI); // Inserts the generated HTML
+					$('#tablePersonalizedAIFeedbackMsgs tbody').html(htmlAI); // Inserts the generated HTML
+					$("#personalizedAIFeedbackMsgsContainer").trigger("create"); // Re-apply jQuery Mobile styles to table
 					$('#personalizedAIFeedbackMsgsContainer').show(); // Makes table visible
 				}
 				
@@ -1384,11 +1386,13 @@ function getCustomFeedbackMsgs(userID) {
 						htmlBI += "<tr>"
 						+ "<td>" + timeCreated.format('YYYY-MM-DD HH:mm') + "</td>"
 						+ "<td>" + BIFeedbackMsgs[i].feedbackText + "</td>"
-						+ "<td>" + getExerciseTitle(BIFeedbackMsgs[i].exerciseID) + "</td>";
-						+ "</tr>";
+						+ "<td>" + getExerciseTitle(BIFeedbackMsgs[i].exerciseID) + "</td>"
+						+ "<td><button data-role='button' data-inline='true' data-mini='true'"
+						+ "onclick='deleteFeedbackMsg(" + BIFeedbackMsgs[i].msgID + ")'>Slett</button>" 
+						+ "</td></tr>";
 					}
-					$('#tablePersonalizedBIFeedbackMsgs tbody tr').remove(); // Removes all exisitng rows from table body
-					$('#tablePersonalizedBIFeedbackMsgs tbody').append(htmlBI); // Inserts the generated HTML
+					$('#tablePersonalizedBIFeedbackMsgs tbody').html(htmlBI); // Inserts the generated HTML
+					$("#personalizedBIFeedbackMsgsContainer").trigger("create"); // Re-apply jQuery Mobile styles to table
 					$('#personalizedBIFeedbackMsgsContainer').show(); // Makes table visible
 				}
 			} else {
@@ -1396,6 +1400,31 @@ function getCustomFeedbackMsgs(userID) {
 			}
 		}
 	});
+}
+
+function deleteFeedbackMsg(msgID) {
+	var confirmDelete = confirm("Vil du slette dette rådet?");
+	if (confirmDelete) {
+		showLoader();
+		$.ajax({
+			url: '../api/feedbackCustom.php?msgID=' + msgID,
+			type: 'DELETE',
+			beforeSend: function (request) {
+				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+			},
+			error: function(data, status) {
+				console.log("Error accessing API: DELETE request to feedbackCustom.php with parameter msgID=" + msgID);
+				showToast("#toastPersonalizedFeedback", false, "Det oppstod en feil under skriving til databasen.");
+
+				hideLoader(); // Hides the loading widget
+			}, 
+			success: function(data, status) { // If the API request is successful
+				setActiveUser($activeUserData.userID, false);
+				hideLoader();
+
+			}
+		});
+	}
 }
 
 
@@ -1408,64 +1437,70 @@ function initCustomFeedbackFlipSwitches() {
 	$("#flipPersonalizedBI").prop("checked", $activeUserData.showPersonalizedBIFeedback);
 
 	$("#flipPersonalizedAI").on("change", function (e) {
-		showLoader();
 		var flipSwitchState = e.currentTarget.checked;
-		var flipSwitchStateBinary = flipSwitchState ? "1" : "0";
+		
+		if (flipSwitchState != $activeUserData.showPersonalizedAIFeedback) {
+			showLoader();
+			var flipSwitchStateBinary = flipSwitchState ? "1" : "0";
 
-		var url = "../api/showCustomFeedback.php?category=0&seniorUserID=" 
-			+ $activeUserData.userID + "&value=" + flipSwitchStateBinary;
+			var url = "../api/feedbackCustom.php?category=0&seniorUserID=" 
+				+ $activeUserData.userID + "&value=" + flipSwitchStateBinary;
 
-		$.ajax({
-			url: url,
-			type: 'PUT',
-			beforeSend: function (request) {
-				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-			},
-			error: function(data, status) {
-				console.log("Error accessing API: PUT request to showCustomFeedback.php with parameter category=0 and seniorUserID=" 
-					+ $activeUserData.userID);
-				showToast("#toastPersonalizedFeedback", false, "Det oppstod en feil under skriving til databasen.");
+			$.ajax({
+				url: url,
+				type: 'PUT',
+				beforeSend: function (request) {
+					request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+				},
+				error: function(data, status) {
+					console.log("Error accessing API: PUT request to feedbackCustom.php with parameter category=0 and seniorUserID=" 
+						+ $activeUserData.userID);
+					showToast("#toastPersonalizedFeedback", false, "Det oppstod en feil under skriving til databasen.");
 
-				hideLoader(); // Hides the loading widget
-			}, 
-			success: function(data, status) { // If the API request is successful
-				var toastSuccessText = (flipSwitchState ? "på" : "av");
-				$activeUserData.showPersonalizedAIFeedback = flipSwitchState;
-				showToast("#toastPersonalizedFeedback", true, "Personaliserte AI-råd er nå " 
-					+ toastSuccessText + "slått for denne brukeren.");
-				hideLoader(); // Hides the loading widget
-			}
-		});
+					hideLoader(); // Hides the loading widget
+				}, 
+				success: function(data, status) { // If the API request is successful
+					var toastSuccessText = (flipSwitchState ? "på" : "av");
+					$activeUserData.showPersonalizedAIFeedback = flipSwitchState;
+					showToast("#toastPersonalizedFeedback", true, "Personaliserte AI-råd er nå " 
+						+ toastSuccessText + "slått for denne brukeren.");
+					hideLoader(); // Hides the loading widget
+				}
+			});
+		}
 	});
 
 	$("#flipPersonalizedBI").on("change", function (e) {
 		showLoader();
 		var flipSwitchState = e.currentTarget.checked;
-		var flipSwitchStateBinary = flipSwitchState ? "1" : "0";
+		
+		if (flipSwitchState != $activeUserData.showPersonalizedBIFeedback) {
+			var flipSwitchStateBinary = flipSwitchState ? "1" : "0";
 
-		var url = "../api/showCustomFeedback.php?category=1&seniorUserID=" 
-				+ $activeUserData.userID + "&value=" + flipSwitchStateBinary;
+			var url = "../api/feedbackCustom.php?category=1&seniorUserID=" 
+					+ $activeUserData.userID + "&value=" + flipSwitchStateBinary;
 
-		$.ajax({
-			url: url,
-			type: 'PUT',
-			beforeSend: function (request) {
-				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-			},
-			error: function(data, status) {
-				console.log("Error accessing API: PUT request to showCustomFeedback.php with parameter category=1 and seniorUserID=" 
-					+ $activeUserData.userID);
-				showToast("#toastPersonalizedFeedback", false, "Det oppstod en feil under skriving til databasen.");
-				hideLoader(); // Hides the loading widget
-			}, 
-			success: function(data, status) { // If the API request is successful
-				var toastSuccessText = (flipSwitchState ? "på" : "av");
-				$activeUserData.showPersonalizedBIFeedback = flipSwitchState;
-				showToast("#toastPersonalizedFeedback", true, "Personaliserte BI-råd er nå " 
-					+ toastSuccessText + "slått for denne brukeren.");
-				hideLoader(); // Hides the loading widget
-			}
-		});
+			$.ajax({
+				url: url,
+				type: 'PUT',
+				beforeSend: function (request) {
+					request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+				},
+				error: function(data, status) {
+					console.log("Error accessing API: PUT request to feedbackCustom.php with parameter category=1 and seniorUserID=" 
+						+ $activeUserData.userID);
+					showToast("#toastPersonalizedFeedback", false, "Det oppstod en feil under skriving til databasen.");
+					hideLoader(); // Hides the loading widget
+				}, 
+				success: function(data, status) { // If the API request is successful
+					var toastSuccessText = (flipSwitchState ? "på" : "av");
+					$activeUserData.showPersonalizedBIFeedback = flipSwitchState;
+					showToast("#toastPersonalizedFeedback", true, "Personaliserte BI-råd er nå " 
+						+ toastSuccessText + "slått for denne brukeren.");
+					hideLoader(); // Hides the loading widget
+				}
+			});
+		}
 	});
 }
 
@@ -1810,18 +1845,44 @@ function updateDOM() {
 			$fullAddress += $activeUserData.city;
 		}
 
+
+		// Generate links
+		$addressLink = "";
+		$emailLink = "";
+		$phoneLink = "";
+
+		if ($fullAddress != "") {
+			$addressLink = "<a href='http://maps.google.no/?q="
+				+ $fullAddress + "' target='_blank'>"
+				+ $fullAddress + "</a>";
+		}
+
+		if ($activeUserData.email != "") {
+			$emailLink = "<a href='mailto:" + $activeUserData.email 
+				+ "' target='_blank'>" + $activeUserData.email + "</a>";
+		}
+
+		if ($activeUserData.phoneNumber != "") {
+			$phoneLink = "<a href='tel:" + $activeUserData.phoneNumber 
+				+ "' target='_blank'>" + $activeUserData.phoneNumber  + "</a>";
+		}
+
+
 		// Insert values into user details table and edit user data form
 
 		$("#inputFieldEditFirstName").val($activeUserData.firstName);
 		$("#inputFieldEditLastName").val($activeUserData.lastName);
 		$("#inputFieldEditUsername").val($activeUserData.username);
 
-		$("#cellAddress").html($fullAddress);
+		$("#cellAddress").html($addressLink);
 		$("#inputFieldEditAddress").val($activeUserData.address);
 		$("#inputFieldEditZipCode").val($activeUserData.zipCode);
 		$("#inputFieldEditCity").val($activeUserData.city);
 		
-		$("#cellPhoneNr").html($activeUserData.phoneNumber);
+		$("#cellEmail").html($emailLink);
+		$("#inputFieldEditEmail").val($activeUserData.email);
+		
+		$("#cellPhoneNr").html($phoneLink);
 		$("#inputFieldEditPhone").val($activeUserData.phoneNumber);
 
 		$("#cellDateJoined").html($activeUserData.dateJoinedAdapt);
