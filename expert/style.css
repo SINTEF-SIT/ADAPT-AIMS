@@ -176,6 +176,14 @@
 	font-size: 1.5em;
 }
 
-#charNum {
+#charCounterSingleSMS, #charCounterBulkSMS {
 	color: gray;
+}
+
+#SMSCheckboxesSelectAllOrNone {
+	margin-bottom: 10px;
+}
+
+#SMSCheckboxesSelectAllOrNone a:hover {
+	cursor: pointer;
 }

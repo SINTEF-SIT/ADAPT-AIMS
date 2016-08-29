@@ -18,7 +18,7 @@ body {
   padding-right: 20px;
   left: 0;
   right: 0;
-  margin: 0 auto 40px auto;
+  margin: 0 auto 45px auto;
 }
 
 * {
@@ -64,7 +64,7 @@ body {
 
 
 .chartContainer {
-	margin-bottom: 10px;
+	margin-bottom: 20px;
 }
 
 
@@ -73,55 +73,68 @@ body {
 ***************************/
 #MIImgOuterWrapper {
 	margin-top:	15px;
-	height: 25%;
+	height: auto;
 	min-height: 200px;
 	/*top: 2%;*/
 }
 
 #MIImgWell {
+	height: auto;
 	background-image: -webkit-linear-gradient(top,#DAE6F2 0,#D5E0EB 100%) !important;
 	background-image: -o-linear-gradient(top,#DAE6F2 0,#D5E0EB 100%) !important;
 	background-image: -webkit-gradient(linear,left top,left bottom,from(#DAE6F2),to(#D5E0EB)) !important;
 	background-image: linear-gradient(to bottom,#DAE6F2 0,#D5E0EB 100%) !important;
 }
 
-/*#MIImgHeader {
-	font-size: 4vh;
-	width: 100%;
-	text-align: center;
-	height: 15%;
-	top: 1%;
-	margin: 0;
-	font-family: "Myriad Pro", Arial, Helvetica, sans-serif !important;
-	font-weight: bold;
-}*/
-
-#MIimgInnerWrapper {
-	display: inline-block;
-	overflow:hidden;
-	/*height: 85%;*/
-	height: 100%;
-	width: 100%;
-	vertical-align: middle;
-	padding: 10px 0;
+#MIImgHeader h1 {
+	margin: 10px 0;
 }
 
-.verticalAlignHelper {
+#MIimgInnerWrapper {
+	position: relative;
 	display: inline-block;
-	height: 100%;
+	overflow:hidden;
 	vertical-align: middle;
+	padding-bottom: 15px;
+	margin-bottom: 10px;
 }
 
 #MIImg {
 	vertical-align: middle;
-	max-height: 100%;
+	max-height: 250px;
 	max-width: 100%;
-	margin: 0 auto;
+	margin: 15px auto 0 auto;
 }
 
 
 #michartOpenBtn {
 	margin: 30px;
+}
+
+#MIGaugeChartTextHighRisk, #MIGaugeChartTextLowRisk {
+	position: absolute;
+	bottom: 0;
+	font-weight: bold;
+	font-size: 20px;
+}
+
+@media (max-width: 450px) { 
+	#MIGaugeChartTextHighRisk, #MIGaugeChartTextLowRisk { 
+		font-size: 14px;
+	}
+}
+
+
+#MIGaugeChartTextHighRisk {
+	left: 0;
+	color: #ED1E24;
+	text-shadow: 2px 2px 8px #ED1E24;
+}
+
+#MIGaugeChartTextLowRisk {
+	right: 0;
+	color: #5FBB46;
+	text-shadow: 2px 2px 8px #5FBB46;
 }
 
 
@@ -148,6 +161,10 @@ body {
 #balanceChartContainer, #activityChartContainer {
 	height: 22%;
 	min-height: 200px;
+}
+
+#activityChartContainer {
+	margin-bottom: 0;
 }
 
 .highcharts-container {
@@ -250,7 +267,7 @@ body {
 }
 
 .alert-gray {
-	border-color: #ddd;
+	border-color: #C7C7C7;
 	color: #333;
 	background-color: #f6f6f6;
 }
@@ -265,6 +282,11 @@ body {
 .messageWrapper .alert {
 	padding-bottom: 1%;
 	margin-bottom: 0;
+	background-color: #f6f6f6;
+}
+
+.messageWrapper .clickableFeedback{
+	background-color: #E6E6E6;
 }
 
 .messageWrapper .clickableFeedback:hover {

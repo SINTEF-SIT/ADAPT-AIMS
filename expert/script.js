@@ -3,6 +3,7 @@
 //********************************************************************
 
 $activeUserData = null; // Stores data about the currently selected senior user
+var userOverview = null; // Stores basic data about all senior users accessible by the expert user
 var CSVFileAI = null; // Stores a CSV file for AI values when uploaded
 var CSVFileBI = null; // Stores a CSV file for BI values when uploaded
 
@@ -58,10 +59,10 @@ $(document).bind("mobileinit", function(){
 //***** in case the window size has changed while on another page ****
 //********************************************************************
 $(document).delegate('#user-detail-page', 'pageshow', function () {
-	if ($activeUserData != null) {
-		if (mobilityChart != null) mobilityChart.reflow();
-		if (balanceChart != null) balanceChart.reflow();
-		if (activityChart != null) activityChart.reflow();
+	if ($activeUserData !== null) {
+		if (mobilityChart !== null) mobilityChart.reflow();
+		if (balanceChart !== null) balanceChart.reflow();
+		if (activityChart !== null) activityChart.reflow();
 	}
 });
 
@@ -120,6 +121,18 @@ $(document).ready(function() {
 		$('#csvFileInputAI').bind('change', handleAIFileSelect);
 		$('#csvFileInputBI').bind('change', handleBIFileSelect);
 	}
+
+
+	$("#selectAllSMSRecipients").click(function() { 
+		$("INPUT[name='phone[]']").prop('checked', true).checkboxradio('refresh');
+		return false;
+	});
+
+
+	$("#selectNoSMSRecipients").click(function() {
+		$("INPUT[name='phone[]']").prop('checked', false).checkboxradio('refresh');
+		return false;
+	});
 
 	
 
@@ -311,70 +324,76 @@ $(document).ready(function() {
 	//*************** Submit form for updating user data *****************
 	//********************************************************************
 	$("#editUserDataForm").submit(function(e){
-		showLoader(); // Shows the loading widget
+		var editPhoneNumber = $("#inputFieldEditPhone").val();
+		if (editPhoneNumber === null || editPhoneNumber === "" || validMobilePhoneNumber(editPhoneNumber)) {
+			showLoader(); // Shows the loading widget
 
-		var username = $("#inputFieldEditUsername").val();
-		var usernameUnique = false;
-			
-		// Serialize the form data and append the senior user ID
-		formData = $("#editUserDataForm").serialize();
-		formData += "&seniorUserID=" + $activeUserData.userID;
-
-		$.when($.ajax({
-			type: "GET",
-			beforeSend: function (request) {
-				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-			},
-			url: "../api/checkUsernameAvailability.php?username=" + username,
-			success: function(data, status) { // If the API request is successful
+			var username = $("#inputFieldEditUsername").val();
+			var usernameUnique = false;
 				
-				if (data.data) {
-					if (data.data == -1 || data.data == $activeUserData.userID) {
-						usernameUnique = true;
-					} else {
-						showToast("#toastEditUserDataForm", false, "Brukernavnet er allerede i bruk"); // Shows toast with error msg
-					}
-				} else {
-					showToast("#toastEditUserDataForm", false, "Det ble ikke opprettet forbindelse med databasen"); // Shows toast with error msg
-				}
-			},
-			error: function(data, status) {
-				hideLoader(); // Hides the loading widget
-				showToast("#toastEditUserDataForm", false, "Det oppstod en feil"); // Shows toast with error msg
-			}
-		})).then(function(data, textStatus, jqXHR) {
+			// Serialize the form data and append the senior user ID
+			formData = $("#editUserDataForm").serialize();
+			formData += "&seniorUserID=" + $activeUserData.userID;
 
-			if (usernameUnique) {
-				$.ajax({
-					type: "PUT",
-					beforeSend: function (request) {
-						request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-					},
-					url: "../api/seniorUserData.php",
-					data: formData,
-					success: function(data, status) { // If the API request is successful
-						
-						if (data.data) {
-							$activeUserData.firstName = $("#inputFieldEditFirstName").val();
-							$activeUserData.lastName = $("#inputFieldEditLastName").val();
-
-							setActiveUser($activeUserData.userID, false); // Sets the active user, which in turn updates the DOM with new user data
-							updateUsersTableRow(); // Updates the values in the row in the user overview table corresponding to the active user
-
-							showToast("#toastEditUserDataForm", true, data.status_message); // Shows toast with success msg
+			$.when($.ajax({
+				type: "GET",
+				beforeSend: function (request) {
+					request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+				},
+				url: "../api/checkUsernameAvailability.php?username=" + username,
+				success: function(data, status) { // If the API request is successful
+					
+					if (data.data) {
+						if (data.data == -1 || data.data == $activeUserData.userID) {
+							usernameUnique = true;
 						} else {
+							showToast("#toastEditUserDataForm", false, "Brukernavnet er allerede i bruk"); // Shows toast with error msg
+						}
+					} else {
+						showToast("#toastEditUserDataForm", false, "Det ble ikke opprettet forbindelse med databasen"); // Shows toast with error msg
+					}
+				},
+				error: function(data, status) {
+					hideLoader(); // Hides the loading widget
+					showToast("#toastEditUserDataForm", false, "Det oppstod en feil"); // Shows toast with error msg
+				}
+			})).then(function(data, textStatus, jqXHR) {
+
+				if (usernameUnique) {
+					$.ajax({
+						type: "PUT",
+						beforeSend: function (request) {
+							request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+						},
+						url: "../api/seniorUserData.php",
+						data: formData,
+						success: function(data, status) { // If the API request is successful
+							
+							if (data.data) {
+								$activeUserData.firstName = $("#inputFieldEditFirstName").val();
+								$activeUserData.lastName = $("#inputFieldEditLastName").val();
+
+								setActiveUser($activeUserData.userID, false); // Sets the active user, which in turn updates the DOM with new user data
+								updateUsersTableRow(); // Updates the values in the row in the user overview table corresponding to the active user
+
+								showToast("#toastEditUserDataForm", true, data.status_message); // Shows toast with success msg
+							} else {
+								showToast("#toastEditUserDataForm", false, data.status_message); // Shows toast with error msg
+							}
+						},
+						error: function(data, status) {
+							hideLoader(); // Hides the loading widget
 							showToast("#toastEditUserDataForm", false, data.status_message); // Shows toast with error msg
 						}
-					},
-					error: function(data, status) {
-						hideLoader(); // Hides the loading widget
-						showToast("#toastEditUserDataForm", false, data.status_message); // Shows toast with error msg
-					}
-				});
-			} else {
-				hideLoader(); // Hides the loading widget
-			}
-		});
+					});
+				} else {
+					hideLoader(); // Hides the loading widget
+				}
+			});
+		} else {
+			showToast("#toastEditUserDataForm", false, "Det oppgitte mobilnummeret er ugyldig."); // Shows toast with error msg
+		}
+			
 
 		return false; // Returns false to stop the default form behaviour
 	});
@@ -384,63 +403,68 @@ $(document).ready(function() {
 	//************* Submit form for adding new senior user ***************
 	//********************************************************************
 	$("#newUserForm").submit(function(e){
-		showLoader(); // Shows the loading widget
+		var newPhoneNumber = $("#inputFieldEditPhone").val();
+		if (newPhoneNumber === null || newPhoneNumber === "" || validMobilePhoneNumber(newPhoneNumber)) {
+			showLoader(); // Shows the loading widget
 
-		var username = $("#inputFieldNewUsername").val();
-		var usernameUnique = false;
+			var username = $("#inputFieldNewUsername").val();
+			var usernameUnique = false;
 
-		// Serialize the form data and append the senior user ID
-		formData = $("#newUserForm").serialize();
-		formData += ("&expertUserID=" + expertUserID);
+			// Serialize the form data and append the senior user ID
+			formData = $("#newUserForm").serialize();
+			formData += ("&expertUserID=" + expertUserID);
 
 
-		$.when($.ajax({
-			type: "GET",
-			beforeSend: function (request) {
-				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-			},
-			url: "../api/checkUsernameAvailability.php?username=" + username,
-			success: function(data, status) { // If the API request is successful
-				
-				if (data.data) {
-					if (data.data == -1) { // no match found for the given username
-						usernameUnique = true;
+			$.when($.ajax({
+				type: "GET",
+				beforeSend: function (request) {
+					request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+				},
+				url: "../api/checkUsernameAvailability.php?username=" + username,
+				success: function(data, status) { // If the API request is successful
+					
+					if (data.data) {
+						if (data.data == -1) { // no match found for the given username
+							usernameUnique = true;
+						} else {
+							showToast("#toastEditUserDataForm", false, "Brukernavnet er allerede i bruk"); // Shows toast with error msg
+						}
 					} else {
-						showToast("#toastEditUserDataForm", false, "Brukernavnet er allerede i bruk"); // Shows toast with error msg
+						showToast("#toastEditUserDataForm", false, "Det ble ikke opprettet forbindelse med databasen"); // Shows toast with error msg
 					}
-				} else {
-					showToast("#toastEditUserDataForm", false, "Det ble ikke opprettet forbindelse med databasen"); // Shows toast with error msg
+				},
+				error: function(data, status) {
+					hideLoader(); // Hides the loading widget
+					showToast("#toastEditUserDataForm", false, "Det oppstod en feil"); // Shows toast with error msg
 				}
-			},
-			error: function(data, status) {
-				hideLoader(); // Hides the loading widget
-				showToast("#toastEditUserDataForm", false, "Det oppstod en feil"); // Shows toast with error msg
-			}
-		})).then(function(data, textStatus, jqXHR) {
+			})).then(function(data, textStatus, jqXHR) {
 
-			if (usernameUnique) {
-				$.ajax({
-					type: "POST",
-					beforeSend: function (request) {
-						request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-					},
-					url: "../api/seniorUserData.php",
-					data: formData,
-					success: function(data, status) { // If the API request is successful
-						hideLoader(); // Hides the loading widget
-						$.mobile.back();
-						getUserOverview(); // Updates the DOM with new data from db
-						document.getElementById("newUserForm").reset(); // Clears all the input fields in the new user form
-					},
-					error: function(data, status) {
-						hideLoader(); // Hides the loading widget
-						showToast("#toastNewUserForm", false, data.status_message); // Shows toast with error msg
-					}
-				});
-			} else {
-				hideLoader(); // Hides the loading widget
-			}
-		});
+				if (usernameUnique) {
+					$.ajax({
+						type: "POST",
+						beforeSend: function (request) {
+							request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+						},
+						url: "../api/seniorUserData.php",
+						data: formData,
+						success: function(data, status) { // If the API request is successful
+							hideLoader(); // Hides the loading widget
+							$.mobile.back();
+							getUserOverview(); // Updates the DOM with new data from db
+							document.getElementById("newUserForm").reset(); // Clears all the input fields in the new user form
+						},
+						error: function(data, status) {
+							hideLoader(); // Hides the loading widget
+							showToast("#toastNewUserForm", false, data.status_message); // Shows toast with error msg
+						}
+					});
+				} else {
+					hideLoader(); // Hides the loading widget
+				}
+			});
+		} else {
+			showToast("#toastNewUserForm", false, "Det oppgitte mobilnummeret er ugyldig."); // Shows toast with error msg
+		}
 
 		// Returns false to stop the default form behaviour
 		return false;
@@ -474,16 +498,17 @@ $(document).ready(function() {
 
 		return false; // Returns false to stop the default form behaviour
 	});
-	
+
 
 
 	//********************************************************************
-	//******** Submit form for updating default feedback messages ********
+	//*********** Submit form for sending multiple SMS messages **********
 	//********************************************************************
-	$("#sendSMSForm").submit(function(e){
-		if ($("#SMSContentField").val().length <= 1224) {
+	$("#sendBulkSMSForm").submit(function(e){
+		if ($("#bulkSMSContentField").val().length <= 1224) {
 			showLoader(); // Shows the loading widget
-			formData = $("#sendSMSForm").serialize(); // Serialize the form data
+			formData = $("#sendBulkSMSForm").serialize(); // Serialize the form data
+			formData = formData.replace(/%5B%5D/g, "[]");
 
 			$.ajax({
 				type: "POST",
@@ -494,25 +519,62 @@ $(document).ready(function() {
 				data: formData,
 				success: function(data, status) { // If the API request is successful
 					if (data.data.ok) {
-						$("#SMSContentField").val("");
-						showToast("#toastSendSMS", true, data.status_message); // Shows toast with success msg
+						$("#bulkSMSContentField").val("");
+						showToast("#toastSendBulkSMS", true, data.status_message); // Shows toast with success msg
 					} else {
-						showToast("#toastSendSMS", false, "Kunne ikke sende SMS."); // Shows toast with error msg
+						showToast("#toastSendBulkSMS", false, "Kunne ikke sende SMSer."); // Shows toast with error msg
 					}
 					hideLoader(); // Hides the loading widget
 				},
 				error: function(data, status) {
 					hideLoader(); // Hides the loading widget
-					showToast("#toastSendSMS", false, data.status_message); // Shows toast with error msg
+					showToast("#toastSendBulkSMS", false, data.status_message); // Shows toast with error msg
 				}
 			});
 		} else {
-			showToast("#toastSendSMS", false, "Meldingen er for lang!"); // Shows toast with error msg
+			showToast("#toastSendBulkSMS", false, "Meldingen er for lang!"); // Shows toast with error msg
 		}
 
 		return false; // Returns false to stop the default form behaviour
 	});
 
+
+
+	//********************************************************************
+	//*********** Submit form for sending a single SMS message ***********
+	//********************************************************************
+	$("#sendSingleSMSForm").submit(function(e){
+		if ($("#singleSMSContentField").val().length <= 1224) {
+			showLoader(); // Shows the loading widget
+			formData = $("#sendSingleSMSForm").serialize(); // Serialize the form data
+
+			$.ajax({
+				type: "POST",
+				beforeSend: function (request) {
+					request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+				},
+				url: "../api/sendSMS.php",
+				data: formData,
+				success: function(data, status) { // If the API request is successful
+					if (data.data.ok) {
+						$("#singleSMSContentField").val("");
+						showToast("#toastSendSingleSMS", true, data.status_message); // Shows toast with success msg
+					} else {
+						showToast("#toastSendSingleSMS", false, "Kunne ikke sende SMS."); // Shows toast with error msg
+					}
+					hideLoader(); // Hides the loading widget
+				},
+				error: function(data, status) {
+					hideLoader(); // Hides the loading widget
+					showToast("#toastSendSingleSMS", false, data.status_message); // Shows toast with error msg
+				}
+			});
+		} else {
+			showToast("#toastSendSingleSMS", false, "Meldingen er for lang!"); // Shows toast with error msg
+		}
+
+		return false; // Returns false to stop the default form behaviour
+	});
 });
 
 
@@ -539,12 +601,11 @@ function getDefaultFeedbackMsgs() {
 			exercises = data.data;
 
 			// Populate the dropdown for selecting linked exercise to new personalized AI/BI feedback msgs
-			var selectExerciseHtml = generateExerciseDropdownOptionHTML(-1);
-			$("#selectPersonalizedAIFeedbackExercise").html(selectExerciseHtml);
-			$("#selectPersonalizedBIFeedbackExercise").html(selectExerciseHtml);
+			$("#selectPersonalizedAIFeedbackExercise").html(generateExerciseDropdownOptionHTML(-1, true));
+			$("#selectPersonalizedBIFeedbackExercise").html(generateExerciseDropdownOptionHTML(-1, false));
 		}
 	})).then(function(data, textStatus, jqXHR) {
-		if (exercises != null) {
+		if (exercises !== null) {
 			$.ajax({
 				url: "../api/feedbackDefault.php",
 				type: 'GET',
@@ -559,7 +620,7 @@ function getDefaultFeedbackMsgs() {
 					hideLoader(); // Hides the loading widget
 					var msgs = data.data;
 
-					if (msgs != null) { // Checks that the API call returned data
+					if (msgs !== null) { // Checks that the API call returned data
 						// Removes all rows from the feedback table bodies (if any)
 						$('#AIDefaultFeedbackTable tbody tr').remove();
 						$('#BIDefaultFeedbackTable tbody tr').remove();
@@ -568,22 +629,24 @@ function getDefaultFeedbackMsgs() {
 						var htmlBI = "";
 
 						for (var i=0; i<msgs.length; i++) { // Iterates the messages to build a table row for each message
+
+							var isAI = (msgs[i].category === 0);
+							var categoryTxt = (isAI ? "AI" : "BI");
 							
 							// Builds the html for the dropdown box for selecting an exercise
-							var optionsHtml = generateExerciseDropdownOptionHTML(msgs[i].exerciseID);
+							var optionsHtml = generateExerciseDropdownOptionHTML(msgs[i].exerciseID, isAI);
 
 							// Builds the HTML code for a table row
-							var categoryTxt = (msgs[i].category == 1 ? "BI" : "AI");
 							var htmlTemp = "<tr>"
 								+ "<td>" + msgs[i].idx + "</td><td>"
 								+ "<input type='text' name='msg-" + msgs[i].msgID + "' id='default" + categoryTxt + "FeedbackInput" + msgs[i].idx + "' value='" + msgs[i].feedbackText + "' required>"
 								+ "</td><td><select name='exercise-" + msgs[i].msgID + "'>" + optionsHtml + "</select></td></tr>";
 							
 							// Places the HTML string in the correct variable (AI or BI)
-							if (msgs[i].category == 1) {
-								htmlBI += htmlTemp;
-							} else {
+							if (isAI) {
 								htmlAI += htmlTemp;
+							} else {
+								htmlBI += htmlTemp;
 							}
 						}
 
@@ -605,14 +668,22 @@ function getDefaultFeedbackMsgs() {
 //******* Generates the options elements used in a select box ********
 //********* to select an exercise to link to a feedback msg **********
 //********************************************************************
-function generateExerciseDropdownOptionHTML(selectedID) {
-	var html = "<option value='-1'>Ingen</option>";
+function generateExerciseDropdownOptionHTML(selectedID, isAI) {
+	var html = "";
+	if (isAI) {
+		html += "<option value='-1'>Ingen</option>";
+	}
+
+	var categoryNr = isAI ? 0 : 1;
+
 	for (var j=0; j<exercises.length; j++) {
-		html += "<option value='" + exercises[j].exerciseID + "'";
-		if (selectedID == exercises[j].exerciseID) {
-			html += " selected";
+		if (exercises[j].isBalanceExercise === categoryNr) {
+			html += "<option value='" + exercises[j].exerciseID + "'";
+			if (selectedID == exercises[j].exerciseID) {
+				html += " selected";
+			}
+			html += ">" + exercises[j].title + "</option>";
 		}
-		html += ">" + exercises[j].title + "</option>";
 	}
 	return html;
 }
@@ -637,39 +708,44 @@ function getUserOverview() {
 		},
 		success: function(data, status) { // If the API request is successful
 			hideLoader(); // Hides the loading widget
-			var userData = data.data;
+			userOverview = data.data;
 
-			if (userData != null) { // Checks that the API call returned data
+			// Inserts the users and their phone number as values for the checkboxes on the page for sending SMSes to multiple recipients.
+			populateSMSCheckboxes();
+
+			if (userOverview !== null) { // Checks that the API call returned data
 				$('#usersTable').remove(); // Removes all rows from the usersTable body (if any)
 				
 				var html = '<table data-role="table" data-mode="columntoggle" data-column-btn-text="Velg synlige kolonner" '
 					+ 'data-filter="true" data-input="#filterTable-input" class="ui-responsive table-stripe ui-shadow" id="usersTable">'
 					+ '<thead>'
 					+ '<tr>'
-					+ '<th data-priority="4">Bruker-ID</th>'
 					+ '<th >Etternavn</th>'
 					+ '<th data-priority="1">Fornavn</th>'
-					+ '<th data-priority="3">Alder</th>'
-					+ '<th data-priority="2">Mobility index</th>'
+					+ '<th data-priority="2">Alder</th>'
+					+ '<th data-priority="3">MI</th>'
+					+ '<th data-priority="4">BI</th>'
+					+ '<th data-priority="5">AI</th>'
 					+ '</tr>'
 					+ '</thead>'
 					+ '<tbody>';
 
-				for (var i=0; i<userData.length; i++) { // Iterates the user data to build a table row for each entry
-					//If MI is null, replace it with empty string
-					$mobilityIdx = userData[i].mobilityIdx;
-					if ($mobilityIdx == null) {
-						$mobilityIdx = "";
-					}
+				for (var i=0; i<userOverview.length; i++) { // Iterates the user data to build a table row for each entry
+					
+					// If MI/BI/AI is null, replace it with empty string
+					var mobilityIdx = (userOverview[i].mobilityIdx === null) ? "" : userOverview[i].mobilityIdx;
+					var balanceIdx = (userOverview[i].balanceIdx === null) ? "" : userOverview[i].balanceIdx;
+					var activityIdx = (userOverview[i].activityIdx === null) ? "" : userOverview[i].activityIdx;
 
-					$age = calculateAge(userData[i].birthDate); // Calculate the age of the senior user in years
+					$age = calculateAge(userOverview[i].birthDate); // Calculate the age of the senior user in years
 
 					html += "<tr>"
-						+ "<td class='ui-table-priority-4'><a onclick='setActiveUser(" + userData[i].userID + ",true);'>" + userData[i].userID + "</a></td>"
-						+ "<td><a onclick='setActiveUser(" + userData[i].userID + ",true);'>" + userData[i].lastName + "</a></td>"
-						+ "<td class='ui-table-priority-1'><a onclick='setActiveUser(" + userData[i].userID + ",true);'>" + userData[i].firstName + "</a></td>"
-						+ "<td class='ui-table-priority-3'><a onclick='setActiveUser(" + userData[i].userID + ",true);'>" + $age + "</a></td>"
-						+ "<td class='ui-table-priority-2'><a onclick='setActiveUser(" + userData[i].userID + ",true);'>" + $mobilityIdx + "</a></td>"
+						+ "<td><a onclick='setActiveUser(" + userOverview[i].userID + ",true);'>" + userOverview[i].lastName + "</a></td>"
+						+ "<td class='ui-table-priority-1'><a onclick='setActiveUser(" + userOverview[i].userID + ",true);'>" + userOverview[i].firstName + "</a></td>"
+						+ "<td class='ui-table-priority-2'><a onclick='setActiveUser(" + userOverview[i].userID + ",true);'>" + $age + "</a></td>"
+						+ "<td class='ui-table-priority-3'><a onclick='setActiveUser(" + userOverview[i].userID + ",true);'>" + mobilityIdx + "</a></td>"
+						+ "<td class='ui-table-priority-4'><a onclick='setActiveUser(" + userOverview[i].userID + ",true);'>" + balanceIdx + "</a></td>"
+						+ "<td class='ui-table-priority-5'><a onclick='setActiveUser(" + userOverview[i].userID + ",true);'>" + activityIdx + "</a></td>"
 						+ "</tr>";
 				}
 
@@ -720,7 +796,7 @@ function getUserOverview() {
 function setActiveUser(userID, changePage) {
 
 	// Don't fetch data again if the DOM already contains the data for the requested user
-	if (changePage && $activeUserData != null && $activeUserData.userID == userID) {
+	if (changePage && $activeUserData !== null && $activeUserData.userID == userID) {
 		$.mobile.changePage("index.html#user-detail-page");
 		return;
 	}
@@ -739,7 +815,9 @@ function setActiveUser(userID, changePage) {
 	$("#balanceChartContainer").hide();
 	$("#activityChartContainer").hide();
 
-	countSMSChar(document.getElementById("SMSContentField")); // Displays the initial character count for SMS sending
+	// Displays the initial character count for SMS sending
+	countSMSChar(document.getElementById("bulkSMSContentField"), "charCounterBulkSMS");
+	countSMSChar(document.getElementById("singleSMSContentField"), "charCounterSingleSMS");
 
 
 	clearUserDetailsTable(); // Removes existing content (if any) from the user details table
@@ -801,7 +879,7 @@ function setActiveUser(userID, changePage) {
 				var chartDataJSON = data.data;
 				$activeUserData.mobilityIdxs = chartDataJSON; // Store the MI values in $activeUserData
 
-				if (data.data != null) { // Check if API returned any MI values
+				if (data.data !== null) { // Check if API returned any MI values
 					var chartData = [];
 					for (var i=0; i<chartDataJSON.length; i++) {
 						if (i != 0) {
@@ -853,7 +931,17 @@ function setActiveUser(userID, changePage) {
 							max: 1, // The ceiling value of the y-axis
 							min: 0, // The floor of the y-axis
 							alternateGridColor: '#DEE0E3',
-							tickInterval: 0.1 // How frequent a tick is displayed on the axis
+							tickInterval: 0.1, // How frequent a tick is displayed on the axis
+							plotLines: [{
+								color: 'black', // Color value
+								dashStyle: 'ShortDash', // Style of the plot line. Default to solid
+								value: $activeUserData.MIChartLineValue, // Value of where the line will appear
+								width: 2, // Width of the line
+								label: { 
+									text: 'Normalverdi', // Content of the label. 
+									align: 'left'
+								}
+							}]
 						},
 						legend: {
 							enabled: false // Hides the legend showing the name and toggle option for the series
@@ -907,7 +995,7 @@ function setActiveUser(userID, changePage) {
 				$activeUserData.balanceIdxs = balanceChartDataJSON; // Store the BI values in $activeUserData
 				var balanceChartData = [];
 
-				if (balanceChartDataJSON != null) {
+				if (balanceChartDataJSON !== null) {
 					var maxMI = 0;
 					for (var i=0; i<balanceChartDataJSON.length; i++) {
 						// Comment out if chart is changed to a column chart!
@@ -965,7 +1053,17 @@ function setActiveUser(userID, changePage) {
 							min: 0, // The floor of the y-axis
 							endOnTick: false,
 							alternateGridColor: '#DEE0E3',
-							tickInterval: 0.1 // How frequent a tick is displayed on the axis
+							tickInterval: 0.1, // How frequent a tick is displayed on the axis
+							plotLines: [{
+								color: 'black', // Color value
+								dashStyle: 'ShortDash', // Style of the plot line. Default to solid
+								value: $activeUserData.BIChartLineValue, // Value of where the line will appear
+								width: 2, // Width of the line
+								label: { 
+									text: 'Normalverdi', // Content of the label. 
+									align: 'left'
+								}
+							}]
 						},
 						legend: {
 							enabled: false // Hides the legend showing the name and toggle option for the series
@@ -1019,7 +1117,7 @@ function setActiveUser(userID, changePage) {
 			success: function(data, status) { // If the API request is successful
 				var activityChartDataJSON = data.data;
 				$activeUserData.activityIdxs = activityChartDataJSON; // Store the AI values in $activeUserData
-				if (activityChartDataJSON != null) {
+				if (activityChartDataJSON !== null) {
 					var activityChartData = [];
 					for (var i=0; i<activityChartDataJSON.length; i++) {
 						// Uncomment if chart is area chart!
@@ -1071,7 +1169,17 @@ function setActiveUser(userID, changePage) {
 							max: 5, // The ceiling value of the y-axis
 							min: 0, // The floor of the y-axis
 							alternateGridColor: '#DEE0E3',
-							tickInterval: 1 // How frequent a tick is displayed on the axis
+							tickInterval: 1, // How frequent a tick is displayed on the axis
+							plotLines: [{
+								color: 'black', // Color value
+								dashStyle: 'ShortDash', // Style of the plot line. Default to solid
+								value: $activeUserData.AIChartLineValue, // Value of where the line will appear
+								width: 2, // Width of the line
+								label: { 
+									text: 'Normalverdi', // Content of the label. 
+									align: 'left'
+								}
+							}]
 						},
 						legend: {
 							enabled: false // Hides the legend showing the name and toggle option for the series
@@ -1338,14 +1446,14 @@ function getCustomFeedbackMsgs(userID) {
 		success: function(data, status) { // If the API request is successful
 			var feedbackData = data.data;
 
-			if (feedbackData != null) { // Cheks if API returned any data
+			if (feedbackData !== null) { // Cheks if API returned any data
 
 				var AIFeedbackMsgs = [];
 				var BIFeedbackMsgs = [];
 
 				// Sorts the feedback messages into AI and BI
 				for (var i=0; i<feedbackData.length; i++) {
-					if (feedbackData[i].category == '0') { // category 0 = AI
+					if (feedbackData[i].category === '0') { // category 0 = AI
 						AIFeedbackMsgs.push(feedbackData[i]);
 					} else { // category 1 = BI
 						BIFeedbackMsgs.push(feedbackData[i]);
@@ -1510,7 +1618,7 @@ function initCustomFeedbackFlipSwitches() {
 //******* Fetches the title of an exercise given a certain ID  *******
 //********************************************************************
 function getExerciseTitle(exerciseID) {
-	if (exercises != null || exerciseID != null) {
+	if (exercises !== null || exerciseID !== null) {
 		for (var i=0; i<exercises.length; i++) {
 			if (exercises[i].exerciseID == exerciseID) {
 				return exercises[i].title;
@@ -1584,7 +1692,7 @@ function readCSVFile(isAI) {
 	var file = null;
 
 	if (isAI) {
-		if (CSVFileAI != null) {
+		if (CSVFileAI !== null) {
 			file = CSVFileAI;
 		} else {
 			alert("Ingen fil er valgt.");
@@ -1592,7 +1700,7 @@ function readCSVFile(isAI) {
 			return false;
 		}
 	} else { // BI file upload
-		if (CSVFileBI != null) {
+		if (CSVFileBI !== null) {
 			file = CSVFileBI;
 		} else {
 			alert("Ingen fil er valgt.");
@@ -1613,7 +1721,7 @@ function readCSVFile(isAI) {
 		// Exclude empty lines and other invalid entries
 		for (var i=0; i<data.length; i++) {
 			// check valid date
-			if ((typeof data[i].dato != 'undefined') && (data[i].dato != null) && (data[i].dato != '')) {
+			if ((typeof data[i].dato != 'undefined') && (data[i].dato !== null) && (data[i].dato != '')) {
 				// check valid value
 				var value = (isAI ? data[i].ai : data[i].bi);
 				if ($.isNumeric(value) && value >= 0 && value <= 5) {
@@ -1632,7 +1740,7 @@ function readCSVFile(isAI) {
 						compareDates = $activeUserData.activityIdxs;
 					}
 
-					if (compareDates != null) {
+					if (compareDates !== null) {
 						for (var j=0; j<compareDates.length; j++) {
 							if (dateCorrectFormat == compareDates[j].timeDataCollected) {
 								alert("Det er allerede registrert en verdi på datoen " + dateCorrectFormat + ". For å overskrive, bruk det manuelle skjemaet.");
@@ -1767,7 +1875,7 @@ function clearUserDetailsTable() {
 /**** Calculates the age of a user in years based on date of birth ***/
 /*********************************************************************/
 function calculateAge(birthDate) {
-	if (birthDate != null && birthDate != "0000-00-00") {
+	if (birthDate !== null && birthDate != "0000-00-00") {
 		birthDateSplit = birthDate.split('-');
 		birthYear = birthDateSplit[0];
 		birthMonth = birthDateSplit[1];
@@ -1796,7 +1904,7 @@ function updateDOM() {
 	/******* Values that might be stored as a null value in the db *******/
 	/*********************** are checked for this. ***********************/
 	/*********************************************************************/
-	if ($activeUserData != null) {
+	if ($activeUserData !== null) {
 		$fullName = $activeUserData.firstName + " " + $activeUserData.lastName;
 		$genderStr = ($activeUserData.isMale == 1) ? 'Mann' :'Kvinne';
 
@@ -1824,17 +1932,17 @@ function updateDOM() {
 		// taking into account that some parts of it might not be set.
 		$fullAddress = "";
 		$isZipSet = false;
-		if ($activeUserData.address != null) {
+		if ($activeUserData.address !== null) {
 			$fullAddress += $activeUserData.address;
 		}
-		if ($activeUserData.zipCode != null) {
+		if ($activeUserData.zipCode !== null) {
 			$isZipSet = true;
 			if ($fullAddress != "") {
 				$fullAddress += ", ";
 			}
 			$fullAddress += $activeUserData.zipCode + " ";
 		}
-		if ($activeUserData.city != null) {
+		if ($activeUserData.city !== null) {
 			if ($fullAddress != "") {
 				if ($isZipSet) {
 					$fullAddress += " ";
@@ -1889,27 +1997,42 @@ function updateDOM() {
 		
 		$("#cellGender").html($genderStr);
 
-		if ($activeUserData.weight != null) {
+		if ($activeUserData.weight !== null) {
 			$("#cellWeight").html($activeUserData.weight + " kg");
 			$("#inputFieldEditWeight").val($activeUserData.weight);
 		}
 
-		if ($activeUserData.height != null) {
+		if ($activeUserData.height !== null) {
 			$("#cellHeight").html($activeUserData.height + " cm");
 			$("#inputFieldEditHeight").val($activeUserData.height);
 		}
 		
-		if ($activeUserData.numFalls3Mths != null) {
+		if ($activeUserData.numFalls3Mths !== null) {
 			$("#cellFalls3").html($activeUserData.numFalls3Mths);
 			$("#inputFieldEditNumFalls3Mths").val($activeUserData.numFalls3Mths);
 		}
 
-		if ($activeUserData.numFalls12Mths != null) {
+		if ($activeUserData.numFalls12Mths !== null) {
 			$("#cellFall12").html($activeUserData.numFalls12Mths);
 			$("#inputFieldEditNumFalls12Mths").val($activeUserData.numFalls12Mths);
 		}
 
-		if ($activeUserData.comment != null) {
+		if ($activeUserData.MIChartLineValue !== null) {
+			$("#cellMIChartLineValue").html($activeUserData.MIChartLineValue);
+			$("#inputFieldEditMIChartLineValue").val($activeUserData.MIChartLineValue);
+		}
+
+		if ($activeUserData.BIChartLineValue !== null) {
+			$("#cellBIChartLineValue").html($activeUserData.BIChartLineValue);
+			$("#inputFieldEditBIChartLineValue").val($activeUserData.BIChartLineValue);
+		}
+
+		if ($activeUserData.AIChartLineValue !== null) {
+			$("#cellAIChartLineValue").html($activeUserData.AIChartLineValue);
+			$("#inputFieldEditAIChartLineValue").val($activeUserData.AIChartLineValue);
+		}
+
+		if ($activeUserData.comment !== null) {
 			$("#cellComment").html($activeUserData.comment);
 			$("#inputFieldEditComment").val($activeUserData.comment);
 		}
@@ -1927,12 +2050,11 @@ function updateDOM() {
 }
 
 
-//  
+/*********************************************************************/
+/******** Updates the values in the row in the user overview *********/
+/************** table corresponding to the active user ***************/
+/*********************************************************************/
 function updateUsersTableRow() {
-	/*********************************************************************/
-	/******** Updates the values in the row in the user overview *********/
-	/************** table corresponding to the active user ***************/
-	/*********************************************************************/
 	if ($activeUserData) {
 		$('#usersTable tbody tr').each(function() {
 			if ($(this)[0].cells[0].childNodes[0].innerText == $activeUserData.userID) {
@@ -1946,27 +2068,61 @@ function updateUsersTableRow() {
 }
 
 
-function countSMSChar(val) {
-  var len = val.value.length;
-  var print;
-  if (len <= 1224) {
-  	var maxLengths = [160,146,153,153,153,153,153,153];
-    var tempCounter = 0;
-    for (var i=0; i<maxLengths.length; i++) {
-    	tempCounter += maxLengths[i];
-      if (len <= tempCounter) {
-      	var numSMS = i+1;
-        var remainingChars = tempCounter - len;
-        var SMSLengthText = numSMS + " SMS";
-        if (i>0) {
-        	SMSLengthText += "er";
-        }
-        SMSLengthText += ", " + remainingChars + " tegn til neste melding."
-        $('#charNum').text(SMSLengthText);
-        break;
-      }
-    }
-  } else {
-  	$('#charNum').text("Meldingen er for lang!");
-  }
+/*********************************************************************/
+/** Counts the number of characters of a given text, and calculates **/
+/* how many SMSes will need to be sent to transfer the whole message,*/
+/* and how many characters ramain until a new SMS message will need **/
+/**************************** to be sent. ****************************/
+/*********************************************************************/
+function countSMSChar(val, feedbackID) {
+	var len = val.value.length;
+	$feedbackElement = $('#' + feedbackID);
+	var print;
+	if (len <= 1224) {
+		var maxLengths = [160,146,153,153,153,153,153,153];
+		var tempCounter = 0;
+		for (var i=0; i<maxLengths.length; i++) {
+			tempCounter += maxLengths[i];
+			if (len <= tempCounter) {
+				var numSMS = i+1;
+				var remainingChars = tempCounter - len;
+				var SMSLengthText = numSMS + " SMS";
+				if (i>0) {
+					SMSLengthText += "er";
+				}
+				SMSLengthText += ", " + remainingChars + " tegn til neste melding."
+				$feedbackElement.text(SMSLengthText);
+				break;
+			}
+		}
+	} else {
+		$feedbackElement.text("Meldingen er for lang!");
+	}
 };
+
+
+/*********************************************************************/
+/* Checks if a given number is a valid Norwegian mobile phone number */
+/*********************************************************************/
+function validMobilePhoneNumber(phoneNumber) {
+	return ((phoneNumber >= 40000000 && phoneNumber <= 49999999) ||
+		phoneNumber >= 90000000 && phoneNumber <= 99999999)
+}
+
+
+/*********************************************************************/
+/***** Inserts the users and their phone number as values for the ****/
+/** checkboxes on the page for sending SMSes to multiple recipients. */
+/*********************************************************************/
+function populateSMSCheckboxes() {
+	var html = "";
+	for (var i=0; i<userOverview.length; i++) {
+		var phoneNumber = userOverview[i].phoneNumber;
+		if (phoneNumber !== null && phoneNumber.trim() !== "") {
+			html += "<input type='checkbox' name='phone[]' id='SMSRecipientCheckbox-" + i + "' value='" + phoneNumber + "'>"
+				+ "<label for='SMSRecipientCheckbox-" + i + "'>" + userOverview[i].firstName + " " + userOverview[i].lastName + "</label>"
+		}
+	}
+
+	$("#SMSRecipientCheckboxGroup").append(html);
+}

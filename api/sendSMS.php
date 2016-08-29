@@ -6,19 +6,27 @@
 
 	$tokenUserID = validateToken();
 
-	if ($tokenUserID != null) {
-		if (isset($_POST["msg"]) && isset($_POST["phone"])) {
+	if ($tokenUserID !== null) {
+		if (isset($_POST["msg"]) && (isset($_POST["phone"]) || isset($_POST["phone%5B%5D"]) || isset($_POST["phone[]"]))) {
 			$msg = $_POST["msg"];
 			$phone = $_POST["phone"];
 
-			$username = '99286869';
-			$authKey = '47ee61e1c5491d85af46dad9ffb29978'; // API key, generated in app.keysms.no
+			$username = '';
+			$authKey = ''; // API key, generated in app.keysms.no
 
 			$keysms = new KeySMS;
 			$keysms->auth($username, $authKey);
-			$response = $keysms->sms($msg, array($phone));
 
-			deliver_response(200, "SMSen ble sendt.", $response);
+			$plural = "";
+
+			if (isset($_POST["bulk"])) {
+				$response = $keysms->sms($msg, $phone);
+				$plural = "ene";
+			} else {
+				$response = $keysms->sms($msg, array($phone));
+			}
+
+			deliver_response(200, "SMS" . $plural . " ble sendt.", $response);
 			
 		} else {
 			deliver_response(400, "Ugyldig forespørsel.", NULL);

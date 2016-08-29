@@ -62,6 +62,7 @@
 				<br><br>
 
 				<a onclick="$.mobile.changePage('index.html#default-feedback-page');" data-role="button" data-icon="comment">Rediger standard-råd</a>
+				<a onclick="$.mobile.changePage('index.html#send-multiple-sms-page');" data-role="button" data-icon="comment">SMS til flere brukere</a>
 			</div><!-- /content -->
 
 			<!--<div data-role="footer">
@@ -138,6 +139,18 @@
 									<tr>
 										<td>Antall fall 12 mnd. før start</td>
 										<td id="cellFall12"></td>
+									</tr>
+									<tr>
+										<td>Verdi linje MI-diagram</td>
+										<td id="cellMIChartLineValue"></td>
+									</tr>
+									<tr>
+										<td>Verdi linje BI-diagram</td>
+										<td id="cellBIChartLineValue"></td>
+									</tr>
+									<tr>
+										<td>Verdi linje AI-diagram</td>
+										<td id="cellAIChartLineValue"></td>
 									</tr>
 									<tr>
 										<td>Bruker ganghjelpemiddel</td>
@@ -464,8 +477,8 @@
 					</div>
 					
 					<div class="ui-field-contain">
-						<label for="inputFieldEditPhone">Telefonnr:</label>
-						<input type="number" name="phone" id="inputFieldEditPhone" min="10000000" max="99999999">
+						<label for="inputFieldEditPhone">Mobilnr:</label>
+						<input type="number" name="phone" id="inputFieldEditPhone" min="40000000" max="99999999">
 					</div>
 					
 					<div class="ui-field-contain">
@@ -487,17 +500,32 @@
 						<label for="inputFieldEditNumFalls12Mths">Antall fall 12 mnd. før start:</label>
 						<input type="number" name="falls12Mths" id="inputFieldEditNumFalls12Mths" min="0">
 					</div>
+					
+					<div class="ui-field-contain">
+						<label for="inputFieldEditMIChartLineValue">Linje normalverdi MI-diagram:</label>
+						<input type="number" name="MIChartLineValue" id="inputFieldEditMIChartLineValue" min="0" max="1" step="0.1" required>
+					</div>
+					
+					<div class="ui-field-contain">
+						<label for="inputFieldEditBIChartLineValue">Linje normalverdi BI-diagram:</label>
+						<input type="number" name="BIChartLineValue" id="inputFieldEditBIChartLineValue" min="0" max="5" step="0.5" required>
+					</div>
+					
+					<div class="ui-field-contain">
+						<label for="inputFieldEditAIChartLineValue">Linje normalverdi AI-diagram:</label>
+						<input type="number" name="AIChartLineValue" id="inputFieldEditAIChartLineValue" min="0" max="5" step="0.5" required>
+					</div>
+					
+					<div class="ui-field-contain">
+						<label for="inputFieldEditComment">Kommentar:</label>
+						<input type="text" name="comment" id="inputFieldEditComment">
+					</div>
 
 					<label for="inputFieldEditUsesWalkingAid">Bruker ganghjelpemiddel</label>
 					<input type="checkbox" name="walkingAid" id="inputFieldEditUsesWalkingAid" value="walkingAid">
 
 					<label for="inputFieldEditLivingIndependently">Bor for seg selv</label>
 					<input type="checkbox" name="livingIndependently" id="inputFieldEditLivingIndependently" value="livingIndependently">
-					
-					<div class="ui-field-contain">
-						<label for="inputFieldEditComment">Kommentar:</label>
-						<input type="text" name="comment" id="inputFieldEditComment">
-					</div>
 
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 
@@ -592,8 +620,8 @@
 					</div>
 					
 					<div class="ui-field-contain">
-						<label for="inputFieldNewPhone">Telefonnr:</label>
-						<input type="number" name="phone" id="inputFieldNewPhone" min="10000000" max="99999999">
+						<label for="inputFieldNewPhone">Mobilnr:</label>
+						<input type="number" name="phone" id="inputFieldNewPhone" min="40000000" max="99999999">
 					</div>
 					
 					<div class="ui-field-contain">
@@ -614,6 +642,21 @@
 					<div class="ui-field-contain">
 						<label for="inputFieldNewNumFalls12Mths">Antall fall 12 mnd. før start:</label>
 						<input type="number" name="falls12Mths" id="inputFieldNewNumFalls12Mths" min="0">
+					</div>
+					
+					<div class="ui-field-contain">
+						<label for="inputFieldNewMIChartLineValue">Linje normalverdi MI-diagram:</label>
+						<input type="number" name="MIChartLineValue" id="inputFieldNewMIChartLineValue" min="0" max="1" step="0.1" value="0.5" required>
+					</div>
+					
+					<div class="ui-field-contain">
+						<label for="inputFieldNewBIChartLineValue">Linje normalverdi BI-diagram:</label>
+						<input type="number" name="BIChartLineValue" id="inputFieldNewBIChartLineValue" min="0" max="5" step="0.5" value="2.5" required>
+					</div>
+					
+					<div class="ui-field-contain">
+						<label for="inputFieldNewAIChartLineValue">Linje normalverdi AI-diagram:</label>
+						<input type="number" name="AIChartLineValue" id="inputFieldNewAIChartLineValue" min="0" max="5" step="0.5" value="2.5" required>
 					</div>
 					
 					<div class="ui-field-contain">
@@ -648,11 +691,11 @@
 
 			<div data-role="content" data-theme="a">
 				<form id="registerDefaultFeedbackForm" method="post">
-					<h1>Aktivitetsråd</h1>
-					<table id="AIDefaultFeedbackTable" data-role="table" class="ui-responsive table-stripe ui-shadow">
+					<h1>Balanseråd</h1>
+					<table id="BIDefaultFeedbackTable" data-role="table" class="ui-responsive table-stripe ui-shadow">
 						<thead>
 							<tr>
-								<th>AI-verdi</th>
+								<th>BI-verdi</th>
 								<th>Råd</th>
 								<th>Øvelse</th>
 							</tr>
@@ -662,11 +705,11 @@
 
 					<br><br>
 
-					<h1>Balanseråd</h1>
-					<table id="BIDefaultFeedbackTable" data-role="table" class="ui-responsive table-stripe ui-shadow">
+					<h1>Aktivitetsråd</h1>
+					<table id="AIDefaultFeedbackTable" data-role="table" class="ui-responsive table-stripe ui-shadow">
 						<thead>
 							<tr>
-								<th>BI-verdi</th>
+								<th>AI-verdi</th>
 								<th>Råd</th>
 								<th>Øvelse</th>
 							</tr>
@@ -690,6 +733,45 @@
 
 
 		<!-- ******************************************************* -->
+		<!-- **************** SEND MULTIPLE SMS PAGE *************** -->
+		<!-- ******************************************************* -->
+		<div data-role="page" id="send-multiple-sms-page">
+			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
+				<h1>SMS masseutsending</h1>
+				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
+					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
+				</div>
+			</div><!-- /header -->
+
+			<div data-role="content" data-theme="a">
+
+				<h2>Send masseutsending</h2>
+				<form id="sendBulkSMSForm" method="post">
+					<div class="ui-field-contain">
+						<label for="bulkSMSContentField">Melding:</label>
+						<textarea name="msg" id="bulkSMSContentField" onkeyup="countSMSChar(this, 'charCounterBulkSMS')" required></textarea>
+						<div id="charCounterBulkSMS"></div>
+					</div>
+				    <fieldset id="SMSRecipientCheckboxGroup" data-role="controlgroup">
+				        <legend>Send til:</legend>
+						<div id="SMSCheckboxesSelectAllOrNone">
+							<a id="selectAllSMSRecipients">Velg&nbsp;alle</a> | <a id="selectNoSMSRecipients">Velg&nbsp;ingen</a>
+						</div>
+				    </fieldset>
+					<input type="hidden" name="bulk" value="1">
+					<input type="submit" value="Send" data-icon="check" data-iconpos="right" data-theme="b">
+				</form>
+
+				<div id='toastSendBulkSMS' class="toast">
+					<div class="toast-content">
+						<img id="toastSendBulkSMSImg" class="toast-icon" src="//:0"/> <span id="toastSendBulkSMSText"></span>
+					</div>
+				</div>
+			</div><!-- /content -->
+		</div><!-- /send-multiple-sms-page -->
+
+
+		<!-- ******************************************************* -->
 		<!-- ******************** SEND SMS PAGE ******************** -->
 		<!-- ******************************************************* -->
 		<div data-role="page" id="send-sms-page">
@@ -703,11 +785,11 @@
 			<div data-role="content" data-theme="a">
 
 				<h2>Send SMS</h2>
-				<form id="sendSMSForm" method="post">
+				<form id="sendSingleSMSForm" method="post">
 					<div class="ui-field-contain">
-						<label for="SMSContentField">Melding:</label>
-						<textarea name="msg" id="SMSContentField" onkeyup="countSMSChar(this)" required></textarea>
-						<div id="charNum"></div>
+						<label for="singleSMSContentField">Melding:</label>
+						<textarea name="msg" id="singleSMSContentField" onkeyup="countSMSChar(this, 'charCounterSingleSMS')" required></textarea>
+						<div id="charCounterSingleSMS"></div>
 					</div>
 
 					<input id="SMSReceiverField" type="hidden" name="phone">
@@ -715,9 +797,9 @@
 					<input type="submit" value="Send" data-icon="check" data-iconpos="right" data-theme="b">
 				</form>
 
-				<div id='toastSendSMS' class="toast">
+				<div id='toastSendSingleSMS' class="toast">
 					<div class="toast-content">
-						<img id="toastSendSMSImg" class="toast-icon" src="//:0"/> <span id="toastSendSMSText"></span>
+						<img id="toastSendSingleSMSImg" class="toast-icon" src="//:0"/> <span id="toastSendSingleSMSText"></span>
 					</div>
 				</div>
 			</div><!-- /content -->
@@ -744,40 +826,6 @@
 				    <input type="checkbox" data-role="flipswitch" name="personalizedAI" id="flipPersonalizedAI" data-on-text="På" data-off-text="Av">
 				<div>
 
-				<br><br>
-
-				<div id="personalizedAIFeedbackMsgsContainer" class="personalizedFeedbackMsgsContainer">
-					<table id="tablePersonalizedAIFeedbackMsgs" data-role="table" class="ui-responsive table-stripe ui-shadow">
-						<thead>
-							<th>Dato</th>
-							<th>Tekst</th>
-							<th>Øvelse</th>
-							<th>Slett</th>
-						</thead>
-						<tbody>
-						</tbody>
-					</table>
-				</div>
-
-				<br>
-
-				<form id="registerPersonalizedAIFeedbackForm" method="post">
-					<div class="ui-field-contain">
-						<label for="textareaPersonalizedAIFeedback">Nytt AI-råd:</label>
-						<input type="text" name="feedbackText" id="textareaPersonalizedAIFeedback" required></input>
-					</div>
-					<div class="ui-field-contain">
-						<label>Øvelse:</label>
-						<select id="selectPersonalizedAIFeedbackExercise" name="exerciseID"></select>
-					</div>
-
-					<input type="hidden" name="category" value="0">
-
-					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
-				</form>
-
-				<br><br>
-				<hr>
 				<br><br>
 
 				<h2>Råd knyttet til balanseindeks (BI):</h2>
@@ -825,6 +873,40 @@
 					</div>
 					
 				</form>
+
+				<br><br>
+				<hr>
+				<br><br>
+
+				<div id="personalizedAIFeedbackMsgsContainer" class="personalizedFeedbackMsgsContainer">
+					<table id="tablePersonalizedAIFeedbackMsgs" data-role="table" class="ui-responsive table-stripe ui-shadow">
+						<thead>
+							<th>Dato</th>
+							<th>Tekst</th>
+							<th>Øvelse</th>
+							<th>Slett</th>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
+
+				<br>
+
+				<form id="registerPersonalizedAIFeedbackForm" method="post">
+					<div class="ui-field-contain">
+						<label for="textareaPersonalizedAIFeedback">Nytt AI-råd:</label>
+						<input type="text" name="feedbackText" id="textareaPersonalizedAIFeedback" required></input>
+					</div>
+					<div class="ui-field-contain">
+						<label>Øvelse:</label>
+						<select id="selectPersonalizedAIFeedbackExercise" name="exerciseID"></select>
+					</div>
+
+					<input type="hidden" name="category" value="0">
+
+					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
+				</form>				
 			</div><!-- /content -->
 		</div><!-- /personalized-feedback-page -->
 

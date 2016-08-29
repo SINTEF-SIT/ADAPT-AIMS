@@ -1,6 +1,30 @@
 <?php
 	include('deliver_response.inc.php');
 
+	function readAdminDB($password) {
+		include('../inc/db.inc.php');
+		include('../inc/jwt.inc.php');
+
+		$passwordHashed = hashword($password);
+
+		if ($stmt = $conn->prepare("SELECT userID FROM Admin WHERE adminPassword = ?;")) {
+			$stmt->bind_param("s", $passwordHashed);
+			$stmt->execute();
+			$result = $stmt->get_result();
+			$stmt->close();
+
+			if (mysqli_num_rows($result) > 0) {
+				$row = mysqli_fetch_assoc($result);
+				$row['token'] = generateToken(0);
+				$row['isAdmin'] = true;
+				$conn->close();
+				return $row;
+			}
+			$conn->close();
+		}
+		return null;
+	}
+
 	function readDB($username, $password) {
 
 		include('../inc/db.inc.php');
@@ -52,6 +76,7 @@
 					}
 
 					$row['token'] = generateToken($userID);
+					$row['isAdmin'] = false;
 					return $row;
 				}
 				$stmtExpert->close();
@@ -66,7 +91,11 @@
 		$username = $_POST['username'];
 		$password = $_POST['password'];
 
-		$userData = readDB($username, $password);
+		if ($username == "admin") {
+			$userData = readAdminDB($password);
+		} else {
+			$userData = readDB($username, $password);
+		}
 
 		if (empty($userData)) {
 			deliver_response(200, "Ugyldig brukernavn/passord.", NULL);

@@ -14,18 +14,25 @@ $(document).ready(function() {
 				// If API call returns data (successful login):
 				if (data.data) {
 					// Store data about logged in user in localstorage
-					localStorage.setItem("firstname", data.data.firstName);
-					localStorage.setItem("lastname", data.data.lastName);
 					localStorage.setItem("userid", data.data.userID);
-					localStorage.setItem("username", $("#usernameField").val());
-					localStorage.setItem("isexpert", data.data.isExpert);
 					localStorage.setItem("token", data.data.token);
 
-					// Redirects the browser depending on whether the user has an expert or a senior account type
-					if (data.data.isExpert) {
-						window.location.href = "expert/index.html";
+					// Redirect to admin page if login data match admin user
+					if (data.data.isAdmin) {
+						window.location.href = "admin/index.html";
 					} else {
-						window.location.href = "senior/index.html";
+						localStorage.setItem("firstname", data.data.firstName);
+						localStorage.setItem("lastname", data.data.lastName);
+						localStorage.setItem("username", $("#usernameField").val());
+						localStorage.setItem("isexpert", data.data.isExpert);
+						
+
+						// Redirects the browser depending on whether the user has an expert or a senior account type
+						if (data.data.isExpert) {
+							window.location.href = "expert/index.html";
+						} else {
+							window.location.href = "senior/index.html";
+						}
 					}
 				} else {
 					// Display toast with error message if login credentials were incorrect

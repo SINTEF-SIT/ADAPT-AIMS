@@ -12,7 +12,7 @@
 			}
 		}
 
-		if ($stmt = $conn->prepare("SELECT fmc.msgID, fmc.feedbackText, fmc.timeCreated, fmc.category, e.*
+		if ($stmt = $conn->prepare("SELECT fmc.msgID, fmc.feedbackText, fmc.timeCreated, fmc.category, e.exerciseID
 				FROM FeedbackMsgCustom AS fmc LEFT JOIN Exercises AS e ON fmc.exerciseID = e.exerciseID
 				WHERE userID=?
 				ORDER BY timeCreated DESC;")) {
@@ -105,7 +105,7 @@
 
 	$tokenUserID = validateToken();
 
-	if ($tokenUserID != null) {
+	if ($tokenUserID !== null) {
 
 		$method = $_SERVER['REQUEST_METHOD'];
 

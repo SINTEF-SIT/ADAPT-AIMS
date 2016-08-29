@@ -101,7 +101,7 @@
 
 	$tokenUserID = validateToken();
 
-	if ($tokenUserID != null) {
+	if ($tokenUserID !== null) {
 		$method = $_SERVER['REQUEST_METHOD'];
 
 		switch ($method) {

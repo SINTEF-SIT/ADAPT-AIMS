@@ -5,7 +5,9 @@
 	function getData() {
 		include('../inc/db.inc.php');
 
-		if ($stmt = $conn->prepare("SELECT fmd.msgID, fmd.feedbackText, fmd.category, fmd.idx, e.* FROM FeedbackMsgDefault AS fmd LEFT JOIN Exercises AS e ON fmd.exerciseID = e.exerciseID;")) {
+		if ($stmt = $conn->prepare("SELECT fmd.msgID, fmd.feedbackText, fmd.category, fmd.idx, e.exerciseID
+				FROM FeedbackMsgDefault AS fmd 
+				LEFT JOIN Exercises AS e ON fmd.exerciseID = e.exerciseID;")) {
 			$stmt->execute();
 			$result = $stmt->get_result();
 			$stmt->close();
@@ -45,7 +47,7 @@
 
 	$tokenUserID = validateToken();
 
-	if ($tokenUserID != null) {
+	if ($tokenUserID !== null) {
 
 		$method = $_SERVER['REQUEST_METHOD'];
 

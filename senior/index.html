@@ -11,11 +11,6 @@
 		<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 		<script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
 
-		<!-- Bootstrap -->
-		<!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
-		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>-->
-
 		<!-- Highcharts -->
 		<script src="https://code.highcharts.com/highcharts.js"></script>
 
@@ -51,15 +46,14 @@
 				<!-- Mobility index image (MIImg) -->
 				<div id="MIImgOuterWrapper" class="pageMainElement">
 					<div id="MIImgWell" class="well">
-						<div id="MIImgHeader"></div>
+						<div id="MIImgHeader">
+							<h1>Mobilitetsindeks</h1>
+							<b>Grønt betyr lav risiko for å falle.</b>
+						</div>
 						<div id="MIImgInnerWrapper">
-							<span class="verticalAlignHelper"></span><img src="//:0" alt="Mobility index" id="MIImg">
-
-							<!-- Confirm open MI chart popup -->
-							<!--<div data-role="popup" data-transition="pop" id="confirmOpenMIChartPopup">
-								<a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
-								<a onclick="openMIChartPopup()" data-rel="popup" class="ui-btn ui-corner-all ui-icon-clock ui-btn-icon-left greyBtn" id="michartOpenBtn">Vis mobilitetsindeks over tid</a>
-							</div>-->
+							<img src="//:0" alt="Mobility index" id="MIImg">
+							<span id="MIGaugeChartTextHighRisk">Høy risiko</span>
+							<span id="MIGaugeChartTextLowRisk">Lav risiko</span>
 						</div>
 						<a href="#MIImgTooltip" data-rel="popup" data-role="button" id="MIImgTooltipBtn" class="tooltipBtn ui-link ui-btn ui-btn-a ui-icon-info ui-btn-icon-notext ui-btn-inline ui-shadow ui-corner-all" data-inline="true" data-transition="pop" data-icon="info" data-theme="a" data-iconpos="notext" data-corners="true" data-shadow="true" data-iconshadow="true" data-wrapperels="span" title="Forklaring av bildet"></a>
 
@@ -82,11 +76,6 @@
 					</div>
 				</div>
 
-				<!-- BI feedback message -->
-				<div id="messageWrapperBI" class="pageMainElement messageWrapper">
-					<div id="feedbackMsgBI" class="alert alert-gray" role="alert"></div>
-				</div>
-
 				<!-- Activity index chart -->
 				<div id="activityChartContainer" class="pageMainElement chartContainer">
 					<div class="well chartWell">
@@ -98,20 +87,45 @@
 						</div>
 					</div>
 				</div>
+			</div>
+
+			<!-- Footer -->
+			<div data-role="footer" data-position="fixed" data-tap-toggle="false">
+				<div data-role="navbar">
+					<ul>
+						<li><a data-icon="grid" class="ui-btn-active ui-state-persist">Oversikt</a></li>
+						<li><a href="#feedback-page" data-icon="comment" data-transition="none">Råd</a></li>
+						<li><a href="#details-page" data-icon="bars" data-transition="none">Mer</a></li>
+						<li><a href="#help-page" data-icon="info" data-transition="none">Hjelp</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+
+
+		<!-- Feedback page -->
+		<div data-role="page" id="feedback-page">
+			<div data-role="content">
+				<h1>Råd</h1>
+
+				<!-- BI feedback message -->
+				<div id="messageWrapperBI" class="pageMainElement messageWrapper">
+					<div id="feedbackMsgBI" class="alert alert-gray" role="alert"></div>
+				</div>
 
 				<!-- AI feedback message -->
 				<div id="messageWrapperAI" class="pageMainElement messageWrapper">
 					<div id="feedbackMsgAI" class="alert alert-gray" role="alert"></div>
 				</div>
+
 			</div>
 
 			<!-- Footer -->
 			<div data-role="footer" data-position="fixed" data-tap-toggle="false">
-				
-				<!--<a href="#settingsPage" id="settingsBtn" class="ui-btn ui-corner-all ui-btn-inline ui-icon-gear ui-btn-icon-left greyBtn" data-transition="flip">Innstillinger</a>-->
 				<div data-role="navbar">
 					<ul>
-						<li><a data-icon="grid" class="ui-btn-active ui-state-persist">Oversikt</a></li>
+						<li><a href="#main-page" data-icon="grid" data-transition="none" data-direction="reverse">Oversikt</a></li>
+						<li><a data-icon="comment" class="ui-btn-active ui-state-persist">Råd</a></li>
 						<li><a href="#details-page" data-icon="bars" data-transition="none">Mer</a></li>
 						<li><a href="#help-page" data-icon="info" data-transition="none">Hjelp</a></li>
 					</ul>
@@ -138,7 +152,7 @@
 					<div class="well">
 						<p>
 							Innlogget som: <i><span id="userFullName"></span></i><br>
-							Sist oppdatert: <span id="lastUpdatedValue"></span>
+							<div id="lastUpdatedWrapper">Sist oppdatert: <span id="lastUpdatedValue"></span></div>
 						</p>
 					</div>
 				</div>
@@ -154,6 +168,7 @@
 				<div data-role="navbar">
 					<ul>
 						<li><a href="#main-page" data-icon="grid" data-transition="none" data-direction="reverse">Oversikt</a></li>
+						<li><a href="#feedback-page" data-icon="comment" data-transition="none">Råd</a></li>
 						<li><a data-icon="bars" class="ui-btn-active ui-state-persist">Mer</a></li>
 						<li><a href="#help-page" data-icon="info" data-transition="none">Hjelp</a></li>
 					</ul>
@@ -174,6 +189,7 @@
 				<div data-role="navbar">
 					<ul>
 						<li><a href="#main-page" data-icon="grid" data-transition="none" data-direction="reverse">Oversikt</a></li>
+						<li><a href="#feedback-page" data-icon="comment" data-transition="none">Råd</a></li>
 						<li><a href="#details-page" data-icon="bars" data-transition="none" data-direction="reverse">Mer</a></li>
 						<li><a data-icon="info" class="ui-btn-active ui-state-persist">Hjelp</a></li>
 					</ul>
@@ -181,24 +197,6 @@
 			</div>
 		</div>
 
-
-		<!-- MI chart popup -->
-		<!--<div data-role="page" data-dialog="true" data-close-btn="right" id="mi-chart-popup">
-			<div class="popupHeader" data-role="header" data-theme="b">
-				<h1>-</h1>
-			</div>
-			<div role="main" data-role="content">
-				<div id="mobilityChartContainer" class="pageMainElement">
-					<div class="well chartWell">
-						<div id="mobilityChart"></div>
-					</div>
-				</div>
-				<br>
-				<a data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Tilbake</a>
-			</div>
-		</div>-->
-
-			
 
 		<!--  Exercise info page, AI  -->
 		<div data-role="page" data-dialog="true" data-close-btn="right" id="exercise-info-page-AI">
@@ -229,45 +227,7 @@
 				<a data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Lukk</a>
 			</div>
 		</div> <!-- /exercise info page, BI -->
-	
 
-
-		<!-- Settings page -->
-		<div data-role="page" id="settingsPage">
-			<div id="settingsHeader" data-role="header">
-				<h1>Innstillinger</h1>
-			</div>
-			<!--<a href="#main-page" id="backBtnHeader" class="ui-btn ui-corner-all ui-btn-inline ui-icon-back ui-btn-icon-left" data-transition="flip">Tilbake</a>-->
-
-			<div data-role="main" class="ui-content">
-				<!--<h2 id="MIImgSelectionHeader">Representasjonsbilde for fallrisiko:</h2>
-				<div id="MIImgSelectionGroup">
-					<img src="img/MIImg/thumbnails/MIImg1.png" id="MIImg1" class="MIImgSelected" alt="Skålvekt"/>
-					<img src="img/MIImg/thumbnails/MIImg2.png" id="MIImg2" alt="Blomster"/>
-					<img src="img/MIImg/thumbnails/MIImg3.png" id="MIImg3" alt="Meter"/>
-				</div>-->
-
-				<div id="settingsBtnGroup">
-					<a href="#main-page" onclick="closeSettingsView()" id="backBtn" class="ui-btn ui-corner-all ui-icon-back ui-btn-icon-left greyBtn" data-transition="flip">Tilbake</a>
-					<a onclick="openVideoPopup()" data-rel="popup" class="ui-btn ui-corner-all ui-icon-info ui-btn-icon-left greyBtn">Hjelp</a>
-					
-					<!--<a href="#main-page" onclick="saveChanges()" id="saveBtn" class="ui-btn ui-corner-all ui-icon-check ui-btn-icon-left greenBtn" data-transition="flip">Lagre endringer</a>
-					<a href="#popupDialog" id="cancelBtn" data-rel="popup" data-position-to="window" class="ui-btn ui-corner-all ui-icon-delete ui-btn-icon-left greyBtn">Lukk uten å lagre</a>-->
-					<a href="" onclick="logout()" id="logoutBtn" class="ui-btn ui-corner-all ui-icon-power ui-btn-icon-left redBtn">Logg ut</a>
-
-					<div data-role="popup" id="popupDialog" data-overlay-theme="b" data-theme="b" data-dismissible="false" data-history="false" style="max-width:400px;">
-					    <div data-role="header" data-theme="a">
-					    <h1>Forkast endringer?</h1>
-					    </div>
-					    <div role="main" class="ui-content">
-					        <h3 class="ui-title">Er du sikker på at du ikke vil lagre endringene?</h3>
-					        <a onclick="cancelChanges()" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-a" data-rel="back">Ja</a>
-					        <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back">Nei</a>
-					    </div>
-					</div>
-				</div>
-			</div>
-		</div>
 
 		<div class="ui-loader ui-corner-all ui-body-a ui-loader-default" style="display: block;">
 			<span class="ui-icon ui-icon-loading">

@@ -1,3 +1,9 @@
+// ****************************************************************************
+// Contains functions used by both the senior and expert views of the system.
+// ****************************************************************************
+
+
+
 function showToast(formID, success, msg) {
 	// Displays a 'toast', a popup text box at the bottom of the screen, for a few seconds.
 	// Typically used for providing feedback after form submission.

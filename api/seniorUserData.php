@@ -51,75 +51,61 @@
 						$row["mobilityIdxTimeDataCollected"] = null;
 					}
 				} else {
+					$conn->close();
 					return NULL;
 				}
 				
 				$conn->close();
 				return $row;
-			} else {
-				$conn->close();
-				return NULL;
 			}
-		} else {
-			$conn->close();
-			return NULL;
 		}
+		$conn->close();
+		return NULL;
 	}
 
 	function postData($expertUserID) {
 		include('../inc/db.inc.php');
 
-		if (checkExpertSeniorLink($conn, $expertUserID, $_POST["seniorUserID"])) {
+		$address = isset($_POST["address"]) ? encrypt($_POST["address"]) : NULL;
+		$zipCode = isset($_POST["zipCode"]) ? encrypt($_POST["zipCode"]) : NULL;
+		$city = isset($_POST["city"]) ? encrypt($_POST["city"]) : NULL;
+		$email = isset($_POST["email"]) ? encrypt($_POST["email"]) : NULL;
+		$phone = isset($_POST["phone"]) ? encrypt($_POST["phone"]) : NULL;
+		$weight = isset($_POST["weight"]) ? $_POST["weight"] : NULL;
+		$height = isset($_POST["height"]) ? $_POST["height"] : NULL;
+		$falls3Mths = isset($_POST["falls3Mths"]) ? $_POST["falls3Mths"] : NULL;
+		$falls12Mths = isset($_POST["falls12Mths"]) ? $_POST["falls12Mths"] : NULL;
+		$comment = isset($_POST["comment"]) ? encrypt($_POST["comment"]) : NULL;
 
-			$address = isset($_POST["address"]) ? encrypt($_POST["address"]) : NULL;
-			$zipCode = isset($_POST["zipCode"]) ? encrypt($_POST["zipCode"]) : NULL;
-			$city = isset($_POST["city"]) ? encrypt($_POST["city"]) : NULL;
-			$email = isset($_POST["email"]) ? encrypt($_POST["email"]) : NULL;
-			$phone = isset($_POST["phone"]) ? encrypt($_POST["phone"]) : NULL;
-			$weight = isset($_POST["weight"]) ? $_POST["weight"] : NULL;
-			$height = isset($_POST["height"]) ? $_POST["height"] : NULL;
-			$falls3Mths = isset($_POST["falls3Mths"]) ? $_POST["falls3Mths"] : NULL;
-			$falls12Mths = isset($_POST["falls12Mths"]) ? $_POST["falls12Mths"] : NULL;
-			$comment = isset($_POST["comment"]) ? encrypt($_POST["comment"]) : NULL;
+		$usesWalkingAid = isset($_POST["walkingAid"]) ? "1" : "0";
+		$livingIndependently = isset($_POST["livingIndependently"]) ? "1" : "1";
 
-			$usesWalkingAid = isset($_POST["walkingAid"]) ? "1" : "0";
-			$livingIndependently = isset($_POST["livingIndependently"]) ? "1" : "1";
-
-			$password = hashword($_POST["password"]);
+		$password = hashword($_POST["password"]);
 
 
-			if ($stmt = $conn->prepare("INSERT INTO Users (username, password, firstName, lastName) VALUES (?,?,?,?)")) {
-				$stmt->bind_param("ssss", encrypt($_POST["username"]), $password, encrypt($_POST["firstName"]), encrypt($_POST["lastName"]));
+		if ($stmt = $conn->prepare("INSERT INTO Users (username, password, firstName, lastName) VALUES (?,?,?,?)")) {
+			$stmt->bind_param("ssss", encrypt($_POST["username"]), $password, encrypt($_POST["firstName"]), encrypt($_POST["lastName"]));
+			$stmt->execute();
+
+			$seniorUserID = (int) mysqli_insert_id($conn);
+
+			if ($stmt = $conn->prepare("INSERT INTO SeniorUsers (userID, address, zipCode, city, email, phoneNumber, birthDate, isMale, weight, height, usesWalkingAid, livingIndependently, numFalls3Mths, numFalls12Mths, comment, MIChartLineValue, BIChartLineValue, aIChartLineValue, dateJoinedAdapt, active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, NOW(), b'1')")) {
+				$stmt->bind_param("issssssiiiiiiisddd", $seniorUserID, $address, $zipCode, $city, $email, $phone, encrypt($_POST["birthDate"]), $_POST["isMale"], $weight, $height, $usesWalkingAid, $livingIndependently, $falls3Mths, $falls12Mths, $comment, $MIChartLineValue, $BIChartLineValue, $AIChartLineValue);
 				$stmt->execute();
 
-				$seniorUserID = (int) mysqli_insert_id($conn);
-
-				if ($stmt = $conn->prepare("INSERT INTO SeniorUsers (userID, address, zipCode, city, email, phoneNumber, birthDate, isMale, weight, height, usesWalkingAid, livingIndependently, numFalls3Mths, numFalls12Mths, comment, dateJoinedAdapt, active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, NOW(), b'1')")) {
-					$stmt->bind_param("issssssiiiiiiis", $seniorUserID, $address, $zipCode, $city, $email, $phone, encrypt($_POST["birthDate"]), $_POST["isMale"], $weight, $height, $usesWalkingAid, $livingIndependently, $falls3Mths, $falls12Mths, $comment);
+				if ($stmt = $conn->prepare("INSERT INTO ExpertSeniorLink (expertUserID, seniorUserID) VALUES (?,?)")) {
+					$stmt->bind_param("ii", $_POST["expertUserID"], $seniorUserID);
 					$stmt->execute();
-
-					if ($stmt = $conn->prepare("INSERT INTO ExpertSeniorLink (expertUserID, seniorUserID) VALUES (?,?)")) {
-						$stmt->bind_param("ii", $_POST["expertUserID"], $seniorUserID);
-						$stmt->execute();
-						$stmt->close();
-						$conn->close();
-						return true;
-					} else {
-						$stmt->close();
-						$conn->close();
-						return false;
-					}
-					
-				} else {
 					$stmt->close();
 					$conn->close();
-					return false;
+					return true;
+				} else {
+					$stmt->close();
 				}
-			} else {
-				$conn->close();
-				return false;
 			}
 		}
+		$conn->close();
+		return false;
 	}
 
 	function putData($expertUserID) {
@@ -137,6 +123,9 @@
 			$falls3Mths = isset($_POST["falls3Mths"]) ? $_POST["falls3Mths"] : NULL;
 			$falls12Mths = isset($_POST["falls12Mths"]) ? $_POST["falls12Mths"] : NULL;
 			$comment = isset($_POST["comment"]) ? encrypt($_POST["comment"]) : NULL;
+			$MIChartLineValue = isset($_POST["MIChartLineValue"]) ? $_POST["MIChartLineValue"] : NULL;
+			$BIChartLineValue = isset($_POST["BIChartLineValue"]) ? $_POST["BIChartLineValue"] : NULL;
+			$AIChartLineValue = isset($_POST["AIChartLineValue"]) ? $_POST["AIChartLineValue"] : NULL;
 
 			$usesWalkingAid = isset($_POST["walkingAid"]) ? "1" : "0";
 			$livingIndependently = isset($_POST["livingIndependently"]) ? "1" : "0";
@@ -146,28 +135,27 @@
 					su.address=?, su.zipCode=?, su.city=?, su.email=?, 
 					su.phoneNumber=?, su.weight=?, su.height=?, 
 					su.usesWalkingAid=?, su.livingIndependently=?, 
-					su.numFalls3Mths=?, su.numFalls12Mths=?, su.comment=?
+					su.numFalls3Mths=?, su.numFalls12Mths=?, su.comment=?,
+					su.MIChartLineValue=?, su.BIChartLineValue=?, su.AIChartLineValue=?
 					WHERE su.userID = u.userID AND u.userID = ?;")) {
-				$stmt->bind_param("ssssssssiiiiiisi", encrypt($_POST["firstName"]), encrypt($_POST["lastName"]), encrypt($_POST["username"]), $address, $zipCode, $city, $email, $phone, $weight, $height, $usesWalkingAid, $livingIndependently, $falls3Mths, $falls12Mths, $comment, $_POST["seniorUserID"]);
+				$stmt->bind_param("ssssssssiiiiiisdddi", encrypt($_POST["firstName"]), encrypt($_POST["lastName"]), encrypt($_POST["username"]), $address, $zipCode, $city, $email, $phone, $weight, $height, $usesWalkingAid, $livingIndependently, $falls3Mths, $falls12Mths, $comment, $MIChartLineValue, $BIChartLineValue, $AIChartLineValue, $_POST["seniorUserID"]);
 				$stmt->execute();
 				$stmt->close();
 				$conn->close();
 				return true;
 			} else {
 				$stmt->close();
-				$conn->close();
-				return false;
 			}
-		} else {
-			return false;
 		}
+		$conn->close();
+		return false;
 	}
 
 
 
 	$tokenUserID = validateToken();
 
-	if ($tokenUserID != null) {
+	if ($tokenUserID !== null) {
 		$method = $_SERVER['REQUEST_METHOD'];
 
 		switch ($method) {
@@ -190,7 +178,7 @@
 
 			case 'POST':
 				// Store a new senior user to DB
-				if (isset($_POST["expertUserID"]) && isset($_POST["username"]) && isset($_POST["password"]) && isset($_POST["firstName"]) && isset($_POST["lastName"]) && isset($_POST["birthDate"]) && isset($_POST["isMale"])) {
+				if (isset($_POST["expertUserID"]) && isset($_POST["username"]) && isset($_POST["password"]) && isset($_POST["firstName"]) && isset($_POST["lastName"]) && isset($_POST["birthDate"]) && isset($_POST["isMale"]) && isset($_POST["MIChartLineValue"]) && isset($_POST["BIChartLineValue"]) && isset($_POST["AIChartLineValue"])) {
 			
 					$dbWriteSuccess = postData($expertUserID);
 					
