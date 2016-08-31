@@ -1,4 +1,10 @@
 $(document).ready(function() {
+	if (Modernizr.localstorage) {
+		console.log("localstorage is supported!");
+	} else {
+		console.log("localstorage not supported");
+	}
+
 	// Listens for the submit of the login form
 	$("#loginForm").submit(function(e) {
 

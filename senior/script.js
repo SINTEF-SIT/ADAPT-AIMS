@@ -7,6 +7,7 @@ var activityChart; // The chart displaying the activity indexes
 var MIImgID; // ID identifying the image used to represent the MI
 var oldMIImgID; // Stores the previously selected MI img when a new img is selected, for rollback if the user cancels the changes
 var userData; // Information about the logged in user
+var exercises; // Information about all exercises in the system
 
 // Tooltip texts explaining what the different AI values mean.
 var activityChartTooltips = ["Det er ikke registrert noe fysisk aktivitet denne dagen.", // AI = 0
@@ -601,7 +602,6 @@ $(document).ready(function() {
 										request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 									},
 									error: function(data, status) { // If the API request fails
-										hideLoader(); // Hides the loading widget
 										console.log("Error attempting to call API: GET request to feedback.php with parameters idx=" 
 											+ secondFeedbackAjaxCall.idx + " and category=" + secondFeedbackAjaxCall.category);
 									}, 
@@ -623,12 +623,45 @@ $(document).ready(function() {
 											// No feedback msg is found
 											console.log(data.status_message);
 										}
-										hideLoader(); // Hides the loading widget
 									}
-								}));
+								})).then(function(data, textStatus, jqXHR) {
+									$.ajax({
+										/***************************
+										** Get all exercises
+										***************************/
+										url: "../api/exercises.php",
+										type: 'GET',
+										beforeSend: function (request) {
+											request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+										},
+										error: function(data, status) { // If the API request fails
+											console.log("Error attempting to call API: GET request to exercises.php");
+											hideLoader(); // Hides the loading widget
+										},
+										success: function(data, status) { // If the API request is successful
+											exercises = data.data;
+
+											var htmlBalanceExercises = "";
+											var htmlActivityExercises = "";
+
+											for (var i=0; i<exercises.length; i++) {
+												var html = "<a onclick='displayExercise(" + i + ")' data-role='button'>" + exercises[i].title + "</a>";
+												if (exercises[i].isBalanceExercise === 1) {
+													htmlBalanceExercises += html;
+												} else {
+													htmlActivityExercises += html;
+												}
+											}
+											$("#balanceExercisesBtnGroup").append(htmlBalanceExercises);
+											$("#activityExercisesBtnGroup").append(htmlActivityExercises);
+
+											hideLoader(); // Hides the loading widget
+										}
+									});	
+								});
 							} else {
 								hideLoader(); // Hides the loading widget
-							}	
+							}
 						});
 					} else {
 						hideLoader(); // Hides the loading widget
@@ -910,3 +943,9 @@ function closeVideoPopup() {
 function openMIChartPopup() {
 	$.mobile.changePage( "#mi-chart-popup", { transition: "pop"}); 
 }*/
+
+function displayExercise(exerciseArrayIdx) {
+	var exercise = exercises[exerciseArrayIdx];
+	generateExerciseHTML(exercise, "");
+	$.mobile.changePage( "index.html#exercise-info-page-", { transition: "pop" });
+}

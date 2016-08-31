@@ -127,14 +127,14 @@ body {
 
 #MIGaugeChartTextHighRisk {
 	left: 0;
-	color: #ED1E24;
-	text-shadow: 2px 2px 8px #ED1E24;
+	/*color: #ED1E24;*/
+	text-shadow: 2px 2px 8px #575757;
 }
 
 #MIGaugeChartTextLowRisk {
 	right: 0;
-	color: #5FBB46;
-	text-shadow: 2px 2px 8px #5FBB46;
+	/*color: #5FBB46;*/
+	text-shadow: 2px 2px 8px #575757;
 }
 
 
@@ -218,8 +218,18 @@ body {
 	margin: 0 auto;
 }
 
+.exercisesBtnGroup {
+	width: 50%;
+	margin: 0 auto;
+	display: inline-block;
+}
+
 @media (max-width: 600px) { 
 	#userDataWrapper { 
+		width: 90%;
+	}
+
+	.exercisesBtnGroup {
 		width: 90%;
 	}
 }
