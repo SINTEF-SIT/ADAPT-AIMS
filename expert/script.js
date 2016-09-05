@@ -16,18 +16,15 @@ var token; // The JWT used for communicating with the API
 
 var exercises; // Data about the exercises that can be recommended to the senior users
 
-// If expert user tries to submit a new MI/BI/AI with a date that already has an MI/BI/AI
+// If expert user tries to submit a new BI/AI with a date that already has an BI/AI
 // for this senior user, a prompt appears asking to confirm overwrite. The form
 // data is stored here temporarily.
-var tempMIFormData = null;
 var tempBIFormData = null;
 var tempAIFormData = null;
 
 // The chart objects and options for these
-var mobilityChart = null;
 var balanceChart = null;
 var activityChart = null;
-var mobilityChartOptions = null;
 var balanceChartOptions = null;
 var activityChartOptions = null;
 
@@ -35,7 +32,7 @@ var activityChartOptions = null;
 
 //********************************************************************
 //******** Returns the current date to be used as the default ********
-//*********** value in the datepicker in the new MI form *************
+//*********************** value in datepickers ***********************
 //********************************************************************
 Date.prototype.toDateInputValue = (function() {
 	var local = new Date(this);
@@ -60,7 +57,6 @@ $(document).bind("mobileinit", function(){
 //********************************************************************
 $(document).delegate('#user-detail-page', 'pageshow', function () {
 	if ($activeUserData !== null) {
-		if (mobilityChart !== null) mobilityChart.reflow();
 		if (balanceChart !== null) balanceChart.reflow();
 		if (activityChart !== null) activityChart.reflow();
 	}
@@ -106,9 +102,6 @@ $(document).ready(function() {
 		window.location.replace("../index.html");
 	}
 
-	// Writes the current date to the datepicker in the new MI form
-	$('#mobilityIdxDatePicker').val(new Date().toDateInputValue());
-
 	// Fetches the detfault feedback messages from the db, and populates the DOM.
 	getDefaultFeedbackMsgs();
 
@@ -133,65 +126,6 @@ $(document).ready(function() {
 		$("INPUT[name='phone[]']").prop('checked', false).checkboxradio('refresh');
 		return false;
 	});
-
-	
-
-	//********************************************************************
-	//*********** Submit form for storing new mobility index *************
-	//********************************************************************
-	$("#mobilityIdxForm").submit(function(e){
-		// Fetch the MI form value from the DOM
-		$mobilityIdxValue = $('#mobilityIdxInputField').val();
-
-		// Checks that the MI value is not equal to the current MI
-		if (parseFloat($mobilityIdxValue) != parseFloat($activeUserData.mobilityIdx)) {
-			// Checks that the MI is numeric and within the boundaries
-			if ($.isNumeric($mobilityIdxValue) && $mobilityIdxValue >= 0 && $mobilityIdxValue <= 1) {
-				
-				// Serialize the form data and append the senior user ID
-				formData = $("#mobilityIdxForm").serialize();
-				formData += "&userID=" + $activeUserData.userID;
-
-				// Check if an MI value is already registered for the given date
-				var match = null;
-				if ($activeUserData.mobilityIdxs) {
-					for (var i=0; i<$activeUserData.mobilityIdxs.length; i++) {
-						if ($activeUserData.mobilityIdxs[i].timeDataCollected == $("#mobilityIdxDatePicker").val()) {
-							match = $activeUserData.mobilityIdxs[i];
-						}
-					}
-				}
-
-				if (match == null) {
-					// No conflicting dates. Form data is sent to DB.
-					writeNewMI(formData, false);
-				} else {
-					// A match was found for the submitted date in the DB.
-					// Page for confirming overwrite is prepared and displayed.
-					formData += "&mobilityIndexID=" + match.mobilityIndexID;
-					tempMIFormData = formData;
-					$("#overwriteMIDialogOldValue").html(match.value);
-					$("#overwriteMIDialogDate").html(match.timeDataCollected);
-					$("#overwriteMIDialogNewValue").html($mobilityIdxValue);
-					
-					$.mobile.changePage( "index.html#confirm-overwrite-mi-dialog", { transition: "pop" });
-				}
-			} else {
-				// Invalid MI
-				showToast("#toastMobilityIdxForm", false, "Feil: ugyldig mobility index");
-			}
-		} else {
-			// Supplied MI is equal to the current MI
-			showToast("#toastMobilityIdxForm", false, "Feil: Oppgitt mobility index er den samme som nåværende index.");
-		}
-
-		// Empty the MI input field
-		$('#mobilityIdxDatePicker').val("");
-		$('#mobilityIdxInputField').val("");
-
-		return false; // Returns false to stop the default form behaviour
-	});
-	
 
 
 	//********************************************************************
@@ -347,15 +281,15 @@ $(document).ready(function() {
 						if (data.data == -1 || data.data == $activeUserData.userID) {
 							usernameUnique = true;
 						} else {
-							showToast("#toastEditUserDataForm", false, "Brukernavnet er allerede i bruk"); // Shows toast with error msg
+							showToast("#toastEditUserDataForm", false, "Brukernavnet er allerede i bruk", 3000); // Shows toast with error msg
 						}
 					} else {
-						showToast("#toastEditUserDataForm", false, "Det ble ikke opprettet forbindelse med databasen"); // Shows toast with error msg
+						showToast("#toastEditUserDataForm", false, "Det ble ikke opprettet forbindelse med databasen", 3000); // Shows toast with error msg
 					}
 				},
 				error: function(data, status) {
 					hideLoader(); // Hides the loading widget
-					showToast("#toastEditUserDataForm", false, "Det oppstod en feil"); // Shows toast with error msg
+					showToast("#toastEditUserDataForm", false, "Det oppstod en feil", 3000); // Shows toast with error msg
 				}
 			})).then(function(data, textStatus, jqXHR) {
 
@@ -376,14 +310,14 @@ $(document).ready(function() {
 								setActiveUser($activeUserData.userID, false); // Sets the active user, which in turn updates the DOM with new user data
 								updateUsersTableRow(); // Updates the values in the row in the user overview table corresponding to the active user
 
-								showToast("#toastEditUserDataForm", true, data.status_message); // Shows toast with success msg
+								showToast("#toastEditUserDataForm", true, data.status_message, 3000); // Shows toast with success msg
 							} else {
-								showToast("#toastEditUserDataForm", false, data.status_message); // Shows toast with error msg
+								showToast("#toastEditUserDataForm", false, data.status_message, 3000); // Shows toast with error msg
 							}
 						},
 						error: function(data, status) {
 							hideLoader(); // Hides the loading widget
-							showToast("#toastEditUserDataForm", false, data.status_message); // Shows toast with error msg
+							showToast("#toastEditUserDataForm", false, data.status_message, 3000); // Shows toast with error msg
 						}
 					});
 				} else {
@@ -391,7 +325,7 @@ $(document).ready(function() {
 				}
 			});
 		} else {
-			showToast("#toastEditUserDataForm", false, "Det oppgitte mobilnummeret er ugyldig."); // Shows toast with error msg
+			showToast("#toastEditUserDataForm", false, "Det oppgitte mobilnummeret er ugyldig.", 3000); // Shows toast with error msg
 		}
 			
 
@@ -424,18 +358,15 @@ $(document).ready(function() {
 				success: function(data, status) { // If the API request is successful
 					
 					if (data.data) {
-						if (data.data == -1) { // no match found for the given username
-							usernameUnique = true;
-						} else {
-							showToast("#toastEditUserDataForm", false, "Brukernavnet er allerede i bruk"); // Shows toast with error msg
-						}
+						usernameUnique = (data.data === -1); // -1 is returned if no match found for the given username was found
 					} else {
-						showToast("#toastEditUserDataForm", false, "Det ble ikke opprettet forbindelse med databasen"); // Shows toast with error msg
+						showToast("#toastNewUserForm", false, "Det ble ikke opprettet forbindelse med databasen", 3000); // Shows toast with error msg
 					}
 				},
 				error: function(data, status) {
 					hideLoader(); // Hides the loading widget
-					showToast("#toastEditUserDataForm", false, "Det oppstod en feil"); // Shows toast with error msg
+					console.log("Error writing new user to database. " + data);
+					showToast("#toastNewUserForm", false, "Det oppstod en feil", 3000); // Shows toast with error msg
 				}
 			})).then(function(data, textStatus, jqXHR) {
 
@@ -449,21 +380,28 @@ $(document).ready(function() {
 						data: formData,
 						success: function(data, status) { // If the API request is successful
 							hideLoader(); // Hides the loading widget
-							$.mobile.back();
-							getUserOverview(); // Updates the DOM with new data from db
-							document.getElementById("newUserForm").reset(); // Clears all the input fields in the new user form
+							if (data.data) {
+								$.mobile.back();
+								getUserOverview(); // Updates the DOM with new data from db
+								document.getElementById("newUserForm").reset(); // Clears all the input fields in the new user form
+								showToast("#toastMainPage"), true, data.status_message;
+							} else {
+								showToast("#toastNewUserForm", false, data.status_message, 3000); // Shows toast with error msg
+							}
+							
 						},
 						error: function(data, status) {
 							hideLoader(); // Hides the loading widget
-							showToast("#toastNewUserForm", false, data.status_message); // Shows toast with error msg
+							showToast("#toastNewUserForm", false, data.status_message, 3000); // Shows toast with error msg
 						}
 					});
 				} else {
+					showToast("#toastNewUserForm", false, "Det oppgitte brukernavnet er allerede i bruk.", 3000); // Shows toast with error msg
 					hideLoader(); // Hides the loading widget
 				}
 			});
 		} else {
-			showToast("#toastNewUserForm", false, "Det oppgitte mobilnummeret er ugyldig."); // Shows toast with error msg
+			showToast("#toastNewUserForm", false, "Det oppgitte mobilnummeret er ugyldig.", 3000); // Shows toast with error msg
 		}
 
 		// Returns false to stop the default form behaviour
@@ -488,11 +426,11 @@ $(document).ready(function() {
 			data: formData,
 			success: function(data, status) { // If the API request is successful
 				hideLoader(); // Hides the loading widget
-				showToast("#toastDefaultFeedbackForm", true, data.status_message); // Shows toast with success msg
+				showToast("#toastDefaultFeedbackForm", true, data.status_message, 3000); // Shows toast with success msg
 			},
 			error: function(data, status) {
 				hideLoader(); // Hides the loading widget
-				showToast("#toastDefaultFeedbackForm", false, data.status_message); // Shows toast with error msg
+				showToast("#toastDefaultFeedbackForm", false, data.status_message, 3000); // Shows toast with error msg
 			}
 		});
 
@@ -520,19 +458,19 @@ $(document).ready(function() {
 				success: function(data, status) { // If the API request is successful
 					if (data.data.ok) {
 						$("#bulkSMSContentField").val("");
-						showToast("#toastSendBulkSMS", true, data.status_message); // Shows toast with success msg
+						showToast("#toastSendBulkSMS", true, data.status_message, 3000); // Shows toast with success msg
 					} else {
-						showToast("#toastSendBulkSMS", false, "Kunne ikke sende SMSer."); // Shows toast with error msg
+						showToast("#toastSendBulkSMS", false, "Kunne ikke sende SMSer.", 3000); // Shows toast with error msg
 					}
 					hideLoader(); // Hides the loading widget
 				},
 				error: function(data, status) {
 					hideLoader(); // Hides the loading widget
-					showToast("#toastSendBulkSMS", false, data.status_message); // Shows toast with error msg
+					showToast("#toastSendBulkSMS", false, data.status_message, 3000); // Shows toast with error msg
 				}
 			});
 		} else {
-			showToast("#toastSendBulkSMS", false, "Meldingen er for lang!"); // Shows toast with error msg
+			showToast("#toastSendBulkSMS", false, "Meldingen er for lang!", 3000); // Shows toast with error msg
 		}
 
 		return false; // Returns false to stop the default form behaviour
@@ -558,19 +496,19 @@ $(document).ready(function() {
 				success: function(data, status) { // If the API request is successful
 					if (data.data.ok) {
 						$("#singleSMSContentField").val("");
-						showToast("#toastSendSingleSMS", true, data.status_message); // Shows toast with success msg
+						showToast("#toastSendSingleSMS", true, data.status_message, 3000); // Shows toast with success msg
 					} else {
-						showToast("#toastSendSingleSMS", false, "Kunne ikke sende SMS."); // Shows toast with error msg
+						showToast("#toastSendSingleSMS", false, "Kunne ikke sende SMS.", 3000); // Shows toast with error msg
 					}
 					hideLoader(); // Hides the loading widget
 				},
 				error: function(data, status) {
 					hideLoader(); // Hides the loading widget
-					showToast("#toastSendSingleSMS", false, data.status_message); // Shows toast with error msg
+					showToast("#toastSendSingleSMS", false, data.status_message, 3000); // Shows toast with error msg
 				}
 			});
 		} else {
-			showToast("#toastSendSingleSMS", false, "Meldingen er for lang!"); // Shows toast with error msg
+			showToast("#toastSendSingleSMS", false, "Meldingen er for lang!", 3000); // Shows toast with error msg
 		}
 
 		return false; // Returns false to stop the default form behaviour
@@ -601,7 +539,7 @@ function getDefaultFeedbackMsgs() {
 			exercises = data.data;
 
 			// Populate the dropdown for selecting linked exercise to new personalized AI/BI feedback msgs
-			$("#selectPersonalizedAIFeedbackExercise").html(generateExerciseDropdownOptionHTML(-1, true));
+			//$("#selectPersonalizedAIFeedbackExercise").html(generateExerciseDropdownOptionHTML(-1, true));
 			$("#selectPersonalizedBIFeedbackExercise").html(generateExerciseDropdownOptionHTML(-1, false));
 		}
 	})).then(function(data, textStatus, jqXHR) {
@@ -632,21 +570,39 @@ function getDefaultFeedbackMsgs() {
 
 							var isAI = (msgs[i].category === 0);
 							var categoryTxt = (isAI ? "AI" : "BI");
-							
-							// Builds the html for the dropdown box for selecting an exercise
-							var optionsHtml = generateExerciseDropdownOptionHTML(msgs[i].exerciseID, isAI);
 
 							// Builds the HTML code for a table row
-							var htmlTemp = "<tr>"
-								+ "<td>" + msgs[i].idx + "</td><td>"
-								+ "<input type='text' name='msg-" + msgs[i].msgID + "' id='default" + categoryTxt + "FeedbackInput" + msgs[i].idx + "' value='" + msgs[i].feedbackText + "' required>"
-								+ "</td><td><select name='exercise-" + msgs[i].msgID + "'>" + optionsHtml + "</select></td></tr>";
-							
-							// Places the HTML string in the correct variable (AI or BI)
+							var htmlInputFeedback = "<input type='text' name='msg-" + msgs[i].msgID + "' id='default" + categoryTxt + "FeedbackInput" + msgs[i].idx + "' value='" + msgs[i].feedbackText + "' required>";
+
 							if (isAI) {
-								htmlAI += htmlTemp;
+								var AIFeedbackType = "Å sitte mindre"; // AIFeedbackType = 0
+								if (msgs[i].AIFeedbackType === 1) {
+									AIFeedbackType = "Å gå mer";
+								}
+
+								htmlAI += "<tr>";
+								htmlAI += "<td>" + msgs[i].idx + "</td>";
+								htmlAI += "<td>" + AIFeedbackType + "</td>";
+								htmlAI += "<td>" + htmlInputFeedback + "</td>";
+								htmlAI += "</tr>";
 							} else {
-								htmlBI += htmlTemp;
+								var BISectionText = "";
+								if (msgs[i].idx === -1) {
+									BISectionText = "Lav";
+								} else if (msgs[i].idx === 0) {
+									BISectionText = "Medium";
+								} else if (msgs[i].idx === 1) {
+									BISectionText = "Høy";
+								}
+
+								// Builds the html for the dropdown box for selecting an exercise
+								var optionsHtml = generateExerciseDropdownOptionHTML(msgs[i].exerciseID, false);
+
+								htmlBI += "<tr>";
+								htmlBI += "<td>" + BISectionText + "</td>";
+								htmlBI += "<td>" + htmlInputFeedback + "</td>";
+								htmlBI += "<td><select name='exercise-" + msgs[i].msgID + "'>" + optionsHtml + "</select></td>";
+								htmlBI += "</tr>";
 							}
 						}
 
@@ -723,27 +679,24 @@ function getUserOverview() {
 					+ '<th >Etternavn</th>'
 					+ '<th data-priority="1">Fornavn</th>'
 					+ '<th data-priority="2">Alder</th>'
-					+ '<th data-priority="3">MI</th>'
-					+ '<th data-priority="4">BI</th>'
-					+ '<th data-priority="5">AI</th>'
+					+ '<th data-priority="3">BI</th>'
+					+ '<th data-priority="4">AI</th>'
 					+ '</tr>'
 					+ '</thead>'
 					+ '<tbody>';
 
 				for (var i=0; i<userOverview.length; i++) { // Iterates the user data to build a table row for each entry
 					
-					// If MI/BI/AI is null, replace it with empty string
-					var mobilityIdx = (userOverview[i].mobilityIdx === null) ? "" : userOverview[i].mobilityIdx;
+					// If BI/AI is null, replace it with empty string
 					var balanceIdx = (userOverview[i].balanceIdx === null) ? "" : userOverview[i].balanceIdx;
 					var activityIdx = (userOverview[i].activityIdx === null) ? "" : userOverview[i].activityIdx;
 
 					$age = calculateAge(userOverview[i].birthDate); // Calculate the age of the senior user in years
 
-					html += "<tr>"
+					html += "<tr id='userRow" + userOverview[i].userID + "'>"
 						+ "<td><a onclick='setActiveUser(" + userOverview[i].userID + ",true);'>" + userOverview[i].lastName + "</a></td>"
 						+ "<td class='ui-table-priority-1'><a onclick='setActiveUser(" + userOverview[i].userID + ",true);'>" + userOverview[i].firstName + "</a></td>"
 						+ "<td class='ui-table-priority-2'><a onclick='setActiveUser(" + userOverview[i].userID + ",true);'>" + $age + "</a></td>"
-						+ "<td class='ui-table-priority-3'><a onclick='setActiveUser(" + userOverview[i].userID + ",true);'>" + mobilityIdx + "</a></td>"
 						+ "<td class='ui-table-priority-4'><a onclick='setActiveUser(" + userOverview[i].userID + ",true);'>" + balanceIdx + "</a></td>"
 						+ "<td class='ui-table-priority-5'><a onclick='setActiveUser(" + userOverview[i].userID + ",true);'>" + activityIdx + "</a></td>"
 						+ "</tr>";
@@ -761,34 +714,6 @@ function getUserOverview() {
 }
 
 
-//********************************************************************
-//****** Fetches the most recent MI for the given senior user ********
-//********************************************************************
-/*function getNewestMobilityIdx(userID) {
-	showLoader(); // Shows the loading widget
-	$.ajax({
-		url: "../api/mobilityIdx.php?seniorUserID=" + userID + "&getNewest=1",
-		type: 'GET',
-		beforeSend: function (request) {
-			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-		},
-		error: function(data, status) {
-			hideLoader(); // Hides the loading widget
-			console.log("Error fetching data from API mobilityIdx.");
-			return null;
-		},
-		success: function(data, status) { // If the API request is successful
-			hideLoader(); // Hides the loading widget
-			if (data.data) {
-				return data.data.value;
-				console.log("successfully fetched MI for userID=" + userID + ". Data=" + data.data.value);
-			} else {
-				return null;
-			}
-		}
-	});
-}*/
-
 
 //********************************************************************
 //** Feches data about a specific senior user and writes to the DOM **
@@ -803,17 +728,27 @@ function setActiveUser(userID, changePage) {
 
 	showLoader(); // Shows the loading widget
 
-	mobilityChart = null;
 	balanceChart = null;
 	activityChart = null;
-	mobilityChartOptions = null;
 	balanceChartOptions = null;
 	activityChartOptions = null;
 
 	// Hides the charts until they are populated with data
-	$("#mobilityChartContainer").hide();
 	$("#balanceChartContainer").hide();
 	$("#activityChartContainer").hide();
+
+	// Sets global options for the charts
+	Highcharts.setOptions({
+		// Defines Norwegian text strings used in the charts
+		lang: {
+			months: ['januar', 'februar', 'mars', 'april', 'mai', 'juni',  'juli', 'august', 'september', 'oktober', 'november', 'desember'],
+			shortMonths: ['jan', 'feb', 'mars', 'apr', 'mai', 'juni',  'juli', 'aug', 'sep', 'okt', 'nov', 'des'],
+			weekdays: ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'],
+			shortWeekdays: ['sø', 'ma', 'ti', 'on', 'to', 'fr', 'lø'],
+			decimalPoint: ',',
+			thousandsSep: ' '
+		}
+	});
 
 	// Displays the initial character count for SMS sending
 	countSMSChar(document.getElementById("bulkSMSContentField"), "charCounterBulkSMS");
@@ -851,8 +786,6 @@ function setActiveUser(userID, changePage) {
 			$activeUserData.showPersonalizedBIFeedback = ($activeUserData.showPersonalizedBIFeedback == "1" ? true : false);
 			$activeUserData.customAIFeedback = null;
 			$activeUserData.customBIFeedback = null;
-			
-			updateDOM(); // Populates the user detail and edit user data pages with data from $activeUserData
 
 			// Sets current values and adds change listeners to the flip switches on personalized-feedback-page
 			initCustomFeedbackFlipSwitches();
@@ -861,124 +794,7 @@ function setActiveUser(userID, changePage) {
 
 		}
 	})).then(function(data, textStatus, jqXHR) {
-
 		$.when($.ajax({
-			//********************************************************************
-			//********** Get mobility indexes to populate the MI chart ***********
-			//********************************************************************
-			url: "../api/mobilityIdx.php?seniorUserID=" + userID,
-			type: 'GET',
-			beforeSend: function (request) {
-				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-			},
-			error: function(data, status) {
-				console.log("Error attempting to call API: GET request to mobilityIdx.php with parameter seniorUserID=" + userID);
-				hideLoader(); // Hides the loading widget
-			}, 
-			success: function(data, status) { // If the API request is successful
-				var chartDataJSON = data.data;
-				$activeUserData.mobilityIdxs = chartDataJSON; // Store the MI values in $activeUserData
-
-				if (data.data !== null) { // Check if API returned any MI values
-					var chartData = [];
-					for (var i=0; i<chartDataJSON.length; i++) {
-						if (i != 0) {
-							// Draws an extra data point right before each data point (except the first) 
-							// to get a flat line instead of a straight, diagonal line between the points.
-							// Needs to be commented out if the chart is switched to a column chart.
-							var dataPointPre = [];
-							var datePre = new Date(chartDataJSON[i].timeDataCollected);
-							datePre.setSeconds(datePre.getSeconds() - 1);
-							dataPointPre.push(datePre.getTime());
-							dataPointPre.push(parseFloat(chartDataJSON[i-1].value));
-							chartData.push(dataPointPre);
-						}
-
-						var dataPoint = [];
-						var date = Date.parse(chartDataJSON[i].timeDataCollected);
-						dataPoint.push(date);
-						dataPoint.push(parseFloat(chartDataJSON[i].value));
-						chartData.push(dataPoint);
-
-						// If last data point from db, add a final data point at the current datetime
-						if (i+1 == chartDataJSON.length) {
-							var dataPointFinal = [];
-							dataPointFinal.push(new Date().getTime());
-							dataPointFinal.push(parseFloat(chartDataJSON[i].value));
-							chartData.push(dataPointFinal);
-						}
-					}
-
-					mobilityChartOptions = {
-						chart: {
-							renderTo: 'mobilityChart', // ID of div where the chart is to be rendered
-							type: 'area', // Chart type. Can e.g. be set to 'column' or 'area'
-							zoomType: 'x', // The chart is zoomable along the x-axis by clicking and draging over a portion of the chart
-							backgroundColor: null,
-							reflow: true
-						},
-						title: {
-							text: 'Mobility index'
-						},
-						xAxis: {
-							type: 'datetime',
-							tickInterval: 24 * 3600 * 1000 // How frequent a tick is displayed on the axis (set in milliseconds)
-						},
-						yAxis: {
-							title: {
-								enabled: false
-							},
-							max: 1, // The ceiling value of the y-axis
-							min: 0, // The floor of the y-axis
-							alternateGridColor: '#DEE0E3',
-							tickInterval: 0.1, // How frequent a tick is displayed on the axis
-							plotLines: [{
-								color: 'black', // Color value
-								dashStyle: 'ShortDash', // Style of the plot line. Default to solid
-								value: $activeUserData.MIChartLineValue, // Value of where the line will appear
-								width: 2, // Width of the line
-								label: { 
-									text: 'Normalverdi', // Content of the label. 
-									align: 'left'
-								}
-							}]
-						},
-						legend: {
-							enabled: false // Hides the legend showing the name and toggle option for the series
-						},
-						credits: {
-							enabled: false // Hides the Highcharts credits
-						},
-						series: [{}]
-					};
-
-					// Sets global options for the charts
-					Highcharts.setOptions({
-						// Defines Norwegian text strings used in the charts
-						lang: {
-							months: ['januar', 'februar', 'mars', 'april', 'mai', 'juni',  'juli', 'august', 'september', 'oktober', 'november', 'desember'],
-							shortMonths: ['jan', 'feb', 'mars', 'apr', 'mai', 'juni',  'juli', 'aug', 'sep', 'okt', 'nov', 'des'],
-							weekdays: ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'],
-							shortWeekdays: ['sø', 'ma', 'ti', 'on', 'to', 'fr', 'lø']
-						}/*,
-						// Adjusts time values in data points to match Norwegian timezone (handles DST automatically).
-						// Commented out as all the charts currently display date values only, not time of day,
-						// and this code caused all values to be displayed at 2am instead of midnight.
-						global: {
-							getTimezoneOffset: function (timestamp) {
-								var zone = 'Europe/Oslo',
-									timezoneOffset = -moment.tz(timestamp, zone).utcOffset();
-
-								return timezoneOffset;
-							}
-						}*/
-					});
-
-					mobilityChartOptions.series[0].data = chartData;
-					mobilityChart = new Highcharts.Chart(mobilityChartOptions);
-				}
-			}
-		}), $.ajax({
 			//********************************************************************
 			//********** Get balance indexes to populate the BI chart ************
 			//********************************************************************
@@ -996,7 +812,6 @@ function setActiveUser(userID, changePage) {
 				var balanceChartData = [];
 
 				if (balanceChartDataJSON !== null) {
-					var maxMI = 0;
 					for (var i=0; i<balanceChartDataJSON.length; i++) {
 						// Comment out if chart is changed to a column chart!
 						if (i != 0) {
@@ -1011,22 +826,24 @@ function setActiveUser(userID, changePage) {
 							balanceChartData.push(dataPointPre);
 						}
 
-						var mi = parseFloat(balanceChartDataJSON[i].value);
-						if (mi > maxMI) maxMI = mi;
+						var bi = parseFloat(balanceChartDataJSON[i].value);
 
 						var dataPoint = [];
 						var date = Date.parse(balanceChartDataJSON[i].timeDataCollected);
 						dataPoint.push(date);
-						dataPoint.push(mi);
+						dataPoint.push(bi);
 						balanceChartData.push(dataPoint);
 
 						// Comment out if chart is changed to a column chart!
 						// If last data point from db, add a final data point at the current datetime
 						if (i+1 == balanceChartDataJSON.length) {
 							var dataPointFinal = [];
+							var value = parseFloat(balanceChartDataJSON[i].value);
 							dataPointFinal.push(new Date().getTime());
-							dataPointFinal.push(parseFloat(balanceChartDataJSON[i].value));
+							dataPointFinal.push(value);
 							balanceChartData.push(dataPointFinal);
+
+							$activeUserData.balanceIdx = value;
 						}
 					}
 
@@ -1049,15 +866,15 @@ function setActiveUser(userID, changePage) {
 							title: {
 								enabled: false
 							},
-							//max: 1, // The ceiling value of the y-axis
-							min: 0, // The floor of the y-axis
+							max: 1, // The ceiling value of the y-axis
+							min: -1, // The floor of the y-axis
 							endOnTick: false,
 							alternateGridColor: '#DEE0E3',
 							tickInterval: 0.1, // How frequent a tick is displayed on the axis
 							plotLines: [{
 								color: 'black', // Color value
 								dashStyle: 'ShortDash', // Style of the plot line. Default to solid
-								value: $activeUserData.BIChartLineValue, // Value of where the line will appear
+								value: 0, // Value of where the line will appear
 								width: 2, // Width of the line
 								label: { 
 									text: 'Normalverdi', // Content of the label. 
@@ -1072,31 +889,11 @@ function setActiveUser(userID, changePage) {
 							enabled: false // Hides the Highcharts credits
 						},
 						series: [{
-							/*color: {
-								linearGradient: {
-									x1: 0,
-									y1: 0,
-									x2: 0,
-									y2: 1
-								},
-								stops: [
-									[0, 'grey'],
-									[0.5, 'grey'],
-									[1, '#ED1E24']
-								]
-							},
-							lineWidth: 0,
-							enableMouseTracking: false*/
+							threshold: -1,
+							data: balanceChartData
 						}]
 					};
 
-					/*colorMaxMI = getMIChartData($currentMobilityIdx).color; // todo: define correlation between BI and MI
-					colorMidMI = getMIChartData($currentMobilityIdx/2).color;
-
-					balanceChartOptions.series[0].color.stops[0][1] = "#" + colorMaxMI;
-					balanceChartOptions.series[0].color.stops[1][1] = "#" + colorMidMI;*/
-
-					balanceChartOptions.series[0].data = balanceChartData;
 					balanceChart = new Highcharts.Chart(balanceChartOptions);
 				}
 			}
@@ -1117,7 +914,10 @@ function setActiveUser(userID, changePage) {
 			success: function(data, status) { // If the API request is successful
 				var activityChartDataJSON = data.data;
 				$activeUserData.activityIdxs = activityChartDataJSON; // Store the AI values in $activeUserData
+
 				if (activityChartDataJSON !== null) {
+					$activeUserData.activityIdx = activityChartDataJSON[activityChartDataJSON.length-1].value;
+
 					var activityChartData = [];
 					for (var i=0; i<activityChartDataJSON.length; i++) {
 						// Uncomment if chart is area chart!
@@ -1197,12 +997,9 @@ function setActiveUser(userID, changePage) {
 				hideLoader();
 			}
 		})).then(function(data, textStatus, jqXHR) {
-			 // Displays the charts in the DOM if they have been set
-			if (mobilityChartOptions) {
-				$("#mobilityChartContainer").show();
-				mobilityChart = new Highcharts.Chart(mobilityChartOptions);
-			}
+			updateDOM(); // Populates the user detail and edit user data pages with data from $activeUserData
 
+			// Displays the charts in the DOM if they have been set
 			if (balanceChartOptions) {
 				$("#balanceChartContainer").show();
 				balanceChart = new Highcharts.Chart(balanceChartOptions);
@@ -1235,7 +1032,7 @@ function submitCustomFeedbackMsg(formData, toastID, isAI) {
 		success: function(data, status) { // If the API request is successful
 			hideLoader(); // Hides the loading widget
 			getCustomFeedbackMsgs($activeUserData.userID); // Fetches personalized feedback messages from DB to update the tables
-			showToast(toastID, true, data.status_message); // Shows toast with success msg
+			showToast(toastID, true, data.status_message, 3000); // Shows toast with success msg
 
 			if (isAI) {
 				$("#flipPersonalizedAI").flipswitch("enable");
@@ -1245,20 +1042,11 @@ function submitCustomFeedbackMsg(formData, toastID, isAI) {
 		},
 		error: function(data, status) {
 			hideLoader(); // Hides the loading widget
-			showToast(toastID, false, data.status_message); // Shows toast with error msg
+			showToast(toastID, false, data.status_message, 3000); // Shows toast with error msg
 		}
 	});
 }
 
-
-
-//********************************************************************
-//* Called from the confirm dialog for overwriting existing MI value *
-//********************************************************************
-function updateMI(doUpdate) {
-	if (doUpdate) writeNewMI(tempMIFormData, true);
-	tempMIFormData = null;
-}
 
 //********************************************************************
 //* Called from the confirm dialog for overwriting existing BI value *
@@ -1269,7 +1057,7 @@ function updateBI(doUpdate) {
 }
 
 //********************************************************************
-//* Called from the confirm dialog for overwriting existing MI value *
+//* Called from the confirm dialog for overwriting existing AI value *
 //********************************************************************
 function updateAI(doUpdate) {
 	if (doUpdate) writeNewAI(tempAIFormData, true);
@@ -1277,50 +1065,6 @@ function updateAI(doUpdate) {
 }
 
 
-//********************************************************************
-//****************** Writes new/updates MI to DB *********************
-//********************************************************************
-function writeNewMI(formData, update) {
-	showLoader(); // Shows the loading widget
-
-	// Calls different API depending on whether the data is 
-	// stored as a new entry, or updating an existing entry
-	var requestType = (update ? "PUT" : "POST"); 
-	
-	$.ajax({
-		type: requestType,
-		beforeSend: function (request) {
-			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-		},
-		url: "../api/mobilityIdx.php",
-		data: formData,
-		success: function(data, status) { // If the API request is successful
-			hideLoader(); // Hides the loading widget
-			if (data.data) {
-				showToast("#toastMobilityIdxForm", true, data.status_message); // Shows toast with success msg
-			} else {
-				showToast("#toastMobilityIdxForm", false, data.status_message); // Shows toast with error msg
-			}
-
-			$currentNewestMIDate = $activeUserData.mobilityIdxTimeDataCollected;
-			$inputMIDate = $('#mobilityIdxDatePicker').val();
-
-			if ($currentNewestMIDate == null || parseDate($inputMIDate) > parseDate($currentNewestMIDate)) {
-				// Updates DOM if the date of the created MI is more recent than the newest MI value
-				$("#cellMobilityIdx").html($mobilityIdxValue);
-				$activeUserData.mobilityIdx = $mobilityIdxValue;
-				$activeUserData.mobilityIdxTimeDataCollected = $inputMIDate;
-				updateUsersTableRow(); // Updates the values in the row in the user overview table corresponding to the active user
-			}
-			
-			setActiveUser($activeUserData.userID, false); // Sets the active user, which in turn updates the active user data and charts
-		},
-		error: function(data, status) {
-			hideLoader(); // Hides the loading widget
-			showToast("#toastMobilityIdxForm", false, data.status_message); // Shows toast with error msg
-		}
-	});
-}
 
 //********************************************************************
 //****************** Writes new/updates BI to DB *********************
@@ -1342,16 +1086,17 @@ function writeNewBI(formData, update) {
 		success: function(data, status) { // If the API request is successful
 			hideLoader(); // Hides the loading widget
 			if (data.data) {
-				showToast("#toastBalanceIdxManualForm", true, data.status_message); // Shows toast with success msg
+				showToast("#toastBalanceIdxManualForm", true, data.status_message, 3000); // Shows toast with success msg
 			} else {
-				showToast("#toastBalanceIdxManualForm", false, data.status_message); // Shows toast with error msg
+				showToast("#toastBalanceIdxManualForm", false, data.status_message, 3000); // Shows toast with error msg
 			}
 			
 			setActiveUser($activeUserData.userID, false); // Sets the active user, which in turn updates the active user data and charts
+			updateUsersTableRow(); // Updates the values in the row in the user overview table corresponding to the active user
 		},
 		error: function(data, status) {
 			hideLoader(); // Hides the loading widget
-			showToast("#toastBalanceIdxManualForm", false, data.status_message); // Shows toast with error msg
+			showToast("#toastBalanceIdxManualForm", false, data.status_message, 3000); // Shows toast with error msg
 		}
 	});
 }
@@ -1376,16 +1121,17 @@ function writeNewAI(formData, update) {
 		success: function(data, status) { // If the API request is successful
 			hideLoader(); // Hides the loading widget
 			if (data.data) {
-				showToast("#toastActivityIdxManualForm", true, data.status_message); // Shows toast with success msg
+				showToast("#toastActivityIdxManualForm", true, data.status_message, 3000); // Shows toast with success msg
 			} else {
-				showToast("#toastActivityIdxManualForm", false, data.status_message); // Shows toast with error msg
+				showToast("#toastActivityIdxManualForm", false, data.status_message, 3000); // Shows toast with error msg
 			}
 			
 			setActiveUser($activeUserData.userID, false); // Sets the active user, which in turn updates the active user data and charts
+			updateUsersTableRow(); // Updates the values in the row in the user overview table corresponding to the active user
 		},
 		error: function(data, status) {
 			hideLoader(); // Hides the loading widget
-			showToast("#toastActivityIdxManualForm", false, data.status_message); // Shows toast with error msg
+			showToast("#toastActivityIdxManualForm", false, data.status_message, 3000); // Shows toast with error msg
 		}
 	});
 }
@@ -1417,11 +1163,8 @@ function deleteUser() {
 				}
 			});
 
-			$('#usersTable tbody tr').each(function() {
-				if ($(this)[0].cells[0].childNodes[0].innerText == $activeUserData.userID) {
-					$(this).remove();
-				}
-			});
+			var usersTableRow = findUsersTableRow($activeUserData.userID);
+			usersTableRow.remove();
 
 			$.mobile.back(); // Returns to the main page
 		}
@@ -1453,7 +1196,7 @@ function getCustomFeedbackMsgs(userID) {
 
 				// Sorts the feedback messages into AI and BI
 				for (var i=0; i<feedbackData.length; i++) {
-					if (feedbackData[i].category === '0') { // category 0 = AI
+					if (feedbackData[i].category === 0) { // category 0 = AI
 						AIFeedbackMsgs.push(feedbackData[i]);
 					} else { // category 1 = BI
 						BIFeedbackMsgs.push(feedbackData[i]);
@@ -1522,7 +1265,7 @@ function deleteFeedbackMsg(msgID) {
 			},
 			error: function(data, status) {
 				console.log("Error accessing API: DELETE request to feedbackCustom.php with parameter msgID=" + msgID);
-				showToast("#toastPersonalizedFeedback", false, "Det oppstod en feil under skriving til databasen.");
+				showToast("#toastPersonalizedFeedback", false, "Det oppstod en feil under skriving til databasen.", 3000);
 
 				hideLoader(); // Hides the loading widget
 			}, 
@@ -1563,7 +1306,7 @@ function initCustomFeedbackFlipSwitches() {
 				error: function(data, status) {
 					console.log("Error accessing API: PUT request to feedbackCustom.php with parameter category=0 and seniorUserID=" 
 						+ $activeUserData.userID);
-					showToast("#toastPersonalizedFeedback", false, "Det oppstod en feil under skriving til databasen.");
+					showToast("#toastPersonalizedFeedback", false, "Det oppstod en feil under skriving til databasen.", 3000);
 
 					hideLoader(); // Hides the loading widget
 				}, 
@@ -1571,7 +1314,7 @@ function initCustomFeedbackFlipSwitches() {
 					var toastSuccessText = (flipSwitchState ? "på" : "av");
 					$activeUserData.showPersonalizedAIFeedback = flipSwitchState;
 					showToast("#toastPersonalizedFeedback", true, "Personaliserte AI-råd er nå " 
-						+ toastSuccessText + "slått for denne brukeren.");
+						+ toastSuccessText + "slått for denne brukeren.", 3000);
 					hideLoader(); // Hides the loading widget
 				}
 			});
@@ -1597,14 +1340,14 @@ function initCustomFeedbackFlipSwitches() {
 				error: function(data, status) {
 					console.log("Error accessing API: PUT request to feedbackCustom.php with parameter category=1 and seniorUserID=" 
 						+ $activeUserData.userID);
-					showToast("#toastPersonalizedFeedback", false, "Det oppstod en feil under skriving til databasen.");
+					showToast("#toastPersonalizedFeedback", false, "Det oppstod en feil under skriving til databasen.", 3000);
 					hideLoader(); // Hides the loading widget
 				}, 
 				success: function(data, status) { // If the API request is successful
 					var toastSuccessText = (flipSwitchState ? "på" : "av");
 					$activeUserData.showPersonalizedBIFeedback = flipSwitchState;
 					showToast("#toastPersonalizedFeedback", true, "Personaliserte BI-råd er nå " 
-						+ toastSuccessText + "slått for denne brukeren.");
+						+ toastSuccessText + "slått for denne brukeren.", 3000);
 					hideLoader(); // Hides the loading widget
 				}
 			});
@@ -1639,21 +1382,6 @@ function isFileAPIAvailable() {
 		// Great success! All the File APIs are supported.
 		return true;
 	} else {
-		/*
-		// source: File API availability - http://caniuse.com/#feat=fileapi
-		// source: <output> availability - http://html5doctor.com/the-output-element/
-		document.writeln('The HTML5 APIs used in this form are only available in the following browsers:<br />');
-		// 6.0 File API & 13.0 <output>
-		document.writeln(' - Google Chrome: 13.0 or later<br />');
-		// 3.6 File API & 6.0 <output>
-		document.writeln(' - Mozilla Firefox: 6.0 or later<br />');
-		// 10.0 File API & 10.0 <output>
-		document.writeln(' - Internet Explorer: Not supported (partial support expected in 10.0)<br />');
-		// ? File API & 5.1 <output>
-		document.writeln(' - Safari: Not supported<br />');
-		// ? File API & 9.2 <output>
-		document.writeln(' - Opera: Not supported');
-		*/
 		$("#activityIdxFileInputContainer").hide();
 		return false;
 	}
@@ -1724,33 +1452,35 @@ function readCSVFile(isAI) {
 			if ((typeof data[i].dato != 'undefined') && (data[i].dato !== null) && (data[i].dato != '')) {
 				// check valid value
 				var value = (isAI ? data[i].ai : data[i].bi);
-				if ($.isNumeric(value) && value >= 0 && value <= 5) {
-					data[i].value = value;
+				if ($.isNumeric(value)) {
+					if ((isAI && value >= 0 && value <= 5) || !isAI && value >= -1 && value <= 1) {
+						data[i].value = value;
 
-					// Change date format to YYYY-MM-DD
-					var dateSplit = data[i].dato.split(".");
-					var dateCorrectFormat = dateSplit[2] + "-" + dateSplit[1] + "-" + dateSplit[0];
-					data[i].timeDataCollected = dateCorrectFormat;
+						// Change date format to YYYY-MM-DD
+						var dateSplit = data[i].dato.split(".");
+						var dateCorrectFormat = dateSplit[2] + "-" + dateSplit[1] + "-" + dateSplit[0];
+						data[i].timeDataCollected = dateCorrectFormat;
 
-					var isValid = true;
+						var isValid = true;
 
-					// Check if a value is already set for one of the dates in the file
-					var compareDates = $activeUserData.balanceIdxs;
-					if (isAI) {
-						compareDates = $activeUserData.activityIdxs;
-					}
+						// Check if a value is already set for one of the dates in the file
+						var compareDates = $activeUserData.balanceIdxs;
+						if (isAI) {
+							compareDates = $activeUserData.activityIdxs;
+						}
 
-					if (compareDates !== null) {
-						for (var j=0; j<compareDates.length; j++) {
-							if (dateCorrectFormat == compareDates[j].timeDataCollected) {
-								alert("Det er allerede registrert en verdi på datoen " + dateCorrectFormat + ". For å overskrive, bruk det manuelle skjemaet.");
-								isValid = false;
+						if (compareDates !== null) {
+							for (var j=0; j<compareDates.length; j++) {
+								if (dateCorrectFormat == compareDates[j].timeDataCollected) {
+									alert("Det er allerede registrert en verdi på datoen " + dateCorrectFormat + ". For å overskrive, bruk det manuelle skjemaet.");
+									isValid = false;
+								}
 							}
 						}
-					}
 
-					if (isValid) {
-						validData.push(data[i]);
+						if (isValid) {
+							validData.push(data[i]);
+						}
 					}
 				}
 			}
@@ -1758,7 +1488,7 @@ function readCSVFile(isAI) {
 
 		if (validData.length == 0) {
 			hideLoader(); // Hides the loading widget
-			showToast(toastID, false, "Ingen gyldige verdier ble funnet i filen.");
+			showToast(toastID, false, "Ingen gyldige verdier ble funnet i filen.", 3000);
 		} else {
 			callAjaxPostIdx(validData, 0, 0, 0, isAI); // Call function to send data to API
 		}
@@ -1825,11 +1555,11 @@ function showNotificationActivityIdxFileUpload(successCounter, errorCounter, isA
 		var total = errorCounter + successCounter;
 		var plural = (total > 1) ? "er" : ""; // use plural form if more than one
 		var errorMsg = errorCounter + " av " + total + " oppføring" + plural + " ble IKKE lagret i databasen.";
-		showToast(toastID, false, errorMsg);
+		showToast(toastID, false, errorMsg, 3000);
 	} else { // Show success msg
 		var plural = (successCounter > 1) ? "er" : ""; // use plural form if more than one
 		var successMsg = successCounter + " oppføring" + plural + " ble lagret i databasen.";
-		showToast(toastID, true, successMsg);
+		showToast(toastID, true, successMsg, 3000);
 	}
 
 	setActiveUser($activeUserData.userID, false); // Sets the active user, which in turn updates the DOM with new user data
@@ -1854,7 +1584,8 @@ function clearUserDetailsTable() {
 	$("#activeUserFullName").html("");
 	$("#headerTitleDetailPage").html("");
 	
-	$("#cellMobilityIdx").html("");
+	$("#cellBalanceIdx").html("");
+	$("#cellActivityIdx").html("");
 	$("#cellBirthDate").html("");
 	$("#cellAddress").html("");
 	$("#cellPhoneNr").html("");
@@ -1919,8 +1650,9 @@ function updateDOM() {
 
 		$("#activeUserFullName").html($fullName);
 		$("#headerTitleDetailPage").html("Brukerdetaljer - " + $fullName);
-		
-		$("#cellMobilityIdx").html($activeUserData.mobilityIdx);
+
+		$("#cellBalanceIdx").html($activeUserData.balanceIdx);
+		$("#cellActivityIdx").html($activeUserData.activityIdx);
 
 		$age = calculateAge($activeUserData.birthDate);
 		if ($age != "") {
@@ -1965,14 +1697,20 @@ function updateDOM() {
 				+ $fullAddress + "</a>";
 		}
 
-		if ($activeUserData.email != "") {
+		if ($activeUserData.email && $activeUserData.email !== "") {
 			$emailLink = "<a href='mailto:" + $activeUserData.email 
 				+ "' target='_blank'>" + $activeUserData.email + "</a>";
+		} else {
+			$emailLink = "";
+			$activeUserData.email = "";
 		}
 
-		if ($activeUserData.phoneNumber != "") {
+		if ($activeUserData.phoneNumber &&$activeUserData.phoneNumber !== "") {
 			$phoneLink = "<a href='tel:" + $activeUserData.phoneNumber 
 				+ "' target='_blank'>" + $activeUserData.phoneNumber  + "</a>";
+		} else {
+			$phoneLink = "";
+			$activeUserData.phoneNumber = "";
 		}
 
 
@@ -1986,7 +1724,7 @@ function updateDOM() {
 		$("#inputFieldEditAddress").val($activeUserData.address);
 		$("#inputFieldEditZipCode").val($activeUserData.zipCode);
 		$("#inputFieldEditCity").val($activeUserData.city);
-		
+
 		$("#cellEmail").html($emailLink);
 		$("#inputFieldEditEmail").val($activeUserData.email);
 		
@@ -2017,14 +1755,9 @@ function updateDOM() {
 			$("#inputFieldEditNumFalls12Mths").val($activeUserData.numFalls12Mths);
 		}
 
-		if ($activeUserData.MIChartLineValue !== null) {
-			$("#cellMIChartLineValue").html($activeUserData.MIChartLineValue);
-			$("#inputFieldEditMIChartLineValue").val($activeUserData.MIChartLineValue);
-		}
-
-		if ($activeUserData.BIChartLineValue !== null) {
-			$("#cellBIChartLineValue").html($activeUserData.BIChartLineValue);
-			$("#inputFieldEditBIChartLineValue").val($activeUserData.BIChartLineValue);
+		if ($activeUserData.comment !== null) {
+			$("#cellComment").html($activeUserData.comment);
+			$("#inputFieldEditComment").val($activeUserData.comment);
 		}
 
 		if ($activeUserData.AIChartLineValue !== null) {
@@ -2032,9 +1765,14 @@ function updateDOM() {
 			$("#inputFieldEditAIChartLineValue").val($activeUserData.AIChartLineValue);
 		}
 
-		if ($activeUserData.comment !== null) {
-			$("#cellComment").html($activeUserData.comment);
-			$("#inputFieldEditComment").val($activeUserData.comment);
+		if ($activeUserData.BIThresholdUpper !== null) {
+			$("#cellBIThresholdUpper").html($activeUserData.BIThresholdUpper);
+			$("#inputFieldEditBIThresholdUpper").val($activeUserData.BIThresholdUpper);
+		}
+
+		if ($activeUserData.BIThresholdLower !== null) {
+			$("#cellBIThresholdLower").html($activeUserData.BIThresholdLower);
+			$("#inputFieldEditBIThresholdLower").val($activeUserData.BIThresholdLower);
 		}
 		
 		$("#cellWalkingAid").html($usesWalkingAidStr);
@@ -2056,14 +1794,16 @@ function updateDOM() {
 /*********************************************************************/
 function updateUsersTableRow() {
 	if ($activeUserData) {
-		$('#usersTable tbody tr').each(function() {
-			if ($(this)[0].cells[0].childNodes[0].innerText == $activeUserData.userID) {
-				$(this)[0].cells[1].childNodes[0].innerText = $activeUserData.lastName;
-				$(this)[0].cells[2].childNodes[0].innerText = $activeUserData.firstName;
-				$(this)[0].cells[3].childNodes[0].innerText = calculateAge($activeUserData.birthDate);
-				$(this)[0].cells[4].childNodes[0].innerText = $activeUserData.mobilityIdx;
-			}
-		});
+
+		var usersTableRow = findUsersTableRow($activeUserData.userID);
+
+		if (usersTableRow !== null) {
+			usersTableRow[0].cells[0].childNodes[0].innerText = $activeUserData.lastName;
+			usersTableRow[0].cells[1].childNodes[0].innerText = $activeUserData.firstName;
+			usersTableRow[0].cells[2].childNodes[0].innerText = calculateAge($activeUserData.birthDate);
+			usersTableRow[0].cells[3].childNodes[0].innerText = $activeUserData.balanceIdx;
+			usersTableRow[0].cells[4].childNodes[0].innerText = $activeUserData.activityIdx;
+		}
 	}
 }
 
@@ -2125,4 +1865,16 @@ function populateSMSCheckboxes() {
 	}
 
 	$("#SMSRecipientCheckboxGroup").append(html);
+}
+
+
+function findUsersTableRow(userID) {
+	var idName = "userRow" + userID;
+	var res = null;
+	$('#usersTable tbody tr').each(function() {
+		if ($(this).attr('id') === idName) {
+			res = $(this);
+		}
+	});
+	return res;
 }

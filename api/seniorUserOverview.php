@@ -60,28 +60,11 @@
 					
 					$userID = $r["userID"];
 
-					if ($stmt2 = $conn->prepare("SELECT value FROM MobilityIndexes WHERE userID=? ORDER BY timeDataCollected DESC LIMIT 1;")) {
+					if ($stmt2 = $conn->prepare("SELECT value FROM BalanceIndexes WHERE userID=? ORDER BY timeDataCollected DESC LIMIT 1;")) {
 						$stmt2->bind_param("i", $userID);
 						$stmt2->execute();
-						$mobilityIdxResult = $stmt2->get_result();
+						$balanceIdxResult = $stmt2->get_result();
 						$stmt2->close();
-
-						if (mysqli_num_rows($mobilityIdxResult) > 0) {
-							$rowMI = mysqli_fetch_assoc($mobilityIdxResult);
-							$MI = $rowMI["value"];
-							$r["mobilityIdx"] = $MI;
-						} else {
-							$r["mobilityIdx"] = null;
-						}
-					} else {
-						return NULL;
-					}
-
-					if ($stmt3 = $conn->prepare("SELECT value FROM BalanceIndexes WHERE userID=? ORDER BY timeDataCollected DESC LIMIT 1;")) {
-						$stmt3->bind_param("i", $userID);
-						$stmt3->execute();
-						$balanceIdxResult = $stmt3->get_result();
-						$stmt3->close();
 
 						if (mysqli_num_rows($balanceIdxResult) > 0) {
 							$rowBI = mysqli_fetch_assoc($balanceIdxResult);
@@ -94,11 +77,11 @@
 						return NULL;
 					}
 
-					if ($stmt4 = $conn->prepare("SELECT value FROM ActivityIndexes WHERE userID=? ORDER BY timeDataCollected DESC LIMIT 1;")) {
-						$stmt4->bind_param("i", $userID);
-						$stmt4->execute();
-						$activityIdxResult = $stmt4->get_result();
-						$stmt4->close();
+					if ($stmt3 = $conn->prepare("SELECT value FROM ActivityIndexes WHERE userID=? ORDER BY timeDataCollected DESC LIMIT 1;")) {
+						$stmt3->bind_param("i", $userID);
+						$stmt3->execute();
+						$activityIdxResult = $stmt3->get_result();
+						$stmt3->close();
 
 						if (mysqli_num_rows($activityIdxResult) > 0) {
 							$rowAI = mysqli_fetch_assoc($activityIdxResult);

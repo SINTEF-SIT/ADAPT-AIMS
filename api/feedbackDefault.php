@@ -5,7 +5,7 @@
 	function getData() {
 		include('../inc/db.inc.php');
 
-		if ($stmt = $conn->prepare("SELECT fmd.msgID, fmd.feedbackText, fmd.category, fmd.idx, e.exerciseID
+		if ($stmt = $conn->prepare("SELECT fmd.msgID, fmd.feedbackText, fmd.category, fmd.idx, fmd.AIFeedbackType, e.exerciseID
 				FROM FeedbackMsgDefault AS fmd 
 				LEFT JOIN Exercises AS e ON fmd.exerciseID = e.exerciseID;")) {
 			$stmt->execute();

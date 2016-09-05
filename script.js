@@ -3,6 +3,7 @@ $(document).ready(function() {
 		console.log("localstorage is supported!");
 	} else {
 		console.log("localstorage not supported");
+		showToast("#toastloginForm", false, "LocalStorage støttes ikke. Prøv å bruke en annen nettleser.", null);
 	}
 
 	// Listens for the submit of the login form

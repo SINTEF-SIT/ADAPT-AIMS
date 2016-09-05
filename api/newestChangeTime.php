@@ -12,12 +12,11 @@
 			}
 		}
 
-		if ($stmt = $conn->prepare("SELECT timeCalculated FROM MobilityIndexes AS mi WHERE mi.userID = ?
-				UNION SELECT timeCalculated FROM ActivityIndexes AS ai WHERE ai.userID = ?
+		if ($stmt = $conn->prepare("SELECT timeCalculated FROM  ActivityIndexes AS ai WHERE ai.userID = ?
 				UNION SELECT timeCalculated FROM BalanceIndexes AS bi WHERE bi.userID = ?
 				UNION SELECT timeCreated FROM FeedbackMsgCustom AS fmc WHERE fmc.userID = ?
 				ORDER BY timeCalculated DESC LIMIT 1;")) {
-			$stmt->bind_param("iiii", $seniorUserID, $seniorUserID, $seniorUserID, $seniorUserID);
+			$stmt->bind_param("iii", $seniorUserID, $seniorUserID, $seniorUserID);
 			$stmt->execute();
 			$result = $stmt->get_result();
 			$stmt->close();

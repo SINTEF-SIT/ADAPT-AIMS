@@ -97,7 +97,7 @@
 	/* float:          left; */
 }
 
-#mobilityChartContainer, #balanceChartContainer, #activityChartContainer {
+#balanceChartContainer, #activityChartContainer {
 	width: 80%;
 	margin: 0 auto;
 }
@@ -161,13 +161,19 @@
 	text-align: center;
 }
 
-#default-feedback-page table {
+.feedbackTable table {
 	width: 100%;
 }
 
-#default-feedback-page table tr td:first-child {
+.feedbackTable tr td:first-child {
     width:1%;
     white-space:nowrap;
+}
+
+@media (min-width: 560px) { 
+	.feedbackTable tr td {
+		text-align: center;
+	} 
 }
 
 

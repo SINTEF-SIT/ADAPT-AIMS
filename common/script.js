@@ -8,6 +8,8 @@ function showToast(formID, success, msg, duration) {
 	// Success = green gox with check icon
 	// Unsuccessful = red box with cross icon
 
+	console.log("Toast message displayed: " + msg);
+
 	if (success) {
 		$(formID).removeClass("toast-error").addClass("toast-success"); // Replaces toast-error class (if set) with toast-success class
 		$(formID + 'Img').attr("src","http://vavit.no/adapt-staging/expert/img/check.png"); // Sets source of img tag inside toast to check icon

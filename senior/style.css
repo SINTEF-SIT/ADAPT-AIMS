@@ -69,16 +69,16 @@ body {
 
 
 /***************************
-** Mobility Index Image
+** Balance Index Image
 ***************************/
-#MIImgOuterWrapper {
+#BIImgOuterWrapper {
 	margin-top:	15px;
 	height: auto;
 	min-height: 200px;
 	/*top: 2%;*/
 }
 
-#MIImgWell {
+#BIImgWell {
 	height: auto;
 	background-image: -webkit-linear-gradient(top,#DAE6F2 0,#D5E0EB 100%) !important;
 	background-image: -o-linear-gradient(top,#DAE6F2 0,#D5E0EB 100%) !important;
@@ -86,11 +86,11 @@ body {
 	background-image: linear-gradient(to bottom,#DAE6F2 0,#D5E0EB 100%) !important;
 }
 
-#MIImgHeader h1 {
+#BIImgHeader h1 {
 	margin: 10px 0;
 }
 
-#MIimgInnerWrapper {
+#BIimgInnerWrapper {
 	position: relative;
 	display: inline-block;
 	overflow:hidden;
@@ -99,19 +99,14 @@ body {
 	margin-bottom: 10px;
 }
 
-#MIImg {
+#BIImg {
 	vertical-align: middle;
 	max-height: 250px;
 	max-width: 100%;
 	margin: 15px auto 0 auto;
 }
 
-
-#michartOpenBtn {
-	margin: 30px;
-}
-
-#MIGaugeChartTextHighRisk, #MIGaugeChartTextLowRisk {
+#BIGaugeChartTextHighRisk, #BIGaugeChartTextLowRisk {
 	position: absolute;
 	bottom: 0;
 	font-weight: bold;
@@ -119,19 +114,19 @@ body {
 }
 
 @media (max-width: 450px) { 
-	#MIGaugeChartTextHighRisk, #MIGaugeChartTextLowRisk { 
+	#BIGaugeChartTextHighRisk, #BIGaugeChartTextLowRisk { 
 		font-size: 14px;
 	}
 }
 
 
-#MIGaugeChartTextHighRisk {
+#BIGaugeChartTextHighRisk {
 	left: 0;
 	/*color: #ED1E24;*/
 	text-shadow: 2px 2px 8px #575757;
 }
 
-#MIGaugeChartTextLowRisk {
+#BIGaugeChartTextLowRisk {
 	right: 0;
 	/*color: #5FBB46;*/
 	text-shadow: 2px 2px 8px #575757;
@@ -160,7 +155,7 @@ body {
 
 #balanceChartContainer, #activityChartContainer {
 	height: 22%;
-	min-height: 200px;
+	min-height: 350px;
 }
 
 #activityChartContainer {
@@ -172,40 +167,15 @@ body {
 	height: 100% !important;
 }
 
-#MIImgTooltipBtn, #BIChartTooltipBtn, #AIChartTooltipBtn, #MIChartTooltipBtn {
+#BIImgTooltipBtn, #BIChartTooltipBtn, #AIChartTooltipBtn {
 	position: absolute;
 	top: 0;
 	right: 0;
 }
 
-
-
-/***************************
-** Balance chart
-***************************/
-
-#balanceChartContainer {
-	/*top: 32%;*/
-}
-
-
-/***************************
-** Activity chart
-***************************/
-
-#activityChartContainer {
-	/*top: 58%;*/
-}
-
-
-
-/***************************
-** Mobility chart
-***************************/
-#mobilityChartContainer {
-	height: 400px;
-	width: 80%;
-	margin: 0 auto 100px auto;
+.ui-popup {
+    max-width: 95%;
+    font-size: 20px;
 }
 
 
@@ -243,11 +213,32 @@ body {
 	padding: 10px;
 }
 
+#lastUpdatedValue {
+	font-style: italic;
+}
+
 #logoutBtnWrapper {
 	max-width: 300px;
 	margin: 0 auto;
 }
 
+#logoutBtn {
+	margin-top: 50px;
+}
+
+.redBtn {
+	background-color: #ab3d41 !important;
+	border-color: #8A2F32 !important;
+	color: #ffffff !important;
+	text-shadow: 0 1px 0 #444444 !important;
+}
+
+.redBtn:hover {
+	background-color: #c4464a !important;
+	border-color: #8A2F32 !important;
+	color: #ffffff !important;
+	text-shadow: 0 1px 0 #444444 !important;
+}
 
 
 /***************************
@@ -309,45 +300,6 @@ body {
 }
 
 
-/***************************
-** Footer
-***************************/
-
-/*#footer {
-	height: 60px;
-}
-
-#footer p {
-	position: relative;
-	top: 50%;
-	-ms-transform: translateY(-50%);
-	-webkit-transform: translateY(-50%);
-	-moz-transform: translateY(-50%);
-	-o-transform: translateY(-50%);
-	transform: translateY(-50%);
-	font-weight: 100;
-	text-align: left;
-	padding-left: 10px;
-	margin-top: 0;
-}*/
-
-#lastUpdatedValue {
-	font-style: italic;
-}
-
-#settingsBtn {
-	position: fixed;
-	bottom: 0;
-	right: 0;
-}
-
-@media (max-width: 350px) { 
-	#footer p { 
-		display: none; 
-	} 
-}
-
-
 
 /***************************
 ** Video tutorial
@@ -385,17 +337,6 @@ body {
 	margin: 0 auto;
 }
 
-#videoPopupCloseBtn {
-	/*position: fixed;
-	margin: 0 auto;
-	margin-bottom: 75px;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	width: 400px;
-	max-width: 100%;*/
-}
-
 
 
 /***************************
@@ -428,122 +369,4 @@ body {
 
 .exerciseDesc ul {
 	padding-left: 20px;
-}
-
-
-
-/***************************
-** Settings page
-***************************/
-#settingsHeader {
-	height: 60px;
-}
-
-#settingsHeader h1 {
-	position: relative;
-	top: 50%;
-	transform: translateY(-50%);
-	font-size: 1.5em !important;
-	font-weight: bold;
-}
-
-/*#backBtnHeader {
-	position: fixed;
-	top: 0;
-	left: 0;
-}*/
-
-#MIImgSelectionHeader {
-	font-size: 28px;
-}
-
-#MIImgSelectionGroup {
-	width: 100%;
-	margin-bottom: 30px;
-}
-
-#MIImgSelectionGroup img {
-	width: 30%;
-	max-width: 300px;
-	cursor: pointer;
-	border: 2px solid black;
-	margin: 5px;
-	transition: all .2s ease-in-out;
-}
-
-#MIImgSelectionGroup img:hover {
-	transform: scale(0.9);
-}
-
-.MIImgSelected {
-	border: 8px solid #474747 !important;
-	transform: scale(0.9);
-}
-
-#settingsBtnGroup {
-	max-width: 300px;
-	margin: 0 auto;
-}
-
-#backBtn {
-	display: block;
-}
-
-#saveBtn {
-	display: none;
-}
-
-#cancelBtn {
-	display: none;
-}
-
-#logoutBtn {
-	margin-top: 50px;
-}
-
-
-.greyBtn {
-	background-color: #C4C4C4 !important;
-	border-color: #CCCCCC !important;
-	color: #000000 !important;
-	text-shadow: 0 1px 0 #eeeeee !important;
-}
-
-.greyBtn:hover {
-	background-color: #D9D7D7 !important;
-	border-color: #CCCCCC !important;
-	color: #000000 !important;
-	text-shadow: 0 1px 0 #eeeeee !important;
-}
-
-.greenBtn {
-	background-color: #009245 !important;
-	border-color: #54cc60 !important;
-	color: #ffffff !important;
-	text-shadow: 0 1px 0 #444444 !important;
-}
-
-.greenBtn:hover {
-	background-color: #45a74f !important;
-	border-color: #60e96e !important;
-	color: #ffffff !important;
-	text-shadow: 0 1px 0 #444444 !important;
-}
-
-.redBtn {
-	background-color: #ab3d41 !important;
-	border-color: #8A2F32 !important;
-	color: #ffffff !important;
-	text-shadow: 0 1px 0 #444444 !important;
-}
-
-.redBtn:hover {
-	background-color: #c4464a !important;
-	border-color: #8A2F32 !important;
-	color: #ffffff !important;
-	text-shadow: 0 1px 0 #444444 !important;
-}
-
-#hiddenBackBtn {
-	display: none;
 }

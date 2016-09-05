@@ -56,7 +56,7 @@
 
 		if (checkExpertSeniorLink($conn, $expertUserID, $_POST["userID"])) {
 			if ($stmt = $conn->prepare("INSERT INTO ActivityIndexes (userID, timeCalculated, timeDataCollected, value) VALUES (?, UTC_TIMESTAMP(), ?, ?);")) {
-				$stmt->bind_param("isi", $_POST["userID"], $_POST["timeDataCollected"], $_POST["activityIdx"]);
+				$stmt->bind_param("isd", $_POST["userID"], $_POST["timeDataCollected"], $_POST["activityIdx"]);
 				$stmt->execute();
 
 				$stmt->close();

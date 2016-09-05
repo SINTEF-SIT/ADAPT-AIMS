@@ -35,26 +35,6 @@
 				if ($row["birthDate"] != null) $row["birthDate"] = decrypt($row["birthDate"]);
 				if ($row["comment"] != null) $row["comment"] = decrypt($row["comment"]);
 
-				if ($stmt2 = $conn->prepare("SELECT value, timeDataCollected FROM MobilityIndexes WHERE userID=? ORDER BY timeDataCollected DESC LIMIT 1;")) {
-					$stmt2->bind_param("i", $row["userID"]);
-					$stmt2->execute();
-					$mobilityIdxResult = $stmt2->get_result();
-					
-					$stmt2->close();
-
-					if (mysqli_num_rows($mobilityIdxResult) > 0) {
-						$rowMI = mysqli_fetch_assoc($mobilityIdxResult);
-						$row["mobilityIdx"] = $rowMI["value"];
-						$row["mobilityIdxTimeDataCollected"] = $rowMI["timeDataCollected"];
-					} else {
-						$row["mobilityIdx"] = null;
-						$row["mobilityIdxTimeDataCollected"] = null;
-					}
-				} else {
-					$conn->close();
-					return NULL;
-				}
-				
 				$conn->close();
 				return $row;
 			}
@@ -76,6 +56,9 @@
 		$falls3Mths = isset($_POST["falls3Mths"]) ? $_POST["falls3Mths"] : NULL;
 		$falls12Mths = isset($_POST["falls12Mths"]) ? $_POST["falls12Mths"] : NULL;
 		$comment = isset($_POST["comment"]) ? encrypt($_POST["comment"]) : NULL;
+		$AIChartLineValue = isset($_POST["AIChartLineValue"]) ? $_POST["AIChartLineValue"] : NULL;
+		$BIThresholdLower = isset($_POST["BIThresholdLower"]) ? $_POST["BIThresholdLower"] : NULL;
+		$BIThresholdUpper = isset($_POST["BIThresholdUpper"]) ? $_POST["BIThresholdUpper"] : NULL;
 
 		$usesWalkingAid = isset($_POST["walkingAid"]) ? "1" : "0";
 		$livingIndependently = isset($_POST["livingIndependently"]) ? "1" : "1";
@@ -83,24 +66,25 @@
 		$password = hashword($_POST["password"]);
 
 
-		if ($stmt = $conn->prepare("INSERT INTO Users (username, password, firstName, lastName) VALUES (?,?,?,?)")) {
-			$stmt->bind_param("ssss", encrypt($_POST["username"]), $password, encrypt($_POST["firstName"]), encrypt($_POST["lastName"]));
-			$stmt->execute();
+		if ($stmt1 = $conn->prepare("INSERT INTO Users (username, password, firstName, lastName) VALUES (?,?,?,?)")) {
+			$stmt1->bind_param("ssss", encrypt($_POST["username"]), $password, encrypt($_POST["firstName"]), encrypt($_POST["lastName"]));
+			$stmt1->execute();
 
 			$seniorUserID = (int) mysqli_insert_id($conn);
+			$stmt1->close();
 
-			if ($stmt = $conn->prepare("INSERT INTO SeniorUsers (userID, address, zipCode, city, email, phoneNumber, birthDate, isMale, weight, height, usesWalkingAid, livingIndependently, numFalls3Mths, numFalls12Mths, comment, MIChartLineValue, BIChartLineValue, aIChartLineValue, dateJoinedAdapt, active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, NOW(), b'1')")) {
-				$stmt->bind_param("issssssiiiiiiisddd", $seniorUserID, $address, $zipCode, $city, $email, $phone, encrypt($_POST["birthDate"]), $_POST["isMale"], $weight, $height, $usesWalkingAid, $livingIndependently, $falls3Mths, $falls12Mths, $comment, $MIChartLineValue, $BIChartLineValue, $AIChartLineValue);
-				$stmt->execute();
+			if ($stmt2 = $conn->prepare("INSERT INTO SeniorUsers (userID, address, zipCode, city, email, phoneNumber, birthDate, isMale, weight, height, usesWalkingAid, livingIndependently, numFalls3Mths, numFalls12Mths, comment, AIChartLineValue, BIThresholdLower, BIThresholdUpper, dateJoinedAdapt, active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, NOW(), b'1')")) {
+				$stmt2->bind_param("issssssiiiiiiisddd", $seniorUserID, $address, $zipCode, $city, $email, $phone, encrypt($_POST["birthDate"]), $_POST["isMale"], $weight, $height, $usesWalkingAid, $livingIndependently, $falls3Mths, $falls12Mths, $comment, $AIChartLineValue, $BIThresholdLower, $BIThresholdUpper);
+				$stmt2->execute();
+				$stmt2->close();
 
-				if ($stmt = $conn->prepare("INSERT INTO ExpertSeniorLink (expertUserID, seniorUserID) VALUES (?,?)")) {
-					$stmt->bind_param("ii", $_POST["expertUserID"], $seniorUserID);
-					$stmt->execute();
-					$stmt->close();
+				if ($stmt3 = $conn->prepare("INSERT INTO ExpertSeniorLink (expertUserID, seniorUserID) VALUES (?,?)")) {
+					$stmt3->bind_param("ii", $_POST["expertUserID"], $seniorUserID);
+					$stmt3->execute();
+					$stmt3->close();
+
 					$conn->close();
 					return true;
-				} else {
-					$stmt->close();
 				}
 			}
 		}
@@ -123,9 +107,9 @@
 			$falls3Mths = isset($_POST["falls3Mths"]) ? $_POST["falls3Mths"] : NULL;
 			$falls12Mths = isset($_POST["falls12Mths"]) ? $_POST["falls12Mths"] : NULL;
 			$comment = isset($_POST["comment"]) ? encrypt($_POST["comment"]) : NULL;
-			$MIChartLineValue = isset($_POST["MIChartLineValue"]) ? $_POST["MIChartLineValue"] : NULL;
-			$BIChartLineValue = isset($_POST["BIChartLineValue"]) ? $_POST["BIChartLineValue"] : NULL;
 			$AIChartLineValue = isset($_POST["AIChartLineValue"]) ? $_POST["AIChartLineValue"] : NULL;
+			$BIThresholdLower = isset($_POST["BIThresholdLower"]) ? $_POST["BIThresholdLower"] : NULL;
+			$BIThresholdUpper = isset($_POST["BIThresholdUpper"]) ? $_POST["BIThresholdUpper"] : NULL;
 
 			$usesWalkingAid = isset($_POST["walkingAid"]) ? "1" : "0";
 			$livingIndependently = isset($_POST["livingIndependently"]) ? "1" : "0";
@@ -136,9 +120,10 @@
 					su.phoneNumber=?, su.weight=?, su.height=?, 
 					su.usesWalkingAid=?, su.livingIndependently=?, 
 					su.numFalls3Mths=?, su.numFalls12Mths=?, su.comment=?,
-					su.MIChartLineValue=?, su.BIChartLineValue=?, su.AIChartLineValue=?
+					su.AIChartLineValue=?, su.BIThresholdLower = ?,
+					su.BIThresholdUpper = ?
 					WHERE su.userID = u.userID AND u.userID = ?;")) {
-				$stmt->bind_param("ssssssssiiiiiisdddi", encrypt($_POST["firstName"]), encrypt($_POST["lastName"]), encrypt($_POST["username"]), $address, $zipCode, $city, $email, $phone, $weight, $height, $usesWalkingAid, $livingIndependently, $falls3Mths, $falls12Mths, $comment, $MIChartLineValue, $BIChartLineValue, $AIChartLineValue, $_POST["seniorUserID"]);
+				$stmt->bind_param("ssssssssiiiiiisdddi", encrypt($_POST["firstName"]), encrypt($_POST["lastName"]), encrypt($_POST["username"]), $address, $zipCode, $city, $email, $phone, $weight, $height, $usesWalkingAid, $livingIndependently, $falls3Mths, $falls12Mths, $comment, $AIChartLineValue, $BIThresholdLower, $BIThresholdUpper, $_POST["seniorUserID"]);
 				$stmt->execute();
 				$stmt->close();
 				$conn->close();
@@ -178,14 +163,14 @@
 
 			case 'POST':
 				// Store a new senior user to DB
-				if (isset($_POST["expertUserID"]) && isset($_POST["username"]) && isset($_POST["password"]) && isset($_POST["firstName"]) && isset($_POST["lastName"]) && isset($_POST["birthDate"]) && isset($_POST["isMale"]) && isset($_POST["MIChartLineValue"]) && isset($_POST["BIChartLineValue"]) && isset($_POST["AIChartLineValue"])) {
+				if (isset($_POST["expertUserID"]) && isset($_POST["username"]) && isset($_POST["password"]) && isset($_POST["firstName"]) && isset($_POST["lastName"]) && isset($_POST["birthDate"]) && isset($_POST["isMale"])) {
 			
 					$dbWriteSuccess = postData($expertUserID);
 					
 					if ($dbWriteSuccess) {
 						deliver_response(200, "Brukeren ble lagret i databasen.", true);
 					} else {
-						deliver_response(200, "Det oppstod en feil, og en eller flere tabeller ble ikke oppdatert." . $dbWriteSuccess, false);
+						deliver_response(200, "Det oppstod en feil, og en eller flere tabeller ble ikke oppdatert.", false);
 					}
 				} else {
 					deliver_response(400, "Ugyldig POST-forespørsel: mangler parametre.", NULL);

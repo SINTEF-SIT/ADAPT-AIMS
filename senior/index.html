@@ -3,7 +3,7 @@
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 
-		<!-- CSS -->
+		<!-- Main CSS -->
 		<link rel="stylesheet" href="style.css">
 
 		<!-- jQuery -->
@@ -18,8 +18,11 @@
 		<script src="http://momentjs.com/downloads/moment.min.js"></script>
 		<script src="http://momentjs.com/downloads/moment-timezone-with-data-2010-2020.min.js"></script>
 
-		<!-- JS -->
-		<script src="../common.js"></script>
+		<!-- Common (used by more than one of the system's main views) -->
+		<script src="../common/script.js"></script>
+		<link rel="stylesheet" href="../common/style.css">
+
+		<!-- Main JS -->
 		<script src="script.js"></script>
 
 		<title>Adapt frontend test</title>
@@ -43,21 +46,22 @@
 		<!-- Main page -->
 		<div data-role="page" id="main-page">
 			<div data-role="content">
-				<!-- Mobility index image (MIImg) -->
-				<div id="MIImgOuterWrapper" class="pageMainElement">
-					<div id="MIImgWell" class="well">
-						<div id="MIImgHeader">
-							<h1>Mobilitetsindeks</h1>
+				<!-- Balance index image (BIImg) -->
+				<div id="BIImgOuterWrapper" class="pageMainElement">
+					<div id="BIImgWell" class="well">
+						<div id="BIImgHeader">
+							<h1>Din balanse</h1>
 							<!--<b>Grønt betyr lav risiko for å falle.</b>-->
 						</div>
-						<div id="MIImgInnerWrapper">
-							<img src="//:0" alt="Mobility index" id="MIImg">
-							<span id="MIGaugeChartTextHighRisk">&nbsp;Høy fallrisiko</span>
-							<span id="MIGaugeChartTextLowRisk">Lav lavrisiko&nbsp;</span>
+						<div id="BIImgInnerWrapper">
+							<img src="//:0" alt="Balanseindeks" id="BIImg">
+							<span id="BIGaugeChartTextHighRisk">&nbsp;Høy fallrisiko</span>
+							<span id="BIGaugeChartTextLowRisk">Lav fallrisiko&nbsp;</span>
 						</div>
-						<a href="#MIImgTooltip" data-rel="popup" data-role="button" id="MIImgTooltipBtn" class="tooltipBtn ui-link ui-btn ui-btn-a ui-icon-info ui-btn-icon-notext ui-btn-inline ui-shadow ui-corner-all" data-inline="true" data-transition="pop" data-icon="info" data-theme="a" data-iconpos="notext" data-corners="true" data-shadow="true" data-iconshadow="true" data-wrapperels="span" title="Forklaring av bildet"></a>
+						<a href="#BIImgTooltip" data-rel="popup" data-role="button" id="BIImgTooltipBtn" class="tooltipBtn ui-link ui-btn ui-btn-a ui-icon-info ui-btn-icon-notext ui-btn-inline ui-shadow ui-corner-all" data-inline="true" data-transition="pop" data-icon="info" data-theme="a" data-iconpos="notext" data-corners="true" data-shadow="true" data-iconshadow="true" data-wrapperels="span" title="Forklaring av bildet"></a>
 
-						<div data-role="popup" id="MIImgTooltip">
+						<div data-role="popup" id="BIImgTooltip">
+							<a href="#" data-rel="back" data-role="button" data-theme="b" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
 							<p>Dette er en representasjon av din mobilitetsindeks. Dette er en verdi som påvirkes både av <i>hvor mye</i> du beveger deg, og <i>hvordan</i> du beveger deg. En høy mobilitetsindeks vil bety lavere risiko for å falle. Grønt betyr høy mobilitetsindeks, rød betyr lav.</p>
 						</div>
 						<br>
@@ -71,6 +75,7 @@
 						<a href="#BIChartTooltip" data-rel="popup" data-role="button" id="BIChartTooltipBtn" class="tooltipBtn ui-link ui-btn ui-btn-a ui-icon-info ui-btn-icon-notext ui-btn-inline ui-shadow ui-corner-all" data-inline="true" data-transition="pop" data-icon="info" data-theme="a" data-iconpos="notext" data-corners="true" data-shadow="true" data-iconshadow="true" data-wrapperels="span" title="Forklaring av diagrammet"></a>
 
 						<div data-role="popup" id="BIChartTooltip">
+							<a href="#" data-rel="back" data-role="button" data-theme="b" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
 							<p>Dette diagrammet viser hvordan balansen din har utviklet seg i løpet av den siste måneden.</p>
 						</div>
 					</div>
@@ -83,6 +88,7 @@
 						<a href="#AIChartTooltip" data-rel="popup" data-role="button" id="AIChartTooltipBtn" class="tooltipBtn ui-link ui-btn ui-btn-a ui-icon-info ui-btn-icon-notext ui-btn-inline ui-shadow ui-corner-all" data-inline="true" data-transition="pop" data-icon="info" data-theme="a" data-iconpos="notext" data-corners="true" data-shadow="true" data-iconshadow="true" data-wrapperels="span" title="Forklaring av diagrammet"></a>
 
 						<div data-role="popup" id="AIChartTooltip">
+							<a href="#" data-rel="back" data-role="button" data-theme="b" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
 							<p>Dette diagrammet viser hvor fysisk aktiv du har vært den siste måneden, basert på hvor mange skritt du har gått.</p>
 						</div>
 					</div>
@@ -108,15 +114,17 @@
 			<div data-role="content">
 				<h1>Råd</h1>
 
+				<h2>Kommer snart...</h2>
+
 				<!-- BI feedback message -->
-				<div id="messageWrapperBI" class="pageMainElement messageWrapper">
+				<!--<div id="messageWrapperBI" class="pageMainElement messageWrapper">
 					<div id="feedbackMsgBI" class="alert alert-gray" role="alert"></div>
-				</div>
+				</div>-->
 
 				<!-- AI feedback message -->
-				<div id="messageWrapperAI" class="pageMainElement messageWrapper">
+				<!--<div id="messageWrapperAI" class="pageMainElement messageWrapper">
 					<div id="feedbackMsgAI" class="alert alert-gray" role="alert"></div>
-				</div>
+				</div>-->
 
 			</div>
 
@@ -137,16 +145,6 @@
 		<!-- Details page -->
 		<div data-role="page" id="details-page">
 			<div data-role="content">
-				<div id="mobilityChartContainer" class="pageMainElement">
-					<div class="well chartWell">
-						<div id="mobilityChart"></div>
-						<a href="#MIChartTooltip" data-rel="popup" data-role="button" id="MIChartTooltipBtn" class="tooltipBtn ui-link ui-btn ui-btn-a ui-icon-info ui-btn-icon-notext ui-btn-inline ui-shadow ui-corner-all" data-inline="true" data-transition="pop" data-icon="info" data-theme="a" data-iconpos="notext" data-corners="true" data-shadow="true" data-iconshadow="true" data-wrapperels="span" title="Forklaring av diagrammet"></a>
-
-						<div data-role="popup" id="MIChartTooltip">
-							<p>Dette diagrammet viser hvordan din mobilitetsindeks har utviklet seg over tid. Høyere tall betyr høyere mobilitetsindeks, og mindre sannsynlighet for å falle.</p>
-						</div>
-					</div>
-				</div>
 
 				<h2>Øvelser</h2>
 
@@ -216,7 +214,7 @@
 		<!--  Exercise info page, AI  -->
 		<div data-role="page" data-dialog="true" data-close-btn="right" id="exercise-info-page-AI">
 			<div class="popupHeader" data-role="header" data-theme="b">
-				<h1>-</h1>
+				<h1>&nbsp;</h1>
 			</div>
 
 			<div role="main" class="ui-content">
@@ -232,7 +230,7 @@
 		<!--  Exercise info page, BI  -->
 		<div data-role="page" data-dialog="true" data-close-btn="right" id="exercise-info-page-BI">
 			<div class="popupHeader" data-role="header" data-theme="b">
-				<h1>-</h1>
+				<h1>&nbsp;</h1>
 			</div>
 			<div role="main" class="ui-content">
 				<h1 id="exerciseHeaderBI"></h1>
@@ -247,7 +245,7 @@
 		<!--  Exercise info page (used for all exercises)  -->
 		<div data-role="page" data-dialog="true" data-close-btn="right" id="exercise-info-page-">
 			<div class="popupHeader" data-role="header" data-theme="b">
-				<h1>-</h1>
+				<h1>&nbsp;</h1>
 			</div>
 			<div role="main" class="ui-content">
 				<h1 id="exerciseHeader"></h1>

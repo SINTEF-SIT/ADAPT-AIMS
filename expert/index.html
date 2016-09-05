@@ -1,5 +1,4 @@
 <html>
-	
 	<head>
 		<title>AIMS - Ekspertvisning</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,7 +8,7 @@
 		<!-- jQuery -->
 		<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
 
-		<!-- CSS -->
+		<!-- Main CSS -->
 		<link rel="stylesheet" href="style.css">
 
 		<!-- Custom jQuery mobile theme -->
@@ -31,8 +30,11 @@
 		<!-- jQuery-CSV -->
 		<script src="lib/jquery-csv/jquery.csv.min.js"></script>
 
-		<!-- JS -->
-		<script src="../common.js"></script>
+		<!-- Common (used by more than one of the system's main views) -->
+		<script src="../common/script.js"></script>
+		<link rel="stylesheet" href="../common/style.css">
+
+		<!-- Main JS -->
 		<script src="script.js" async></script>
 	</head>
 	
@@ -63,6 +65,12 @@
 
 				<a onclick="$.mobile.changePage('index.html#default-feedback-page');" data-role="button" data-icon="comment">Rediger standard-råd</a>
 				<a onclick="$.mobile.changePage('index.html#send-multiple-sms-page');" data-role="button" data-icon="comment">SMS til flere brukere</a>
+
+				<div id='toastMainPage' class="toast">
+					<div class="toast-content">
+						<img id="toastMainPageImg" class="toast-icon" src="//:0"/> <span id="toastMainPageText"></span>
+					</div>
+				</div>
 			</div><!-- /content -->
 
 			<!--<div data-role="footer">
@@ -97,8 +105,12 @@
 								</thead>
 								<tbody>
 									<tr>
-										<td>Mobility index</td>
-										<td id="cellMobilityIdx"></td>
+										<td>Balance index</td>
+										<td id="cellBalanceIdx"></td>
+									</tr>
+									<tr>
+										<td>Activity index</td>
+										<td id="cellActivityIdx"></td>
 									</tr>
 									<tr>
 										<td>Fødselsdato</td>
@@ -141,16 +153,16 @@
 										<td id="cellFall12"></td>
 									</tr>
 									<tr>
-										<td>Verdi linje MI-diagram</td>
-										<td id="cellMIChartLineValue"></td>
-									</tr>
-									<tr>
-										<td>Verdi linje BI-diagram</td>
-										<td id="cellBIChartLineValue"></td>
-									</tr>
-									<tr>
 										<td>Verdi linje AI-diagram</td>
 										<td id="cellAIChartLineValue"></td>
+									</tr>
+									<tr>
+										<td>Øvre BI-verdi for råd</td>
+										<td id="cellBIThresholdUpper"></td>
+									</tr>
+									<tr>
+										<td>Nedre BI-verdi for råd</td>
+										<td id="cellBIThresholdLower"></td>
 									</tr>
 									<tr>
 										<td>Bruker ganghjelpemiddel</td>
@@ -169,7 +181,6 @@
 						</div>
 
 						<div id="btnGroupUserDetails" class="floatItem">
-							<a onclick="$.mobile.changePage('index.html#register-mi-page');" data-role="button" data-icon="plus">Registrer ny mobility idx</a>
 							<a onclick="$.mobile.changePage('index.html#register-bi-page');" data-role="button" data-icon="plus">Registrer ny balance idx</a>
 							<a onclick="$.mobile.changePage('index.html#register-ai-page');" data-role="button" data-icon="plus">Registrer ny activity idx</a>
 							<a onclick="$.mobile.changePage('index.html#personalized-feedback-page');" data-role="button" data-icon="comment">Skriv personalisert råd</a>
@@ -185,13 +196,6 @@
 				<br>
 				<hr>
 				<br>
-
-				<!-- Mobility idx chart -->
-				<div id="mobilityChartContainer" class="pageMainElement">
-					<div class="well chartWell">
-						<div id="mobilityChart"></div>
-					</div>
-				</div>
 
 				<!-- Balance index chart -->
 				<div id="balanceChartContainer" class="pageMainElement">
@@ -213,39 +217,6 @@
 
 			</div>--><!-- /footer -->
 		</div><!-- /user-detail-apge -->
-
-
-		<!-- ******************************************************* -->
-		<!-- ************* REGISTER MOBILITY IDX PAGE ************** -->
-		<!-- ******************************************************* -->
-		<div data-role="page" id="register-mi-page">
-			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
-				<h1>Registrer MI</h1>
-				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
-					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
-				</div>
-			</div><!-- /header -->
-
-			<div data-role="content" data-theme="a">
-				<form id="mobilityIdxForm" method="post">
-					<label for="mobilityIdxDatePicker">Dato:</label>
-					<input type="date" name="timeDataCollected" id="mobilityIdxDatePicker" required>
-
-					<label for="mobilityIdxInputField">Mobility index (0-1):</label>
-					<input type="number" name="mobilityIdx" id="mobilityIdxInputField" min="0" max="1" step="0.1" required>
-					
-					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
-
-					<div id='toastMobilityIdxForm' class="toast">
-						<div class="toast-content">
-							<img id="toastMobilityIdxFormImg" class="toast-icon" src="//:0"/> <span id="toastMobilityIdxFormText"></span>
-						</div>
-					</div>
-					
-				</form>
-
-			</div><!-- /content -->
-		</div><!-- /register-mi-page -->
 
 
 		<!-- ******************************************************* -->
@@ -296,7 +267,7 @@
 					<input type="date" name="timeDataCollected" id="balanceIdxDatePicker" required>
 
 					<label for="balanceIdxInputField">Balance index:</label>
-					<input type="number" name="balanceIdx" id="balanceIdxInputField" min="0" max="5" required>
+					<input type="number" name="balanceIdx" id="balanceIdxInputField" min="-1" max="1" step="0.1" required>
 					
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 
@@ -360,7 +331,7 @@
 					<input type="date" name="timeDataCollected" id="activityIdxDatePicker" required>
 
 					<label for="activityIdxInputField">Activity index:</label>
-					<input type="number" name="activityIdx" id="activityIdxInputField" min="0" max="5" required>
+					<input type="number" name="activityIdx" id="activityIdxInputField" min="0" max="5" step="0.5" required>
 					
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 
@@ -374,24 +345,6 @@
 
 			</div><!-- /content -->
 		</div><!-- /register-ai-manual-page -->
-
-
-
-		<!-- ******************************************************* -->
-		<!-- ************* CONFIRM OVERWRITE MI DIALOG ************* -->
-		<!-- ******************************************************* -->
-		<div data-role="page" data-dialog="true" data-close-btn="right" id="confirm-overwrite-mi-dialog">
-			<div data-role="header" data-theme="b">
-				<h1>Bekreft ny MI</h1>
-			</div>
-
-			<div role="main" class="ui-content">
-				<h1>Erstatt eksisterende MI-verdi?</h1>
-				<p>Verdien <span id="overwriteMIDialogOldValue"></span> er allerede registrert på datoen <span id="overwriteMIDialogDate"></span>. Vil du overskrive denne verdien med MI=<span id="overwriteMIDialogNewValue"></span>?
-				<a id="confirmOverwriteMIBtn" onclick="updateMI(true);" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Ja, lagre ny verdi</a>
-				<a onclick="updateMI(false);" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Nei, avbryt</a>
-			</div>
-		</div> <!-- /confirm overwrite mi dialog -->
 
 
 		<!-- ******************************************************* -->
@@ -502,18 +455,18 @@
 					</div>
 					
 					<div class="ui-field-contain">
-						<label for="inputFieldEditMIChartLineValue">Linje normalverdi MI-diagram:</label>
-						<input type="number" name="MIChartLineValue" id="inputFieldEditMIChartLineValue" min="0" max="1" step="0.1" required>
-					</div>
-					
-					<div class="ui-field-contain">
-						<label for="inputFieldEditBIChartLineValue">Linje normalverdi BI-diagram:</label>
-						<input type="number" name="BIChartLineValue" id="inputFieldEditBIChartLineValue" min="0" max="5" step="0.5" required>
-					</div>
-					
-					<div class="ui-field-contain">
 						<label for="inputFieldEditAIChartLineValue">Linje normalverdi AI-diagram:</label>
 						<input type="number" name="AIChartLineValue" id="inputFieldEditAIChartLineValue" min="0" max="5" step="0.5" required>
+					</div>
+					
+					<div class="ui-field-contain">
+						<label for="inputFieldEditBIThresholdUpper">Grenseverdi for BI-råd, øvre</label>
+						<input type="number" name="BIThresholdUpper" id="inputFieldEditBIThresholdUpper" min="-1" max="1" step="0.1" required>
+					</div>
+					
+					<div class="ui-field-contain">
+						<label for="inputFieldEditBIThresholdLower">Grenseverdi for BI-råd, nedre</label>
+						<input type="number" name="BIThresholdLower" id="inputFieldEditBIThresholdLower" min="-1" max="1" step="0.1" required>
 					</div>
 					
 					<div class="ui-field-contain">
@@ -645,18 +598,18 @@
 					</div>
 					
 					<div class="ui-field-contain">
-						<label for="inputFieldNewMIChartLineValue">Linje normalverdi MI-diagram:</label>
-						<input type="number" name="MIChartLineValue" id="inputFieldNewMIChartLineValue" min="0" max="1" step="0.1" value="0.5" required>
-					</div>
-					
-					<div class="ui-field-contain">
-						<label for="inputFieldNewBIChartLineValue">Linje normalverdi BI-diagram:</label>
-						<input type="number" name="BIChartLineValue" id="inputFieldNewBIChartLineValue" min="0" max="5" step="0.5" value="2.5" required>
-					</div>
-					
-					<div class="ui-field-contain">
 						<label for="inputFieldNewAIChartLineValue">Linje normalverdi AI-diagram:</label>
 						<input type="number" name="AIChartLineValue" id="inputFieldNewAIChartLineValue" min="0" max="5" step="0.5" value="2.5" required>
+					</div>
+					
+					<div class="ui-field-contain">
+						<label for="inputFieldNewBIThresholdUpper">Grenseverdi for BI-råd, øvre</label>
+						<input type="number" name="BIThresholdUpper" id="inputFieldNewBIThresholdUpper" min="-1" max="1" step="0.1" value="0.3" required>
+					</div>
+					
+					<div class="ui-field-contain">
+						<label for="inputFieldNewBIThresholdLower">Grenseverdi for BI-råd, nedre</label>
+						<input type="number" name="BIThresholdLower" id="inputFieldNewBIThresholdLower" min="-1" max="1" step="0.1" value="-0.3" required>
 					</div>
 					
 					<div class="ui-field-contain">
@@ -671,9 +624,13 @@
 					<input type="checkbox" name="livingIndependently" id="inputFieldNewLivingIndependently" value="livingIndependently">
 
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
-
-					<h3 id="toastNewUserForm"></h3>
 				</form>
+
+				<div id='toastNewUserForm' class="toast">
+					<div class="toast-content">
+						<img id="toastNewUserFormImg" class="toast-icon" src="//:0"/> <span id="toastNewUserFormText"></span>
+					</div>
+				</div>
 			</div><!-- /content -->
 		</div><!-- /new user page -->
 
@@ -692,7 +649,7 @@
 			<div data-role="content" data-theme="a">
 				<form id="registerDefaultFeedbackForm" method="post">
 					<h1>Balanseråd</h1>
-					<table id="BIDefaultFeedbackTable" data-role="table" class="ui-responsive table-stripe ui-shadow">
+					<table id="BIDefaultFeedbackTable" data-role="table" class="ui-responsive table-stripe ui-shadow feedbackTable">
 						<thead>
 							<tr>
 								<th>BI-verdi</th>
@@ -705,13 +662,13 @@
 
 					<br><br>
 
-					<h1>Aktivitetsråd</h1>
-					<table id="AIDefaultFeedbackTable" data-role="table" class="ui-responsive table-stripe ui-shadow">
+					<h1>Aktivitetstips</h1>
+					<table id="AIDefaultFeedbackTable" data-role="table" class="ui-responsive table-stripe ui-shadow feedbackTable">
 						<thead>
 							<tr>
 								<th>AI-verdi</th>
+								<th>Type tips</th>
 								<th>Råd</th>
-								<th>Øvelse</th>
 							</tr>
 						</thead>
 						<tbody></tbody>
@@ -819,19 +776,10 @@
 
 			<div data-role="content" data-theme="a">
 
-				<h2>Råd knyttet til aktivitetsindeks (AI):</h2>
-
-				<div class="ui-field-contain">
-				    <label for="flipPersonalizedAI">Personaliserte AI-råd:</label>
-				    <input type="checkbox" data-role="flipswitch" name="personalizedAI" id="flipPersonalizedAI" data-on-text="På" data-off-text="Av">
-				<div>
-
-				<br><br>
-
 				<h2>Råd knyttet til balanseindeks (BI):</h2>
 				
 				<div class="ui-field-contain">
-				    <label for="flipPersonalizedAI">Personaliserte BI-råd:</label>
+				    <label for="flipPersonalizedBI">Personaliserte BI-råd:</label>
 				    <input type="checkbox" data-role="flipswitch" name="personalizedBI" id="flipPersonalizedBI" data-on-text="På" data-off-text="Av">
 				<div>
 
@@ -878,6 +826,15 @@
 				<hr>
 				<br><br>
 
+				<h2>Råd knyttet til aktivitetsindeks (AI):</h2>
+
+				<div class="ui-field-contain">
+				    <label for="flipPersonalizedAI">Personaliserte AI-råd:</label>
+				    <input type="checkbox" data-role="flipswitch" name="personalizedAI" id="flipPersonalizedAI" data-on-text="På" data-off-text="Av">
+				<div>
+
+				<br><br>
+
 				<div id="personalizedAIFeedbackMsgsContainer" class="personalizedFeedbackMsgsContainer">
 					<table id="tablePersonalizedAIFeedbackMsgs" data-role="table" class="ui-responsive table-stripe ui-shadow">
 						<thead>
@@ -898,10 +855,10 @@
 						<label for="textareaPersonalizedAIFeedback">Nytt AI-råd:</label>
 						<input type="text" name="feedbackText" id="textareaPersonalizedAIFeedback" required></input>
 					</div>
-					<div class="ui-field-contain">
+					<!--<div class="ui-field-contain">
 						<label>Øvelse:</label>
 						<select id="selectPersonalizedAIFeedbackExercise" name="exerciseID"></select>
-					</div>
+					</div>-->
 
 					<input type="hidden" name="category" value="0">
 

@@ -1,11 +1,8 @@
 /***************************
 ** Global variables
 ***************************/
-var mobilityChart; // The chart displaying the mobilirt indexes
 var balanceChart; // The chart displaying the balance indexes
 var activityChart; // The chart displaying the activity indexes
-var MIImgID; // ID identifying the image used to represent the MI
-var oldMIImgID; // Stores the previously selected MI img when a new img is selected, for rollback if the user cancels the changes
 var userData; // Information about the logged in user
 var exercises; // Information about all exercises in the system
 
@@ -23,10 +20,12 @@ var seniorUsername; // The username of the logged in user
 var seniorFirstName; // The first name of the logged in user
 var seniorLastName; // The last name of the logged in user
 
-$currentMobilityIdx = null; // The current mobility index for the logged in user
+$currentBalanceIdx = null // The current balance index for the logged in user
 $currentActivityIdx = null; // The current activity index for the logged in user. Not currently in use!
 
-//$isFooterVisible = true;
+var BIMax = 1;
+var BIMin = -1;
+var numBIImg = 21;
 
 
 /***************************
@@ -42,10 +41,6 @@ $(document).delegate('#main-page', 'pageshow', function () {
 	if (activityChart !== null && typeof activityChart !== 'undefined') activityChart.reflow();
 });
 
-
-$(document).delegate('#details-page', 'pageshow', function () {
-	if (mobilityChart !== null) mobilityChart.reflow();
-});
 
 $(document).delegate('#help-page', 'pagehide', function () {
 	$('#tutorialVideoiFrameHelpPage').attr('src', "http://player.vimeo.com/video/107469289"); // Stops video playback
@@ -85,8 +80,8 @@ $(document).ready(function() {
 		window.location.replace("../index.html");
 	}
 	
-	$("#messageWrapperAI").hide(); // Initially hides the box displaying AI feedback messages
-	$("#messageWrapperBI").hide(); // Initially hides the box displaying BI feedback messages
+	//$("#messageWrapperAI").hide(); // Initially hides the box displaying AI feedback messages
+	//$("#messageWrapperBI").hide(); // Initially hides the box displaying BI feedback messages
 
 	$("#userFullName").text(seniorFirstName + " " + seniorLastName); // Writes the full name of the logged in user to the DOM
 
@@ -155,119 +150,9 @@ $(document).ready(function() {
 					console.log(data.status_message);
 				}
 			}
-		}), $.ajax({
-			//********************************************************************
-			//********** Get mobility indexes to populate the MI chart ***********
-			//********************************************************************
-			url: "../api/mobilityIdx.php?seniorUserID=" + seniorUserID,
-			type: 'GET',
-			beforeSend: function (request) {
-				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-			},
-			error: function(data, status) {
-				console.log("Error attempting to call API: GET request to mobilityIdx.php with parameter seniorUserID=" + seniorUserID);
-				hideLoader(); // Hides the loading widget
-			}, 
-			success: function(data, status) { // If the API request is successful
-				var mobilityChartDataJSON = data.data;
-				
-				if (data.data !== null) { // Check if API returned any MI values
-					var mobilityChartData = [];
-					for (var i=0; i<mobilityChartDataJSON.length; i++) {
-						if (i != 0) {
-							// Draws an extra data point right before each data point (except the first) 
-							// to get a flat line instead of a straight, diagonal line between the points.
-							// Needs to be commented out if the chart is switched to a column chart.
-							var dataPointPre = [];
-							var datePre = new Date(mobilityChartDataJSON[i].timeDataCollected);
-							datePre.setSeconds(datePre.getSeconds() - 1);
-							dataPointPre.push(datePre.getTime());
-							dataPointPre.push(parseFloat(mobilityChartDataJSON[i-1].value));
-							mobilityChartData.push(dataPointPre);
-						}
-
-						var dataPoint = [];
-						var date = Date.parse(mobilityChartDataJSON[i].timeDataCollected);
-						dataPoint.push(date);
-						dataPoint.push(parseFloat(mobilityChartDataJSON[i].value));
-						mobilityChartData.push(dataPoint);
-
-						// If last data point from db, add a final data point at the current datetime
-						if (i+1 == mobilityChartDataJSON.length) {
-							var finalMI = parseFloat(mobilityChartDataJSON[i].value);
-							var dataPointFinal = [];
-							dataPointFinal.push(new Date().getTime());
-							dataPointFinal.push(finalMI);
-							mobilityChartData.push(dataPointFinal);
-
-							// Store the last data value as the current MI
-							$currentMobilityIdx = finalMI;
-							setMMImg(); // Displays the MI image corresponding to the current MI value
-						}
-					}
-
-					mobilityChartOptions = {
-						chart: {
-							renderTo: 'mobilityChart', // ID of div where the chart is to be rendered
-							type: 'area', // Chart type. Can e.g. be set to 'column' or 'area'
-							zoomType: 'x', // The chart is zoomable along the x-axis by clicking and draging over a portion of the chart
-							backgroundColor: null,
-							reflow: true
-						},
-						title: {
-							text: 'Mobilitetsindeks over tid'
-						},
-						xAxis: {
-							type: 'datetime',
-							minTickInterval: 24 * 3600 * 1000 // How frequent a tick is displayed on the axis (set in milliseconds)
-						},
-						yAxis: {
-							title: {
-								enabled: false
-							},
-							max: 1, // The ceiling value of the y-axis
-							min: 0, // The floor of the y-axis
-							alternateGridColor: '#DEE0E3',
-							tickInterval: 0.1, // How frequent a tick is displayed on the axis
-							plotLines: [{
-								color: 'black', // Color value
-								dashStyle: 'ShortDash', // Style of the plot line. Default to solid
-								value: userData.MIChartLineValue, // Value of where the line will appear
-								width: 2, // Width of the line
-								label: { 
-									text: 'Normalverdi', // Content of the label. 
-									align: 'left'
-								}
-							}]
-						},
-						legend: {
-							enabled: false // Hides the legend showing the name and toggle option for the series
-						},
-						credits: {
-							enabled: false // Hides the Highcharts credits
-						},
-						tooltip: {
-							enabled: false // Hides the tooltip from being displayed while hovering
-						},
-						series: [{
-							enableMouseTracking: false
-						}]
-					};
-
-					mobilityChartOptions.series[0].data = mobilityChartData;
-					mobilityChart = new Highcharts.Chart(mobilityChartOptions);
-				} else {
-					// No MI registered for this user yet
-					$("#MIImgHeader").html("<h3>Det er ikke registrert noen mobilitetsindeks ennå.</h3>"); // Writes to DOM
-					$("#MIImgInnerWrapper").hide(); // Hides the MI image
-
-					// Hides the button for opening the MI chart popup
-					$("#michartOpenBtnSettingsPage").hide();
-				}
-			}
 		})).then(function(data, textStatus, jqXHR) {
 			var maxBalanceChartRange = 1000 * 60 * 60 * 24 * 90; // The maximum range of the x axis in milliseconds
-			var numBalanceChartSeries = 0;
+			//var numBalanceChartSeries = 0;
 			$.when($.ajax({
 				/***************************
 				** Balance chart
@@ -314,6 +199,9 @@ $(document).ready(function() {
 								dataPointFinal.push(date.valueOf() + (1000 * 60 * 60 * 24));
 								dataPointFinal.push(parseFloat(balanceChartDataJSON[i].value));
 								balanceChartData.push(dataPointFinal);
+
+								$currentBalanceIdx = balanceChartDataJSON[i].value; // Store the last data value as the current BI
+								setBIImg(); // Displays the BI image corresponding to the current BI value
 							}
 						}
 
@@ -322,8 +210,13 @@ $(document).ready(function() {
 							xAxisMinValue = moment().valueOf() - maxBalanceChartRange;
 						}
 
-						balanceChartDataSplit = splitChartSeries(balanceChartData);
-						numBalanceChartSeries = balanceChartDataSplit.length;
+						/*balanceChartDataSplit = splitChartSeries(balanceChartData);
+						numBalanceChartSeries = balanceChartDataSplit.length;*/
+
+						var yAxisLabels = ["Lav", "Medium", "Høy"];
+						
+						colorMaxBI = "#" + getBIChartData($currentBalanceIdx).color;
+						colorMidBI = "#" + getBIChartData($currentBalanceIdx/2).color;
 						
 						balanceChartOptions = {
 							chart: {
@@ -333,32 +226,47 @@ $(document).ready(function() {
 								reflow: true
 							},
 							title: {
-								text: 'Din balanse'
+								text: 'Din balanse over tid'
 							},
 							xAxis: {
 								type: 'datetime',
-								//tickInterval: 7 * 24 * 3600 * 1000, // How frequent a tick is displayed on the axis (set in milliseconds)
+								//maxTickInterval: 7 * 24 * 3600 * 1000, // How frequent a tick is displayed on the axis (set in milliseconds)
 								min: xAxisMinValue
 							},
 							yAxis: {
-								max: 5, // The ceiling value of the y-axis.
-								min: 0, // The floor of the y-axis. 
+								max: 1, // The ceiling value of the y-axis.
+								min: -1, // The floor of the y-axis. 
+								minRange : 0.1,
 								endOnTick: false,
 								alternateGridColor: '#DEE0E3',
-								tickInterval: 1, // How frequent a tick is displayed on the axis,
+								tickInterval: 0.2, // How frequent a tick is displayed on the axis,
 								title: {
 									enabled: false
 								},
 								plotLines: [{
-									color: 'black', // Color value
+									color: '#9E9E9E', // Color value
 									dashStyle: 'ShortDash', // Style of the plot line. Default to solid
-									value: userData.BIChartLineValue, // Value of where the line will appear
+									value: 0, // Value of where the line will appear
 									width: 2, // Width of the line
+									zIndex: 5, // Draw the plot line on top of the series
 									label: { 
 										text: 'Normalverdi', // Content of the label. 
-										align: 'left'
+										align: 'left',
+										style: {
+											fontSize:'18px',
+												color: '#363636'
+										}
+									},
+									line: {
+										lineWidth: 1,
+										softThreshold: false
 									}
-								}]
+								}],
+								labels: {
+									formatter: function() {
+										return yAxisLabels[this.value+1];
+									}
+								}
 							},
 							plotOptions: {
 								series: {
@@ -366,6 +274,20 @@ $(document).ready(function() {
 									enableMouseTracking: false,
 									marker: {
 										enabled: false
+									},
+									color: {
+										linearGradient: {
+											x1: 0,
+											y1: 0,
+											x2: 0,
+											y2: 1
+										},
+										stops: [
+											// The 'grey' color is temporary, as the top and middle colors are calculated later.
+											[0, 'grey'],
+											[0.5, 'grey'],
+											[1, '#ED1E24']
+										]
 									}
 								}
 							},
@@ -378,31 +300,28 @@ $(document).ready(function() {
 							tooltip: {
 								enabled: false // Hides the tooltip from being displayed while hovering
 							},
-							series: [{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}]
+							series: [{
+								type: 'area',
+								threshold: -1,
+								color: {
+									linearGradient: {
+										x1: 0,
+										y1: 0,
+										x2: 0,
+										y2: 1
+									},
+									stops: [
+										// The 'grey' color is temporary, as the top and middle colors are calculated later.
+										[0, colorMaxBI],
+										[0.5, colorMidBI],
+										[1, '#ED1E24']
+									]
+								},
+								lineWidth: 0,
+			            		enableMouseTracking: false,
+			            		data: balanceChartData
+							}]
 						};
-
-						for (var i=0; i<balanceChartDataSplit.length && i<24; i++) {
-							balanceChartOptions.series[i].type = 'area';
-							balanceChartOptions.series[i].data = balanceChartDataSplit[i];
-						}
-
-						// Generate values for the chart line of normal values
-						/*var normalValues = [];
-
-						var dataPointLineStart = [];
-						dataPointLineStart.push(balanceChartData[0][0]);
-						dataPointLineStart.push(0);
-						normalValues.push(dataPointLineStart);
-
-						var dataPointLineEnd = [];
-						dataPointLineEnd.push(moment().valueOf());
-						dataPointLineEnd.push(5);
-						normalValues.push(dataPointLineEnd);
-
-						balanceChartOptions.series[balanceChartDataSplit.length].type = 'spline';
-						balanceChartOptions.series[balanceChartDataSplit.length].color = '#4B78A3';
-						balanceChartOptions.series[balanceChartDataSplit.length].dashStyle = 'dash';
-						balanceChartOptions.series[balanceChartDataSplit.length].data = normalValues;*/
 
 						balanceChart = new Highcharts.Chart(balanceChartOptions);
 					} else {
@@ -484,13 +403,18 @@ $(document).ready(function() {
 									alternateGridColor: '#DEE0E3',
 									tickInterval: 1, // How frequent a tick is displayed on the axis
 									plotLines: [{
-										color: 'black', // Color value
+										color: '#9E9E9E', // Color value
 										dashStyle: 'ShortDash', // Style of the plot line. Default to solid
 										value: userData.AIChartLineValue, // Value of where the line will appear
 										width: 2, // Width of the line
+										zIndex: 5, // Draw the plot line on top of the series
 										label: { 
 											text: 'Normalverdi', // Content of the label. 
-											align: 'left'
+											align: 'left',
+											style: {
+												fontSize:'18px',
+												color: '#363636'
+											}
 										}
 									}]
 								},
@@ -526,6 +450,41 @@ $(document).ready(function() {
 					}
 				})).then(function(data, textStatus, jqXHR) {
 
+					$.ajax({
+						/***************************
+						** Get all exercises
+						***************************/
+						url: "../api/exercises.php",
+						type: 'GET',
+						beforeSend: function (request) {
+							request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+						},
+						error: function(data, status) { // If the API request fails
+							console.log("Error attempting to call API: GET request to exercises.php");
+							hideLoader(); // Hides the loading widget
+						},
+						success: function(data, status) { // If the API request is successful
+							exercises = data.data;
+
+							var htmlBalanceExercises = "";
+							var htmlActivityExercises = "";
+
+							for (var i=0; i<exercises.length; i++) {
+								var html = "<a onclick='displayExercise(" + i + ")' data-role='button'>" + exercises[i].title + "</a>";
+								if (exercises[i].isBalanceExercise === 1) {
+									htmlBalanceExercises += html;
+								} else {
+									htmlActivityExercises += html;
+								}
+							}
+							$("#balanceExercisesBtnGroup").append(htmlBalanceExercises);
+							$("#activityExercisesBtnGroup").append(htmlActivityExercises);
+
+							hideLoader(); // Hides the loading widget
+						}
+					});
+
+					/*
 					var firstFeedbackAjaxCall = null;
 					var secondFeedbackAjaxCall = null;
 
@@ -540,7 +499,7 @@ $(document).ready(function() {
 					}
 
 					if (balanceChart) {
-						currentBI = getNewestChartValue(balanceChart, numBalanceChartSeries-1);
+						currentBI = getNewestChartValue(balanceChart, 0);
 						var BITemp = {
 							category: '1',
 							textID: 'BI',
@@ -557,9 +516,7 @@ $(document).ready(function() {
 
 					if (firstFeedbackAjaxCall) {
 						$.when($.ajax({
-							/***************************
-							** Gets first feedback msg (if any)
-							***************************/
+							// Gets first feedback msg (if any)
 							url: "../api/feedback.php?seniorUserID=" + seniorUserID 
 								+ "&idx=" + firstFeedbackAjaxCall.idx + "&category=" + firstFeedbackAjaxCall.category,
 							type: 'GET',
@@ -591,10 +548,8 @@ $(document).ready(function() {
 							}
 						})).then(function(data, textStatus, jqXHR) {
 							if (secondFeedbackAjaxCall) {
-								$.when($.ajax({
-									/***************************
-									** Gets the other feedback msg (if any)
-									***************************/
+								$.ajax({
+									// Gets the other feedback msg (if any)
 									url: "../api/feedback.php?seniorUserID=" + seniorUserID 
 									+ "&idx=" + secondFeedbackAjaxCall.idx + "&category=" + secondFeedbackAjaxCall.category,
 									type: 'GET',
@@ -624,40 +579,6 @@ $(document).ready(function() {
 											console.log(data.status_message);
 										}
 									}
-								})).then(function(data, textStatus, jqXHR) {
-									$.ajax({
-										/***************************
-										** Get all exercises
-										***************************/
-										url: "../api/exercises.php",
-										type: 'GET',
-										beforeSend: function (request) {
-											request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-										},
-										error: function(data, status) { // If the API request fails
-											console.log("Error attempting to call API: GET request to exercises.php");
-											hideLoader(); // Hides the loading widget
-										},
-										success: function(data, status) { // If the API request is successful
-											exercises = data.data;
-
-											var htmlBalanceExercises = "";
-											var htmlActivityExercises = "";
-
-											for (var i=0; i<exercises.length; i++) {
-												var html = "<a onclick='displayExercise(" + i + ")' data-role='button'>" + exercises[i].title + "</a>";
-												if (exercises[i].isBalanceExercise === 1) {
-													htmlBalanceExercises += html;
-												} else {
-													htmlActivityExercises += html;
-												}
-											}
-											$("#balanceExercisesBtnGroup").append(htmlBalanceExercises);
-											$("#activityExercisesBtnGroup").append(htmlActivityExercises);
-
-											hideLoader(); // Hides the loading widget
-										}
-									});	
 								});
 							} else {
 								hideLoader(); // Hides the loading widget
@@ -666,6 +587,7 @@ $(document).ready(function() {
 					} else {
 						hideLoader(); // Hides the loading widget
 					}
+					*/
 				});
 			});
 		});
@@ -676,9 +598,31 @@ $(document).ready(function() {
 		colors: ['#7CB5EC', '#66A6E3'], // Default series colors
 		lang: { // Defines Norwegian text strings used in the charts
 			months: ['januar', 'februar', 'mars', 'april', 'mai', 'juni',  'juli', 'august', 'september', 'oktober', 'november', 'desember'],
-			shortMonths: ['jan', 'feb', 'mars', 'apr', 'mai', 'juni',  'juli', 'aug', 'sep', 'okt', 'nov', 'des'],
+			shortMonths: ['jan.', 'feb.', 'mars', 'apr.', 'mai', 'juni',  'juli', 'aug.', 'sep.', 'okt.', 'nov.', 'des.'],
 			weekdays: ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'],
-			shortWeekdays: ['sø', 'ma', 'ti', 'on', 'to', 'fr', 'lø']
+			shortWeekdays: ['sø', 'ma', 'ti', 'on', 'to', 'fr', 'lø'],
+			decimalPoint: ',',
+			thousandsSep: ' '
+		},
+		title: {
+			style: {
+				fontSize:'24px'
+			}
+		},
+		yAxis: {
+			labels: {
+				style: {
+					fontSize:'16px'
+				}
+			}
+		},
+		xAxis: {
+			labels: {
+				rotation: -45,
+				style: {
+					fontSize:'16px'
+				}
+			}
 		}
 	});
 });
@@ -768,21 +712,21 @@ function generateExerciseHTML(data, textID) {
 }
 
 
-function setMMImg() {
-	// Updates the DOM with the MI img depending on the MI value
+function setBIImg() {
+	// Updates the DOM with the BI img depending on the BI value
 	var fileName = "";
 
-	$miData = getMIChartData($currentMobilityIdx);
-	if ($miData !== null) {
-		$fileName = $miData.fileName;
+	$biData = getBIChartData($currentBalanceIdx);
+	if ($biData !== null) {
+		$fileName = $biData.fileName;
 
-		var imgPath = "img/MIImg/" + $fileName;
-		var img = document.getElementById("MIImg");
+		var imgPath = "img/BIImg/" + $fileName;
+		var img = document.getElementById("BIImg");
 		img.src = imgPath;
 
 	} else {
-		$("#MIImgHeader").html("<h3>Det oppstod en feil.</h3>");
-		$("#MIImgInnerWrapper").hide();
+		$("#BIImgHeader").html("<h3>Det oppstod en feil.</h3>");
+		$("#BIImgInnerWrapper").hide();
 	}
 }
 
@@ -837,85 +781,44 @@ function setUpdateTimeDiff(timeCalculated) {
 /***************************
 ** Misc
 ***************************/
-function getMIChartData($mi) {
-	// Returns a filename for the MI img and a hex color value for the BI chart
-	// that corresponds to a given MI value.
-	if ($mi >= 0 && $mi <= 1) {
-		$fileName = "";
-		$color = "";
+function getBIChartData(BI) {
+	// Returns a filename for the BI img and a hex color value for the BI chart
+	// that corresponds to a given BI value.
+	if (BI !== null && BI >= -1 && BI <= 1) {
+		var step = (BIMax-BIMin) * 1.0 / numBIImg; // the BI value between two BI images 
 
-		if ($mi < 0.025) {
-			$fileName = "0.png";
-			$color = "ED1E24";
-		} else if ($mi >= 0.025 && $mi < 0.075) {
-			$fileName = "05.png";
-			$color = "F03223";
-		} else if ($mi >= 0.075 && $mi < 0.125) {
-			$fileName = "10.png";
-			$color = "F44D22";
-		} else if ($mi >= 0.125 && $mi < 0.175) {
-			$fileName = "15.png";
-			$color = "F76E20";
-		} else if ($mi >= 0.175 && $mi < 0.225) {
-			$fileName = "20.png";
-			$color = "F78F1F";
-		} else if ($mi >= 0.225 && $mi < 0.275) {
-			$fileName = "25.png";
-			$color = "F7AE1F";
-		} else if ($mi >= 0.275 && $mi < 0.325) {
-			$fileName = "30.png";
-			$color = "F7CC1F";
-		} else if ($mi >= 0.325 && $mi < 0.375) {
-			$fileName = "35.png";
-			$color = "F7E11F";
-		} else if ($mi >= 0.375 && $mi < 0.425) {
-			$fileName = "40.png";
-			$color = "F6EC1F";
-		} else if ($mi >= 0.425 && $mi < 0.475) {
-			$fileName = "45.png";
-			$color = "EEEC21";
-		} else if ($mi >= 0.475 && $mi < 0.525) {
-			$fileName = "50.png";
-			$color = "E4EC23";
-		} else if ($mi >= 0.525 && $mi < 0.575) {
-			$fileName = "55.png";
-			$color = "D8EC27";
-		} else if ($mi >= 0.575 && $mi < 0.625) {
-			$fileName = "60.png";
-			$color = "CBEC2A";
-		} else if ($mi >= 0.625 && $mi < 0.675) {
-			$fileName = "65.png";
-			$color = "BCE82E";
-		} else if ($mi >= 0.675 && $mi < 0.725) {
-			$fileName = "70.png";
-			$color = "ADE132";
-		} else if ($mi >= 0.725 && $mi < 0.775) {
-			$fileName = "75.png";
-			$color = "9EDA36";
-		} else if ($mi >= 0.775 && $mi < 0.825) {
-			$fileName = "80.png";
-			$color = "8FD339";
-		} else if ($mi >= 0.825 && $mi < 0.875) {
-			$fileName = "85.png";
-			$color = "7ECA3E";
-		} else if ($mi >= 0.875 && $mi < 0.925) {
-			$fileName = "90.png";
-			$color = "73C541";
-		} else if ($mi >= 0.925 && $mi < 0.975) {
-			$fileName = "95.png";
-			$color = "68C043";
-		} else {
-			$fileName = "100.png";
-			$color = "68BF44";
+		//$fileNames = ["0.png", "05.png", "10.png", "15.png", "20.png", "25.png", "30.png", "35.png", "40.png", "45.png", "50.png"];
+		var colors = ["ED1E24", "F03223", "F44D22", "F76E20", "F78F1F", "F7AE1F", "F7CC1F", "F7E11F", "F6EC1F", "EEEC21", 
+			"E4EC23", "D8EC27", "CBEC2A", "BCE82E", "ADE132", "9EDA36", "8FD339", "7ECA3E", "73C541", "68C043", "68BF44"];
+
+		if (BI < BIMin+step) { // lowest section
+			return {
+				"fileName": "0.png",
+				"color": colors[0]
+			};
+		} else if (BI >= BIMax-step) { // highest section
+			return {
+				"fileName": "100.png",
+				"color": colors[numBIImg-1]
+			};
 		}
 
-		return {
-			"fileName": $fileName,
-			"color": $color
-		};
-	} else {
-		return null;
+		for (var i=1; i<numBIImg-1; i++) { // 19 loops, one for each possible BI image except the first and last one
+			if (BI >= BIMin+(i*step) && BI < BIMin+((i+1)*step)) {
+				var filename = i*5;
+				if (filename === 5) {
+					filename = "05.png";
+				} else {
+					filename += ".png";
+				}
+				return {
+					"fileName": filename,
+					"color": colors[i]
+				};
+			}
+		}
 	}
+	return null;
 }
 
 function getNewestChartValue(chart, seriesIdx) {
@@ -935,14 +838,6 @@ function closeVideoPopup() {
 	$('#tutorialVideoiFrameHelpPageWrapper').append("<iframe id='tutorialVideoiFrameHelpPage' src='http://player.vimeo.com/video/107469289' width='497' height='298' seamless webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>");
 	//$('tutorialVideoiFrameHelpPage').attr('src', "http://player.vimeo.com/video/107469289"); // Sets the url for the iframe on the help page
 }
-
-/*function openConfirmOpenMIChartPopup() {
-	$("#confirmOpenMIChartPopup").popup("open");
-}
-
-function openMIChartPopup() {
-	$.mobile.changePage( "#mi-chart-popup", { transition: "pop"}); 
-}*/
 
 function displayExercise(exerciseArrayIdx) {
 	var exercise = exercises[exerciseArrayIdx];

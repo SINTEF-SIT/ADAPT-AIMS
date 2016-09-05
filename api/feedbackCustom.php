@@ -8,6 +8,7 @@
 		// If the userID in the token belongs to an expert user, check that this expert is allowed to access this senior user's data
 		if ($tokenUserID != $seniorUserID) {
 			if (checkExpertSeniorLink($conn, $tokenUserID, $seniorUserID) == false) {
+				$conn->close();
 				return null;
 			}
 		}
@@ -29,14 +30,10 @@
 				}
 				$conn->close();
 				return $rows;
-			} else {
-				$conn->close();
-				return NULL;
 			}
-		} else {
-			$conn->close();
-			return NULL;
 		}
+		$conn->close();
+		return NULL;
 	}
 
 	function postData($seniorUserID, $feedbackText, $category, $expertUserID) {
@@ -53,13 +50,10 @@
 				$stmt->close();
 				$conn->close();
 				return true;
-			} else {
-				$conn->close();
-				return false;
 			}
-		} else {
-			return false;
 		}
+		$conn->close();
+		return false;
 	}
 
 	function putData($seniorUserID, $category, $value, $tokenUserID) {
