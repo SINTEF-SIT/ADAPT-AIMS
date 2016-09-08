@@ -14,7 +14,9 @@ var expertLastName;
 var expertUsername;
 var token; // The JWT used for communicating with the API
 
-var exercises; // Data about the exercises that can be recommended to the senior users
+var exerciseGroups; // Exercise groups and their exercises that can be recommended to the senior users
+var BIThresholdUpper; // The upper threshold value for the 'medium' or 'yellow' area for BI
+var BIThresholdLower; // The lower threshold value for the 'medium' or 'yellow' area for BI
 
 // If expert user tries to submit a new BI/AI with a date that already has an BI/AI
 // for this senior user, a prompt appears asking to confirm overwrite. The form
@@ -443,6 +445,7 @@ $(document).ready(function() {
 	//*********** Submit form for sending multiple SMS messages **********
 	//********************************************************************
 	$("#sendBulkSMSForm").submit(function(e){
+		showLoader(); // Shows the loading widget
 		if ($("#bulkSMSContentField").val().length <= 1224) {
 			showLoader(); // Shows the loading widget
 			formData = $("#sendBulkSMSForm").serialize(); // Serialize the form data
@@ -482,6 +485,7 @@ $(document).ready(function() {
 	//*********** Submit form for sending a single SMS message ***********
 	//********************************************************************
 	$("#sendSingleSMSForm").submit(function(e){
+		showLoader(); // Shows the loading widget
 		if ($("#singleSMSContentField").val().length <= 1224) {
 			showLoader(); // Shows the loading widget
 			formData = $("#sendSingleSMSForm").serialize(); // Serialize the form data
@@ -513,6 +517,47 @@ $(document).ready(function() {
 
 		return false; // Returns false to stop the default form behaviour
 	});
+
+
+
+	//********************************************************************
+	//************* Submit form for updating general settings ************
+	//********************************************************************
+	$("#settingsForm").submit(function(e){
+		showLoader(); // Shows the loading widget
+		$BIThresholdUpperInput = $("#BIThresholdUpperInput").val();
+		$BIThresholdLowerInput = $("#BIThresholdLowerInput").val();
+		if (parseFloat($BIThresholdUpperInput) > parseFloat($BIThresholdLowerInput)) {
+			showLoader(); // Shows the loading widget
+			formData = $("#settingsForm").serialize(); // Serialize the form data
+
+			$.ajax({
+				type: "PUT",
+				beforeSend: function (request) {
+					request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+				},
+				url: "../api/settings.php?BIThresholdUpper=" + $BIThresholdUpperInput + "&BIThresholdLower=" + $BIThresholdLowerInput,
+				success: function(data, status) { // If the API request is successful
+					if (data.data) {
+						showToast("#toastSettingsForm", true, data.status_message, 3000); // Shows toast with success msg
+						BIThresholdUpper = $BIThresholdUpperInput;
+						BIThresholdLower = $BIThresholdLowerInput;
+					} else {
+						showToast("#toastSettingsForm", false, "Det oppstod en feil ved skriving til databasen.", 3000); // Shows toast with error msg
+					}
+					hideLoader(); // Hides the loading widget
+				},
+				error: function(data, status) {
+					showToast("#toastSettingsForm", false, data.status_message, 3000); // Shows toast with error msg
+					hideLoader(); // Hides the loading widget
+				}
+			});
+		} else {
+			showToast("#toastSettingsForm", false, "Øvre verdi må være høyere enn den nedre!", 3000); // Shows toast with error msg
+		}
+
+		return false; // Returns false to stop the default form behaviour
+	});
 });
 
 
@@ -526,24 +571,20 @@ function getDefaultFeedbackMsgs() {
 	showLoader(); // Shows the loading widget
 
 	$.when($.ajax({
-		url: "../api/exercises.php",
+		url: "../api/exerciseGroups.php",
 		type: 'GET',
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 		},
 		error: function(data, status) {
 			hideLoader(); // Hides the loading widget
-			console.log("Error fetching data from API: GET request to exercises.php");
+			console.log("Error fetching data from API: GET request to exerciseGroups.php");
 		},
 		success: function(data, status) { // If the API request is successful
-			exercises = data.data;
-
-			// Populate the dropdown for selecting linked exercise to new personalized AI/BI feedback msgs
-			//$("#selectPersonalizedAIFeedbackExercise").html(generateExerciseDropdownOptionHTML(-1, true));
-			$("#selectPersonalizedBIFeedbackExercise").html(generateExerciseDropdownOptionHTML(-1, false));
+			exerciseGroups = data.data;
 		}
 	})).then(function(data, textStatus, jqXHR) {
-		if (exercises !== null) {
+		if (exerciseGroups !== null) {
 			$.ajax({
 				url: "../api/feedbackDefault.php",
 				type: 'GET',
@@ -595,13 +636,15 @@ function getDefaultFeedbackMsgs() {
 									BISectionText = "Høy";
 								}
 
-								// Builds the html for the dropdown box for selecting an exercise
-								var optionsHtml = generateExerciseDropdownOptionHTML(msgs[i].exerciseID, false);
+								// Builds the html for the dropdown boxes for selecting balance and strength exercises
+								var optionsBalanceExercisesHtml = generateExerciseDropdownOptionHTML(msgs[i].idx, msgs[i].balanceExerciseID, 0);
+								var optionsStrengthExercisesHtml = generateExerciseDropdownOptionHTML(msgs[i].idx, msgs[i].strengthExerciseID, 1);
 
 								htmlBI += "<tr>";
 								htmlBI += "<td>" + BISectionText + "</td>";
 								htmlBI += "<td>" + htmlInputFeedback + "</td>";
-								htmlBI += "<td><select name='exercise-" + msgs[i].msgID + "'>" + optionsHtml + "</select></td>";
+								htmlBI += "<td><select name='balanceExercise-" + msgs[i].msgID + "'>" + optionsBalanceExercisesHtml + "</select></td>";
+								htmlBI += "<td><select name='strengthExercise-" + msgs[i].msgID + "'>" + optionsStrengthExercisesHtml + "</select></td>";
 								htmlBI += "</tr>";
 							}
 						}
@@ -622,25 +665,29 @@ function getDefaultFeedbackMsgs() {
 
 //********************************************************************
 //******* Generates the options elements used in a select box ********
-//********* to select an exercise to link to a feedback msg **********
+//********* to select an exercise to link to a feedback msg. *********
+//** The indexSection parameter indicates if the exercises should  ***
+//*********** be connected to low, medium or high BI value. **********
 //********************************************************************
-function generateExerciseDropdownOptionHTML(selectedID, isAI) {
+function generateExerciseDropdownOptionHTML(indexSection, selectedID, exerciseType) {
 	var html = "";
-	if (isAI) {
-		html += "<option value='-1'>Ingen</option>";
-	}
 
-	var categoryNr = isAI ? 0 : 1;
-
-	for (var j=0; j<exercises.length; j++) {
-		if (exercises[j].isBalanceExercise === categoryNr) {
-			html += "<option value='" + exercises[j].exerciseID + "'";
-			if (selectedID == exercises[j].exerciseID) {
-				html += " selected";
+	for (var i=0; i<exerciseGroups.length; i++) {
+		if (exerciseGroups[i].exerciseType === exerciseType) {
+			for (var j=0; j<exerciseGroups[i].exercises.length; j++) {
+				var exercise = exerciseGroups[i].exercises[j];
+				if (exercise.indexSection === indexSection) {
+					
+					html += "<option value='" + exercise.exerciseID + "'";
+					if (selectedID === exercise.exerciseID) {
+						html += " selected";
+					}
+					html += ">" + exercise.title + "</option>";
+				}
 			}
-			html += ">" + exercises[j].title + "</option>";
 		}
 	}
+
 	return html;
 }
 
@@ -652,18 +699,16 @@ function generateExerciseDropdownOptionHTML(selectedID, isAI) {
 //********************************************************************
 function getUserOverview() {
 	showLoader(); // Shows the loading widget
-	$.ajax({
+	$.when($.ajax({
 		url: "../api/seniorUserOverview.php",
 		type: 'GET',
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 		},
 		error: function(data, status) {
-			hideLoader(); // Hides the loading widget
 			console.log("Error fetching data from API seniorUserOverview.");
 		},
 		success: function(data, status) { // If the API request is successful
-			hideLoader(); // Hides the loading widget
 			userOverview = data.data;
 
 			// Inserts the users and their phone number as values for the checkboxes on the page for sending SMSes to multiple recipients.
@@ -710,6 +755,30 @@ function getUserOverview() {
 				console.log("No user data returned from API.");
 			}
 		}
+	})).then(function(data, textStatus, jqXHR) {
+		$.ajax({
+			url: "../api/settings.php",
+			type: 'GET',
+			beforeSend: function (request) {
+				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+			},
+			error: function(data, status) {
+				console.log("Error fetching data from API settings.php");
+				hideLoader(); // Hides the loading widget
+			},
+			success: function(data, status) { // If the API request is successful
+				if (data.data) {
+					BIThresholdUpper = data.data.BIThresholdUpper;
+					BIThresholdLower = data.data.BIThresholdLower;
+
+					$("#BIThresholdUpperInput").val(BIThresholdUpper);
+					$("#BIThresholdLowerInput").val(BIThresholdLower);
+				} else {
+					console.log("Error loading data from the API settings.php");
+				}
+				hideLoader(); // Hides the loading widget
+			}
+		});
 	});
 }
 
@@ -791,7 +860,6 @@ function setActiveUser(userID, changePage) {
 			initCustomFeedbackFlipSwitches();
 
 			getCustomFeedbackMsgs(userID); // Fetches feedback messages for the senior user from DB
-
 		}
 	})).then(function(data, textStatus, jqXHR) {
 		$.when($.ajax({
@@ -895,6 +963,19 @@ function setActiveUser(userID, changePage) {
 					};
 
 					balanceChart = new Highcharts.Chart(balanceChartOptions);
+
+
+					// Calculates whether the current BI value for this user is classified as low, medium or high
+					var BISection = -1;
+					if ($activeUserData.balanceIdx >= BIThresholdLower && $activeUserData.balanceIdx < BIThresholdUpper) {
+						BISection = 0;
+					} else if ($activeUserData.balanceIdx > BIThresholdUpper) {
+						BISection = 1;
+					}
+
+					// Populate the dropdown for selecting linked exercise to new personalized BI feedback msgs
+					$("#selectPersonalizedBIFeedbackBalanceExercise").html(generateExerciseDropdownOptionHTML(BISection, -1, 0));
+					$("#selectPersonalizedBIFeedbackStrengthExercise").html(generateExerciseDropdownOptionHTML(BISection, -1, 1));
 				}
 			}
 		}), $.ajax({
@@ -1215,7 +1296,6 @@ function getCustomFeedbackMsgs(userID) {
 						htmlAI += "<tr>"
 						+ "<td>" + timeCreated.format('YYYY-MM-DD HH:mm') + "</td>"
 						+ "<td>" + AIFeedbackMsgs[i].feedbackText + "</td>"
-						+ "<td>" + getExerciseTitle(AIFeedbackMsgs[i].exerciseID) + "</td>"
 						+ "<td><button data-role='button' data-inline='true' data-mini='true'"
 						+ "onclick='deleteFeedbackMsg(" + AIFeedbackMsgs[i].msgID + ")'>Slett</button>" 
 						+ "</td></tr>";
@@ -1237,7 +1317,8 @@ function getCustomFeedbackMsgs(userID) {
 						htmlBI += "<tr>"
 						+ "<td>" + timeCreated.format('YYYY-MM-DD HH:mm') + "</td>"
 						+ "<td>" + BIFeedbackMsgs[i].feedbackText + "</td>"
-						+ "<td>" + getExerciseTitle(BIFeedbackMsgs[i].exerciseID) + "</td>"
+						+ "<td>" + getExerciseTitle(BIFeedbackMsgs[i].balanceExerciseID) + "</td>"
+						+ "<td>" + getExerciseTitle(BIFeedbackMsgs[i].strengthExerciseID) + "</td>"
 						+ "<td><button data-role='button' data-inline='true' data-mini='true'"
 						+ "onclick='deleteFeedbackMsg(" + BIFeedbackMsgs[i].msgID + ")'>Slett</button>" 
 						+ "</td></tr>";
@@ -1361,10 +1442,12 @@ function initCustomFeedbackFlipSwitches() {
 //******* Fetches the title of an exercise given a certain ID  *******
 //********************************************************************
 function getExerciseTitle(exerciseID) {
-	if (exercises !== null || exerciseID !== null) {
-		for (var i=0; i<exercises.length; i++) {
-			if (exercises[i].exerciseID == exerciseID) {
-				return exercises[i].title;
+	if (exerciseGroups !== null || exerciseID !== null) {
+		for (var i=0; i<exerciseGroups.length; i++) {
+			for (var j=0; j<exerciseGroups[i].exercises.length; j++) {
+				if (exerciseGroups[i].exercises[j].exerciseID === exerciseID) {
+					return exerciseGroups[i].exercises[j].title;
+				}
 			}
 		}
 	}
@@ -1763,16 +1846,6 @@ function updateDOM() {
 		if ($activeUserData.AIChartLineValue !== null) {
 			$("#cellAIChartLineValue").html($activeUserData.AIChartLineValue);
 			$("#inputFieldEditAIChartLineValue").val($activeUserData.AIChartLineValue);
-		}
-
-		if ($activeUserData.BIThresholdUpper !== null) {
-			$("#cellBIThresholdUpper").html($activeUserData.BIThresholdUpper);
-			$("#inputFieldEditBIThresholdUpper").val($activeUserData.BIThresholdUpper);
-		}
-
-		if ($activeUserData.BIThresholdLower !== null) {
-			$("#cellBIThresholdLower").html($activeUserData.BIThresholdLower);
-			$("#inputFieldEditBIThresholdLower").val($activeUserData.BIThresholdLower);
 		}
 		
 		$("#cellWalkingAid").html($usesWalkingAidStr);

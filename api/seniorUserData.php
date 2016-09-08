@@ -1,9 +1,9 @@
 <?php
-	include('deliver_response.inc.php');
-	include('../inc/jwt.inc.php');
+	include('inc/deliver_response.inc.php');
+	include('inc/jwt.inc.php');
 
 	function getData($tokenUserID) {
-		include('../inc/db.inc.php');
+		include('inc/db.inc.php');
 
 		// If the userID in the token belongs to an expert user, check that this expert is allowed to access this senior user's data
 		if ($tokenUserID != $_GET["seniorUserID"]) {
@@ -44,7 +44,7 @@
 	}
 
 	function postData($expertUserID) {
-		include('../inc/db.inc.php');
+		include('inc/db.inc.php');
 
 		$address = isset($_POST["address"]) ? encrypt($_POST["address"]) : NULL;
 		$zipCode = isset($_POST["zipCode"]) ? encrypt($_POST["zipCode"]) : NULL;
@@ -93,7 +93,7 @@
 	}
 
 	function putData($expertUserID) {
-		include('../inc/db.inc.php');
+		include('inc/db.inc.php');
 
 		if (checkExpertSeniorLink($conn, $expertUserID, $_POST["seniorUserID"])) {
 			

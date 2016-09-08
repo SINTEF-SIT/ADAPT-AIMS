@@ -1,9 +1,9 @@
 <?php
-	include('deliver_response.inc.php');
-	include('../inc/jwt.inc.php');
+	include('inc/deliver_response.inc.php');
+	include('inc/jwt.inc.php');
 
 	function getData($seniorUserID, $tokenUserID) {
-		include('../inc/db.inc.php');
+		include('inc/db.inc.php');
 
 		// If the userID in the token belongs to an expert user, check that this expert is allowed to access this senior user's data
 		if ($tokenUserID != $seniorUserID) {

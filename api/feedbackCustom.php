@@ -1,9 +1,9 @@
 <?php
-	include('deliver_response.inc.php');
-	include('../inc/jwt.inc.php');
+	include('inc/deliver_response.inc.php');
+	include('inc/jwt.inc.php');
 
 	function getData($seniorUserID, $tokenUserID) {
-		include('../inc/db.inc.php');
+		include('inc/db.inc.php');
 
 		// If the userID in the token belongs to an expert user, check that this expert is allowed to access this senior user's data
 		if ($tokenUserID != $seniorUserID) {
@@ -13,8 +13,8 @@
 			}
 		}
 
-		if ($stmt = $conn->prepare("SELECT fmc.msgID, fmc.feedbackText, fmc.timeCreated, fmc.category, e.exerciseID
-				FROM FeedbackMsgCustom AS fmc LEFT JOIN Exercises AS e ON fmc.exerciseID = e.exerciseID
+		if ($stmt = $conn->prepare("SELECT msgID, feedbackText, timeCreated, category, balanceExerciseID, strengthExerciseID
+				FROM FeedbackMsgCustom
 				WHERE userID=?
 				ORDER BY timeCreated DESC;")) {
 			$stmt->bind_param("i", $seniorUserID);
@@ -36,15 +36,14 @@
 		return NULL;
 	}
 
-	function postData($seniorUserID, $feedbackText, $category, $expertUserID) {
-		include('../inc/db.inc.php');
+	function postData($seniorUserID, $feedbackText, $category, $balanceExerciseID, $strengthExerciseID, $expertUserID) {
+		
+		include('inc/db.inc.php');
 
 		if (checkExpertSeniorLink($conn, $expertUserID, $seniorUserID)) {
-			
-			$exerciseID = (isset($_POST["exerciseID"]) && $_POST["exerciseID"] != "-1") ? $_POST["exerciseID"] : NULL;
 
-			if ($stmt = $conn->prepare("INSERT INTO FeedbackMsgCustom (userID, feedbackText, timeCreated, category, exerciseID) VALUES (?, ?, UTC_TIMESTAMP(), ?, ?);")) {
-				$stmt->bind_param("isii", $seniorUserID, encrypt($feedbackText), $category, $exerciseID);
+			if ($stmt = $conn->prepare("INSERT INTO FeedbackMsgCustom (userID, feedbackText, timeCreated, category, balanceExerciseID, expertUserID) VALUES (?, ?, UTC_TIMESTAMP(), ?, ?, ?);")) {
+				$stmt->bind_param("isii", $seniorUserID, encrypt($feedbackText), $category, $balanceExerciseID, $strengthExerciseID);
 				$stmt->execute();
 
 				$stmt->close();
@@ -57,7 +56,8 @@
 	}
 
 	function putData($seniorUserID, $category, $value, $tokenUserID) {
-		include('../inc/db.inc.php');
+		
+		include('inc/db.inc.php');
 
 		if (checkExpertSeniorLink($conn, $tokenUserID, $seniorUserID)) {
 			
@@ -80,7 +80,8 @@
 
 
 	function deleteData($msgID) {
-		include('../inc/db.inc.php');
+		
+		include('inc/db.inc.php');
 
 		$query = "DELETE FROM FeedbackMsgCustom WHERE msgID=?";
 
@@ -124,10 +125,8 @@
 				// Store a new personalized feedback message for a senior user in DB
 				if (isset($_POST["userID"]) && isset($_POST["feedbackText"]) && isset($_POST["category"])) {
 					$seniorUserID = $_POST["userID"];
-					$feedbackText = $_POST["feedbackText"];
-					$category = $_POST["category"];
 
-					$dbWriteSuccess = postData($seniorUserID, $feedbackText, $category, $tokenUserID);
+					$dbWriteSuccess = postData($seniorUserID, $_POST["feedbackText"], $_POST["category"], $_POST["balanceExerciseID"], $_POST["strengthExerciseID"], $tokenUserID);
 
 					if ($dbWriteSuccess) {
 						deliver_response(200, "Teksten ble vellykket skrevet til databasen for bruker-ID = " . $seniorUserID . ".", true);

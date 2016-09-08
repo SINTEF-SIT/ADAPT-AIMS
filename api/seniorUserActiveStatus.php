@@ -1,9 +1,9 @@
 <?php
-	include('deliver_response.inc.php');
-	include('../inc/jwt.inc.php');
+	include('inc/deliver_response.inc.php');
+	include('inc/jwt.inc.php');
 
 	function putData($expertUserID, $seniorUserID) {
-		include('../inc/db.inc.php');
+		include('inc/db.inc.php');
 
 		if (checkExpertSeniorLink($conn, $expertUserID, $seniorUserID)) {
 			if ($stmt = $conn->prepare("UPDATE SeniorUsers SET active = b'0' WHERE userID = ?")) {

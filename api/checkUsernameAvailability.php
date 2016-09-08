@@ -1,9 +1,9 @@
 <?php
-	include('deliver_response.inc.php');
-	include('../inc/jwt.inc.php');
+	include('inc/deliver_response.inc.php');
+	include('inc/jwt.inc.php');
 
 	function getData($username) {
-		include('../inc/db.inc.php');
+		include('inc/db.inc.php');
 
 		if ($stmt = $conn->prepare("SELECT userID FROM Users WHERE username = ?;")) {
 			$stmt->bind_param("s", encrypt($username));

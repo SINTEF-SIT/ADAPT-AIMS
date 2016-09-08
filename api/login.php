@@ -1,9 +1,9 @@
 <?php
-	include('deliver_response.inc.php');
+	include('inc/deliver_response.inc.php');
 
 	function readAdminDB($password) {
-		include('../inc/db.inc.php');
-		include('../inc/jwt.inc.php');
+		include('inc/db.inc.php');
+		include('inc/jwt.inc.php');
 
 		$passwordHashed = hashword($password);
 
@@ -27,8 +27,8 @@
 
 	function readDB($username, $password) {
 
-		include('../inc/db.inc.php');
-		include('../inc/jwt.inc.php');
+		include('inc/db.inc.php');
+		include('inc/jwt.inc.php');
 
 		$usernameEncrypted = encrypt($username);
 		$passwordHashed = hashword($password);

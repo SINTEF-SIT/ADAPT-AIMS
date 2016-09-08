@@ -1,9 +1,9 @@
 <?php
-	include('deliver_response.inc.php');
-	include('../inc/jwt.inc.php');
+	include('inc/deliver_response.inc.php');
+	include('inc/jwt.inc.php');
 
 	function getAllData() {
-		include('../inc/db.inc.php');
+		include('inc/db.inc.php');
 
 		if ($stmt = $conn->prepare("SELECT u.userID, u.firstName, u.lastName, su.birthDate
 				FROM Users AS u
@@ -37,7 +37,7 @@
 	}
 
 	function getData($expertUserID) {
-		include('../inc/db.inc.php');
+		include('inc/db.inc.php');
 
 		if ($stmt = $conn->prepare("SELECT u.userID, u.firstName, u.lastName, su.birthDate, su.phoneNumber
 				FROM Users AS u
@@ -116,7 +116,7 @@
 
 		switch ($method) {
 			case 'GET':
-				if ($tokenExpertUserID === 0) {
+				if ($tokenExpertUserID === 0) { // if user is admin
 					$seniorUsers = getAllData();
 				} else {
 					// Get a summary of user data for all senior users an expert user has access to

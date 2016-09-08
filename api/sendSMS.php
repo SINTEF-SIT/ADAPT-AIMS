@@ -1,8 +1,8 @@
 <?php
-	include('deliver_response.inc.php');
-	include('../inc/jwt.inc.php');
+	include('inc/deliver_response.inc.php');
+	include('inc/jwt.inc.php');
 
-	require 'KeySMS.php';
+	require 'inc/KeySMS.php';
 
 	$tokenUserID = validateToken();
 

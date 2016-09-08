@@ -1,9 +1,9 @@
 <?php
-	include('deliver_response.inc.php');
-	include('../inc/jwt.inc.php');
+	include('inc/deliver_response.inc.php');
+	include('inc/jwt.inc.php');
 
 	function getData($seniorUserID, $tokenUserID) {
-		include('../inc/db.inc.php');
+		include('inc/db.inc.php');
 
 		// If the userID in the token belongs to an expert user, check that this expert is allowed to access this senior user's data
 		if ($tokenUserID != $seniorUserID) {
@@ -52,7 +52,7 @@
 	}
 
 	function postData($expertUserID) {
-		include('../inc/db.inc.php');
+		include('inc/db.inc.php');
 
 		if (checkExpertSeniorLink($conn, $expertUserID, $_POST["userID"])) {
 			if ($stmt = $conn->prepare("INSERT INTO ActivityIndexes (userID, timeCalculated, timeDataCollected, value) VALUES (?, UTC_TIMESTAMP(), ?, ?);")) {
@@ -72,7 +72,7 @@
 	}
 
 	function putData($activityIdx, $activityIndexID, $expertUserID) {
-		include('../inc/db.inc.php');
+		include('inc/db.inc.php');
 
 		if ($stmt = $conn->prepare("SELECT userID FROM ActivityIndexes WHERE activityIndexID = ?;")) {
 			$stmt->bind_param("i", $activityIndexID);

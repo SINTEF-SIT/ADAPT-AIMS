@@ -1,9 +1,9 @@
 <?php
-	include('deliver_response.inc.php');
-	include('../inc/jwt.inc.php');
+	include('inc/deliver_response.inc.php');
+	include('inc/jwt.inc.php');
 
 	function getData() {
-		include('../inc/db.inc.php');
+		include('inc/db.inc.php');
 
 		if ($stmt = $conn->prepare("SELECT u.userID, u.username, u.firstName, u.lastName
 				FROM Users AS u

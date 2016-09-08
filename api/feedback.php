@@ -1,9 +1,9 @@
 <?php
-	include('deliver_response.inc.php');
-	include('../inc/jwt.inc.php');
+	include('inc/deliver_response.inc.php');
+	include('inc/jwt.inc.php');
 
 	function getData($seniorUserID, $category, $idx, $tokenUserID) {
-		include('../inc/db.inc.php');
+		include('inc/db.inc.php');
 
 		// If the userID in the token belongs to an expert user, check that this expert is allowed to access this senior user's data
 		if ($tokenUserID != $seniorUserID) {
@@ -30,10 +30,9 @@
 
 
 				if ($fetchPersonalizedMsg) { // Fetch custom, personalized feedback msg
-					if ($stmt = $conn->prepare("SELECT fmc.feedbackText, fmc.timeCreated, fmc.category, e.*
-							FROM FeedbackMsgCustom AS fmc LEFT JOIN Exercises AS e ON fmc.exerciseID = e.exerciseID
-							WHERE fmc.category=? AND userID=?
-							ORDER BY timeCreated DESC;")) {
+					if ($stmt = $conn->prepare("SELECT * FROM FeedbackMsgCustom
+							WHERE category=? AND userID=?
+							ORDER BY timeCreated DESC LIMIT 1;")) {
 						$stmt->bind_param("ii", $category, $seniorUserID);
 						$stmt->execute();
 						$result = $stmt->get_result();
@@ -47,11 +46,9 @@
 						}
 					}
 				} else { // Fetch default feedback msg based on current AI/BI value 
-					if ($stmt = $conn->prepare("SELECT fmd.msgID, fmd.feedbackText, fmd.category, e.* 
-						FROM FeedbackMsgDefault AS fmd 
-						LEFT JOIN Exercises AS e ON fmd.exerciseID = e.exerciseID
-						WHERE fmd.category=? AND fmd.idx=?
-						ORDER BY fmd.category, fmd.idx LIMIT 1;")) {
+					if ($stmt = $conn->prepare("SELECT * FROM FeedbackMsgDefault
+						WHERE category=? AND idx=?
+						ORDER BY category, idx LIMIT 1;")) {
 						$stmt->bind_param("ii", $category, $idx);
 						$stmt->execute();
 						$result = $stmt->get_result();

@@ -4,7 +4,7 @@
 var balanceChart; // The chart displaying the balance indexes
 var activityChart; // The chart displaying the activity indexes
 var userData; // Information about the logged in user
-var exercises; // Information about all exercises in the system
+var exerciseGroups; // Exercise groups and their exercises that can be recommended to the senior users
 
 // Tooltip texts explaining what the different AI values mean.
 var activityChartTooltips = ["Det er ikke registrert noe fysisk aktivitet denne dagen.", // AI = 0
@@ -20,8 +20,15 @@ var seniorUsername; // The username of the logged in user
 var seniorFirstName; // The first name of the logged in user
 var seniorLastName; // The last name of the logged in user
 
-$currentBalanceIdx = null // The current balance index for the logged in user
-$currentActivityIdx = null; // The current activity index for the logged in user. Not currently in use!
+var currentBalanceIdx = null // The current balance index for the logged in user
+var currentActivityIdx = null; // The current activity index for the logged in user.
+
+var AIFeedbackMsg;
+var BIFeedbackMsg;
+
+var BIThresholdUpper; // The upper threshold value for the 'medium' or 'yellow' area for BI
+var BIThresholdLower; // The lower threshold value for the 'medium' or 'yellow' area for BI
+var BIIndexSection; // -1 means the BI is in the 'low zone', 0 means medium, and 1 means high
 
 var BIMax = 1;
 var BIMin = -1;
@@ -47,7 +54,14 @@ $(document).delegate('#help-page', 'pagehide', function () {
 });
 
 
+$(window).on('resize', function() {
+	$('.chartHeader').quickfit({ max: 30, min: 15, truncate: true, tolerance: 0.06 });      
+});
+
+
 $(document).ready(function() {
+
+	$(window).trigger('resize');
 
 	$( "#video-popup" ).enhanceWithin().popup();
 
@@ -86,9 +100,7 @@ $(document).ready(function() {
 	$("#userFullName").text(seniorFirstName + " " + seniorLastName); // Writes the full name of the logged in user to the DOM
 
 	$.when($.ajax({
-		/***************************
-		** Get user details
-		***************************/
+		// Get user details
 		url: "../api/seniorUserData.php?seniorUserID=" + seniorUserID,
 		type: 'GET',
 		beforeSend: function (request) {
@@ -129,11 +141,26 @@ $(document).ready(function() {
 				console.log(data.status_message);
 			}
 		}
+	}), $.ajax({
+		url: "../api/settings.php",
+		type: 'GET',
+		beforeSend: function (request) {
+			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+		},
+		error: function(data, status) {
+			console.log("Error fetching data from API settings.php");
+		},
+		success: function(data, status) { // If the API request is successful
+			if (data.data) {
+				BIThresholdUpper = data.data.BIThresholdUpper;
+				BIThresholdLower = data.data.BIThresholdLower;
+			} else {
+				console.log("Error loading data from the API settings.php");
+			}
+		}
 	})).then(function(data, textStatus, jqXHR) {
 		$.when($.ajax({
-			/***************************
-			** Timestamp of most recent update
-			***************************/
+			// Timestamp of most recent update
 			url: "../api/newestChangeTime.php?seniorUserID=" + seniorUserID,
 			type: 'GET',
 			beforeSend: function (request) {
@@ -154,9 +181,7 @@ $(document).ready(function() {
 			var maxBalanceChartRange = 1000 * 60 * 60 * 24 * 90; // The maximum range of the x axis in milliseconds
 			//var numBalanceChartSeries = 0;
 			$.when($.ajax({
-				/***************************
-				** Balance chart
-				***************************/
+				// Balance chart
 				url: "../api/balanceIdx.php?seniorUserID=" + seniorUserID,
 				type: 'GET',
 				beforeSend: function (request) {
@@ -200,7 +225,16 @@ $(document).ready(function() {
 								dataPointFinal.push(parseFloat(balanceChartDataJSON[i].value));
 								balanceChartData.push(dataPointFinal);
 
-								$currentBalanceIdx = balanceChartDataJSON[i].value; // Store the last data value as the current BI
+								currentBalanceIdx = balanceChartDataJSON[i].value; // Store the last data value as the current BI
+
+								if (currentBalanceIdx < BIThresholdLower) {
+									BIIndexSection = -1;
+								} else if (currentBalanceIdx >= BIThresholdLower && currentBalanceIdx < BIThresholdUpper) {
+									BIIndexSection = 0;
+								} else if (currentBalanceIdx > BIThresholdUpper) {
+									BIIndexSection = 1;
+								}
+
 								setBIImg(); // Displays the BI image corresponding to the current BI value
 							}
 						}
@@ -213,20 +247,23 @@ $(document).ready(function() {
 						/*balanceChartDataSplit = splitChartSeries(balanceChartData);
 						numBalanceChartSeries = balanceChartDataSplit.length;*/
 
-						var yAxisLabels = ["Lav", "Medium", "Høy"];
+						var extraSpace = "";
+						var yAxisLabels = ["Lav" + extraSpace, "Medium" + extraSpace, "Høy" + extraSpace];
 						
-						colorMaxBI = "#" + getBIChartData($currentBalanceIdx).color;
-						colorMidBI = "#" + getBIChartData($currentBalanceIdx/2).color;
+						colorMaxBI = "#" + getBIChartData(currentBalanceIdx).color;
+						colorMidBI = "#" + getBIChartData(currentBalanceIdx/2).color;
 						
 						balanceChartOptions = {
 							chart: {
 								renderTo: 'balanceChart', // ID of div where the chart is to be rendered
 								//zoomType: 'x', // Uncomment to make the chart zoomable along the x-axis
 								backgroundColor: null,
+								marginLeft: 100,
 								reflow: true
 							},
 							title: {
-								text: 'Din balanse over tid'
+								text: ''
+								//text: 'Din balanse over tid'
 							},
 							xAxis: {
 								type: 'datetime',
@@ -274,7 +311,7 @@ $(document).ready(function() {
 									enableMouseTracking: false,
 									marker: {
 										enabled: false
-									},
+									}/*,
 									color: {
 										linearGradient: {
 											x1: 0,
@@ -288,7 +325,7 @@ $(document).ready(function() {
 											[0.5, 'grey'],
 											[1, '#ED1E24']
 										]
-									}
+									}*/
 								}
 							},
 							legend: {
@@ -303,7 +340,8 @@ $(document).ready(function() {
 							series: [{
 								type: 'area',
 								threshold: -1,
-								color: {
+								fillOpacity: 1,
+								/*color: {
 									linearGradient: {
 										x1: 0,
 										y1: 0,
@@ -316,7 +354,7 @@ $(document).ready(function() {
 										[0.5, colorMidBI],
 										[1, '#ED1E24']
 									]
-								},
+								},*/
 								lineWidth: 0,
 			            		enableMouseTracking: false,
 			            		data: balanceChartData
@@ -324,6 +362,8 @@ $(document).ready(function() {
 						};
 
 						balanceChart = new Highcharts.Chart(balanceChartOptions);
+
+						balanceChart.renderer.image('img/BIImg/gradient-bar.png', 88, 9, 12, 196).add();
 					} else {
 						// No BI values registered. BI chart is hidden.
 						$("#balanceChartContainer").hide();
@@ -332,9 +372,7 @@ $(document).ready(function() {
 				}
 			})).then(function(data, textStatus, jqXHR) {
 				$.when($.ajax({
-					/***************************
-					** Activity chart
-					***************************/
+					// Activity chart
 					url: "../api/activityIdx.php?seniorUserID=" + seniorUserID,
 					type: 'GET',
 					beforeSend: function (request) {
@@ -349,33 +387,15 @@ $(document).ready(function() {
 						if (activityChartDataJSON !== null) {
 							var activityChartData = [];
 							for (var i=0; i<activityChartDataJSON.length; i++) {
-								// Uncomment if chart is area chart!
-								/*if (i != 0) {
-									// Draws an extra data point right before each data point (except the first) 
-									// to get a flat line instead of a straight, diagonal line between the points.
-									var dataPointPre = [];
-									var datePre = new Date(activityChartDataJSON[i].timeDataCollected);
-									datePre.setSeconds(datePre.getSeconds() - 1);
-									dataPointPre.push(datePre.getTime());
-									dataPointPre.push(activityChartDataJSON[i-1].value);
-									activityChartData.push(dataPointPre);
-								}*/
-
 								var dataPoint = [];
 								var date = moment.tz(activityChartDataJSON[i].timeDataCollected, "UTC");
 								dataPoint.push(date.valueOf());
 								dataPoint.push(activityChartDataJSON[i].value);
 								activityChartData.push(dataPoint);
 
-								// Uncomment if chart is area chart!
-								// If last data point from db, add a final data point one day after the last, to make the last change more visible
-								/*if (i+1 == activityChartDataJSON.length) {
-									var dataPointFinal = [];
-									date.setDate(date.getDate() + 1);
-									dataPointFinal.push(date);
-									dataPointFinal.push(activityChartDataJSON[i].value);
-									activityChartData.push(dataPointFinal);
-								}*/
+								if (i+1 == activityChartDataJSON.length) {
+									currentActivityIdx = activityChartDataJSON[i].value;
+								}
 							}
 
 							activityChartOptions = {
@@ -387,7 +407,8 @@ $(document).ready(function() {
 									reflow: true
 								},
 								title: {
-									text: 'Din fysiske aktivitet'
+									text: ''
+									//text: 'Din aktivitet over tid'
 								},
 								xAxis: {
 									type: 'datetime',
@@ -449,145 +470,64 @@ $(document).ready(function() {
 						}
 					}
 				})).then(function(data, textStatus, jqXHR) {
-
-					$.ajax({
-						/***************************
-						** Get all exercises
-						***************************/
-						url: "../api/exercises.php",
+					$.when($.ajax({
+						// Get the AI feedback message for the user
+						url: "../api/feedback.php?seniorUserID=" + userData.userID + "&idx=" + currentActivityIdx + "&category=0",
 						type: 'GET',
 						beforeSend: function (request) {
 							request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 						},
 						error: function(data, status) { // If the API request fails
-							console.log("Error attempting to call API: GET request to exercises.php");
-							hideLoader(); // Hides the loading widget
+							console.log("Error attempting to call API: GET request to feedback.php");
 						},
 						success: function(data, status) { // If the API request is successful
-							exercises = data.data;
-
-							var htmlBalanceExercises = "";
-							var htmlActivityExercises = "";
-
-							for (var i=0; i<exercises.length; i++) {
-								var html = "<a onclick='displayExercise(" + i + ")' data-role='button'>" + exercises[i].title + "</a>";
-								if (exercises[i].isBalanceExercise === 1) {
-									htmlBalanceExercises += html;
-								} else {
-									htmlActivityExercises += html;
-								}
-							}
-							$("#balanceExercisesBtnGroup").append(htmlBalanceExercises);
-							$("#activityExercisesBtnGroup").append(htmlActivityExercises);
-
-							hideLoader(); // Hides the loading widget
+							AIFeedbackMsg = data.data;
 						}
-					});
-
-					/*
-					var firstFeedbackAjaxCall = null;
-					var secondFeedbackAjaxCall = null;
-
-					if (activityChart) {
-						var currentAI = getNewestChartValue(activityChart, 0);
-						firstFeedbackAjaxCall = {
-							category: '0',
-							textID: 'AI',
-							textStart: 'Aktivitetsråd:',
-							idx: currentAI
-						};
-					}
-
-					if (balanceChart) {
-						currentBI = getNewestChartValue(balanceChart, 0);
-						var BITemp = {
-							category: '1',
-							textID: 'BI',
-							textStart: 'Balanseråd:',
-							idx: currentBI
-						};
-
-						if (activityChart) {
-							secondFeedbackAjaxCall = BITemp;
-						} else {
-							firstFeedbackAjaxCall = BITemp;
+					}), $.ajax({
+						// Get the BI feedback message for the user
+						url: "../api/feedback.php?seniorUserID=" + userData.userID + "&idx=" + currentBalanceIdx + "&category=1",
+						type: 'GET',
+						beforeSend: function (request) {
+							request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+						},
+						error: function(data, status) { // If the API request fails
+							console.log("Error attempting to call API: GET request to feedback.php");
+						},
+						success: function(data, status) { // If the API request is successful
+							BIFeedbackMsg = data.data;
 						}
-					}
-
-					if (firstFeedbackAjaxCall) {
-						$.when($.ajax({
-							// Gets first feedback msg (if any)
-							url: "../api/feedback.php?seniorUserID=" + seniorUserID 
-								+ "&idx=" + firstFeedbackAjaxCall.idx + "&category=" + firstFeedbackAjaxCall.category,
+					})).then(function(data, textStatus, jqXHR) {
+						$.ajax({
+							// Get all exercise groups and exercises
+							url: "../api/exerciseGroups.php",
 							type: 'GET',
 							beforeSend: function (request) {
 								request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 							},
 							error: function(data, status) { // If the API request fails
-								console.log("Error attempting to call API: GET request to feedback.php with parameters idx=" 
-									+ firstFeedbackAjaxCall.idx + " and category=" + firstFeedbackAjaxCall.category);
-							}, 
+								console.log("Error attempting to call API: GET request to exerciseGroups.php");
+								hideLoader(); // Hides the loading widget
+							},
 							success: function(data, status) { // If the API request is successful
-								var textID = firstFeedbackAjaxCall.textID;
-								if (data.data) {
-									$("#feedbackMsg" + textID).html("<b>" + firstFeedbackAjaxCall.textStart 
-										+ "</b> " + data.data.feedbackText); // Writes the AI feedback msg to the DOM
-									$("#messageWrapper" + textID).show();
+								exerciseGroups = data.data;
 
-									if (data.data.exerciseID !== null) {
-										// If an exercise is linked to this feedback msg: insert exercise info into DOM
-										var exerciseHTML = generateExerciseHTML(data.data, textID);
+								var htmlBalanceExercises = "";
 
-										// Creates a click listener on the message box
-										setFeedbackMsgClickListnerer(textID);
-									}
-								} else {
-									// No feedback msg is found
-									console.log(data.status_message);
-								}
-							}
-						})).then(function(data, textStatus, jqXHR) {
-							if (secondFeedbackAjaxCall) {
-								$.ajax({
-									// Gets the other feedback msg (if any)
-									url: "../api/feedback.php?seniorUserID=" + seniorUserID 
-									+ "&idx=" + secondFeedbackAjaxCall.idx + "&category=" + secondFeedbackAjaxCall.category,
-									type: 'GET',
-									beforeSend: function (request) {
-										request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-									},
-									error: function(data, status) { // If the API request fails
-										console.log("Error attempting to call API: GET request to feedback.php with parameters idx=" 
-											+ secondFeedbackAjaxCall.idx + " and category=" + secondFeedbackAjaxCall.category);
-									}, 
-									success: function(data, status) { // If the API request is successful
-										var textID = secondFeedbackAjaxCall.textID;
-										if (data.data) {
-											$("#feedbackMsg" + textID).html("<b>" + secondFeedbackAjaxCall.textStart 
-												+ "</b> " + data.data.feedbackText); // Writes the BI feedback msg to the DOM
-											$("#messageWrapper" + textID).show();
-
-											if (data.data.exerciseID !== null) {
-												// If an exercise is linked to this feedback msg: insert exercise info into DOM
-												var exerciseHTML = generateExerciseHTML(data.data, textID);
-												
-												// Creates a click listener on the message box
-												setFeedbackMsgClickListnerer(textID);
-											}
-										} else {
-											// No feedback msg is found
-											console.log(data.status_message);
+								for (var i=0; i<exerciseGroups.length; i++) {
+									var exerciseType = exerciseGroups[i].exerciseType;
+									for (var j=0; j<exerciseGroups[i].exercises.length; j++) {
+										var exercise = exerciseGroups[i].exercises[j]; 
+										if (exercise.indexSection === BIIndexSection) {
+											htmlBalanceExercises += "<a onclick='displayExercise(" + exercise.exerciseID + ")' data-role='button'>" + exercise.title + "</a>";
 										}
 									}
-								});
-							} else {
+								}
+								$("#balanceExercisesBtnGroup").append(htmlBalanceExercises);
+								writeFeedback();
 								hideLoader(); // Hides the loading widget
 							}
 						});
-					} else {
-						hideLoader(); // Hides the loading widget
-					}
-					*/
+					});
 				});
 			});
 		});
@@ -595,7 +535,7 @@ $(document).ready(function() {
 
 	// Sets global options for the charts
 	Highcharts.setOptions({
-		colors: ['#7CB5EC', '#66A6E3'], // Default series colors
+		colors: ['#6499CC', '#66A6E3'], // Default series colors
 		lang: { // Defines Norwegian text strings used in the charts
 			months: ['januar', 'februar', 'mars', 'april', 'mai', 'juni',  'juli', 'august', 'september', 'oktober', 'november', 'desember'],
 			shortMonths: ['jan.', 'feb.', 'mars', 'apr.', 'mai', 'juni',  'juli', 'aug.', 'sep.', 'okt.', 'nov.', 'des.'],
@@ -626,6 +566,23 @@ $(document).ready(function() {
 		}
 	});
 });
+
+
+function writeFeedback() {
+	$("#balanceFeedbackContainer").append(BIFeedbackMsg.feedbackText);
+	
+	var balanceExercise = getExercise(BIFeedbackMsg.balanceExerciseID);
+	var strengthExercise = getExercise(BIFeedbackMsg.strengthExerciseID);
+	var htmlBalanceExercise = "<a onclick='displayExercise(" + balanceExercise.exerciseID + ")' data-role='button'>" + balanceExercise.title + "</a>";
+	var htmlStrengthExercise = "<a onclick='displayExercise(" + strengthExercise.exerciseID + ")' data-role='button'>" + strengthExercise.title + "</a>";
+
+	$("#balanceExerciceWrapper").append(htmlBalanceExercise);
+	$("#strengthExerciceWrapper").append(htmlStrengthExercise);
+
+	$("#activityFeedbackContainer").append(AIFeedbackMsg.feedbackText);
+
+
+}
 
 
 function splitChartSeries(chartData) {
@@ -669,54 +626,11 @@ function splitChartSeries(chartData) {
 }
 
 
-function setFeedbackMsgClickListnerer(textID) {
-	// Click listeners on feedback messages boxes
-	$("#feedbackMsg" + textID).addClass("clickableFeedback");
-	$("#messageWrapper" + textID).click(function() {
-		$.mobile.changePage( "index.html#exercise-info-page-" + textID, { transition: "pop" });
-	});
-}
-
-
-function generateExerciseHTML(data, textID) {
-	// Builds a HTML string for an exercise to be inserted into the DOM
-	$("#exerciseHeader" + textID).html(data.title);
-
-	if (data.imgFilename !== null && data.imgFilename !== "") {
-		$("#exerciseImg" + textID).attr("src","img/exercises/" + data.imgFilename);
-	}
-
-	var html = "";
-	if (data.textPreList !== null) {
-		html += "<p>" + data.textPreList + "</p>";
-	}
-
-	if (data.textList !== null) {
-		html += "<ul>";
-		var listItems = data.textList.split(";");
-		for (var i=0; i<listItems.length; i++) {
-			html += "<li>" + listItems[i] + "</li>";
-		}
-		html += "</ul>";
-	}
-
-	if (data.textPostList !== null) {
-		html += "<p>" + data.textPostList + "</p>";
-	}
-
-	if (data.textPostListBold !== null) {
-		html += "<strong>" + data.textPostListBold + "</strong>";
-	}
-
-	$("#exerciseDesc" + textID).append(html);
-}
-
-
 function setBIImg() {
 	// Updates the DOM with the BI img depending on the BI value
 	var fileName = "";
 
-	$biData = getBIChartData($currentBalanceIdx);
+	$biData = getBIChartData(currentBalanceIdx);
 	if ($biData !== null) {
 		$fileName = $biData.fileName;
 
@@ -787,7 +701,6 @@ function getBIChartData(BI) {
 	if (BI !== null && BI >= -1 && BI <= 1) {
 		var step = (BIMax-BIMin) * 1.0 / numBIImg; // the BI value between two BI images 
 
-		//$fileNames = ["0.png", "05.png", "10.png", "15.png", "20.png", "25.png", "30.png", "35.png", "40.png", "45.png", "50.png"];
 		var colors = ["ED1E24", "F03223", "F44D22", "F76E20", "F78F1F", "F7AE1F", "F7CC1F", "F7E11F", "F6EC1F", "EEEC21", 
 			"E4EC23", "D8EC27", "CBEC2A", "BCE82E", "ADE132", "9EDA36", "8FD339", "7ECA3E", "73C541", "68C043", "68BF44"];
 
@@ -839,8 +752,56 @@ function closeVideoPopup() {
 	//$('tutorialVideoiFrameHelpPage').attr('src', "http://player.vimeo.com/video/107469289"); // Sets the url for the iframe on the help page
 }
 
-function displayExercise(exerciseArrayIdx) {
-	var exercise = exercises[exerciseArrayIdx];
-	generateExerciseHTML(exercise, "");
-	$.mobile.changePage( "index.html#exercise-info-page-", { transition: "pop" });
+function displayExercise(exerciseID) {
+	var exercise = getExercise(exerciseID);
+	if (exercise !== null) {
+		generateExerciseHTML(exercise);
+		$.mobile.changePage( "index.html#exercise-info-page", { transition: "pop" });
+	}
+}
+
+function generateExerciseHTML(data) {
+	// Builds a HTML string for an exercise to be inserted into the DOM
+	$("#exerciseHeader").html(data.title);
+
+	if (data.imgFilename !== null && data.imgFilename !== "") {
+		$("#exerciseImg").attr("src","img/exercises/" + data.imgFilename);
+	}
+
+	var html = "";
+	if (data.textPreList !== null) {
+		html += "<p>" + data.textPreList + "</p>";
+	}
+
+	if (data.textList !== null) {
+		html += "<ul>";
+		var listItems = data.textList.split(";");
+		for (var i=0; i<listItems.length; i++) {
+			html += "<li>" + listItems[i] + "</li>";
+		}
+		html += "</ul>";
+	}
+
+	if (data.textPostList !== null) {
+		html += "<p>" + data.textPostList + "</p>";
+	}
+
+	if (data.textPostListBold !== null) {
+		html += "<strong>" + data.textPostListBold + "</strong>";
+	}
+
+	$("#exerciseDesc").html(html);
+}
+
+
+function getExercise(exerciseID) {
+	for (var i=0; i<exerciseGroups.length; i++) {
+		for (var j=0; j<exerciseGroups[i].exercises.length; j++) {
+			var exercise = exerciseGroups[i].exercises[j];
+			if (exercise.exerciseID === exerciseID) {
+				return exercise;
+			}
+		}
+	}
+	return null;
 }
