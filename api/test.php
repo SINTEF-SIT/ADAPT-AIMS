@@ -1,7 +1,7 @@
 <?php
 	include('inc/deliver_response.inc.php');
 	include('inc/jwt.inc.php');
-	include('dbFunctions/feedbackFunctions.php');
+	include('dbFunctions/testFunctions.php');
 
 	$tokenUserID = validateToken();
 
@@ -11,7 +11,7 @@
 
 		switch ($method) {
 			case 'GET':
-				// Get default and personalized feedback messages to a senior user
+				// Get personalized feedback messages to a senior user
 				if (isset($_GET["seniorUserID"])) {
 					$bi = isset($_GET["bi"]) ? $_GET["bi"] : null;
 					$ai = isset($_GET["ai"]) ? $_GET["ai"] : null;
@@ -27,10 +27,11 @@
 				}
 				break;
 			default:
-				deliver_response(400, "Ugyldig forespørsel. Aksepterte forespørsel-typer: GET", NULL);
+				deliver_response(400, "Ugyldig forespørsel. Aksepterte forespørsel-typer: GET, POST, PUT, DELETE", NULL);
 				break;
-		}		
+		}
 	} else {
 		deliver_response(401, "Autentisering feilet.", NULL);
 	}
+		
 ?>

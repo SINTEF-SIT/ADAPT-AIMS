@@ -1,20 +1,7 @@
 <?php
 	include('inc/deliver_response.inc.php');
 	include('inc/jwt.inc.php');
-
-	function putData($seniorUserID, $tokenUserID) {
-		include('inc/db.inc.php');
-			
-		if ($stmt = $conn->prepare("UPDATE SeniorUsers SET hasAccessedSystem='1' WHERE userID=?;")) {
-			$stmt->bind_param("i", $seniorUserID);
-			$stmt->execute();
-			$stmt->close();
-			$conn->close();
-			return true;
-		}
-		$conn->close();
-		return false;
-	}
+	include('dbFunctions/hasAccessedSystemFunctions.php');
 
 	$tokenUserID = validateToken();
 
@@ -28,7 +15,7 @@
 
 				if (isset($_GET["seniorUserID"])) {
 
-					$dbWriteSuccess = putData($_GET["seniorUserID"], $tokenUserID);
+					$dbWriteSuccess = putHasAccessedSystem($tokenUserID, $_GET["seniorUserID"]);
 
 					if ($dbWriteSuccess) {
 						deliver_response(200, "Databasen er nå oppdatert med at denne brukeren har aksessert systemet.", true);

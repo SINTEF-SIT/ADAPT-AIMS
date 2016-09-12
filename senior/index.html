@@ -12,7 +12,7 @@
 		<script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
 
 		<!-- jQuery quickfit -->
-		<script src="../libs/jquery.quickfit.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../libs/jquery.quickfit.js"></script>
 
 		<!-- Highcharts -->
 		<script src="https://code.highcharts.com/highcharts.js"></script>
@@ -22,13 +22,13 @@
 		<script src="http://momentjs.com/downloads/moment-timezone-with-data-2010-2020.min.js"></script>
 
 		<!-- Common (used by more than one of the system's main views) -->
-		<script src="../common/script.js"></script>
-		<link rel="stylesheet" href="../common/style.css">
+		<script src="../common/common.js"></script>
+		<link rel="stylesheet" href="../common/common.css">
 
 		<!-- Main JS -->
 		<script src="script.js"></script>
 
-		<title>Adapt frontend test</title>
+		<title>AIMS</title>
 	</head>
 	<body>
 
@@ -39,7 +39,7 @@
 				<h3>Nedenfor er en video som viser hvordan systemet brukes.</h3>
 				<br>
 				<div class="iframeWrapper">
-					<iframe id="tutorialVideoiFramePopup" src="//:0" width="497" height="298" seamless webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+					<iframe id="tutorialVideoiFramePopup" src="../placeholder.png" width="497" height="298" seamless webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
 				</div>
 				
 				<a id="videoPopupCloseBtn" onclick="closeVideoPopup()" class="ui-btn ui-btn-inline ui-icon-arrow-r ui-btn-icon-right ui-btn-a">Begynn å bruke systemet</a>
@@ -54,7 +54,7 @@
 					<div id="BIImgWell" class="well">
 						<div id="BIImgHeader" class="chartHeader">Din balanse</div>
 						<div id="BIImgInnerWrapper">
-							<img src="//:0" alt="Balanseindeks" id="BIImg">
+							<img src="../placeholder.png" alt="Balanseindeks" id="BIImg">
 							<span id="BIGaugeChartTextHighRisk">&nbsp;Høy fallrisiko</span>
 							<span id="BIGaugeChartTextLowRisk">Lav fallrisiko&nbsp;</span>
 						</div>
@@ -102,7 +102,7 @@
 				<div data-role="navbar">
 					<ul>
 						<li><a data-icon="grid" class="ui-btn-active ui-state-persist">Oversikt</a></li>
-						<li><a href="#feedback-page" data-icon="comment" data-transition="none">Råd</a></li>
+						<li><a href="#feedback-page" data-icon="comment" data-transition="none">Ukens råd</a></li>
 						<li><a href="#details-page" data-icon="bars" data-transition="none">Mer</a></li>
 						<li><a href="#help-page" data-icon="info" data-transition="none">Hjelp</a></li>
 					</ul>
@@ -113,7 +113,7 @@
 
 		<!-- Feedback page -->
 		<div data-role="page" id="feedback-page">
-			<div data-role="content">
+			<div data-role="content" id="feedbackPageContent">
 				<h1>Balanseråd:</h1>
 				<div id="balanceFeedbackContainer" class="well feedbackWell">
 				</div>
@@ -135,16 +135,6 @@
 				<h1>Aktivitetstips:</h1>
 				<div id="activityFeedbackContainer" class="well feedbackWell"></div>
 
-				<!-- BI feedback message -->
-				<!--<div id="messageWrapperBI" class="pageMainElement messageWrapper">
-					<div id="feedbackMsgBI" class="alert alert-gray" role="alert"></div>
-				</div>-->
-
-				<!-- AI feedback message -->
-				<!--<div id="messageWrapperAI" class="pageMainElement messageWrapper">
-					<div id="feedbackMsgAI" class="alert alert-gray" role="alert"></div>
-				</div>-->
-
 			</div>
 
 			<!-- Footer -->
@@ -152,7 +142,7 @@
 				<div data-role="navbar">
 					<ul>
 						<li><a href="#main-page" data-icon="grid" data-transition="none" data-direction="reverse">Oversikt</a></li>
-						<li><a data-icon="comment" class="ui-btn-active ui-state-persist">Råd</a></li>
+						<li><a data-icon="comment" class="ui-btn-active ui-state-persist">Ukens råd</a></li>
 						<li><a href="#details-page" data-icon="bars" data-transition="none">Mer</a></li>
 						<li><a href="#help-page" data-icon="info" data-transition="none">Hjelp</a></li>
 					</ul>
@@ -193,7 +183,7 @@
 				<div data-role="navbar">
 					<ul>
 						<li><a href="#main-page" data-icon="grid" data-transition="none" data-direction="reverse">Oversikt</a></li>
-						<li><a href="#feedback-page" data-icon="comment" data-transition="none">Råd</a></li>
+						<li><a href="#feedback-page" data-icon="comment" data-transition="none">Ukens råd</a></li>
 						<li><a data-icon="bars" class="ui-btn-active ui-state-persist">Mer</a></li>
 						<li><a href="#help-page" data-icon="info" data-transition="none">Hjelp</a></li>
 					</ul>
@@ -214,7 +204,7 @@
 				<div data-role="navbar">
 					<ul>
 						<li><a href="#main-page" data-icon="grid" data-transition="none" data-direction="reverse">Oversikt</a></li>
-						<li><a href="#feedback-page" data-icon="comment" data-transition="none">Råd</a></li>
+						<li><a href="#feedback-page" data-icon="comment" data-transition="none">Ukens råd</a></li>
 						<li><a href="#details-page" data-icon="bars" data-transition="none" data-direction="reverse">Mer</a></li>
 						<li><a data-icon="info" class="ui-btn-active ui-state-persist">Hjelp</a></li>
 					</ul>
@@ -230,7 +220,7 @@
 			</div>
 			<div role="main" class="ui-content">
 				<h1 id="exerciseHeader"></h1>
-				<img id="exerciseImg" class="exerciseImg" src="//:0"/>
+				<img id="exerciseImg" class="exerciseImg" src="../placeholder.png"/>
 				<div id="exerciseDesc" class="exerciseDesc"></div>
 				
 				<a data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Lukk</a>

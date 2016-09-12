@@ -23,8 +23,9 @@ var seniorLastName; // The last name of the logged in user
 var currentBalanceIdx = null // The current balance index for the logged in user
 var currentActivityIdx = null; // The current activity index for the logged in user.
 
-var AIFeedbackMsg;
-var BIFeedbackMsg;
+var AIFeedbackMsgSitting = null;
+var AIFeedbackMsgWalking = null;
+var BIFeedbackMsg = null;
 
 var BIThresholdUpper; // The upper threshold value for the 'medium' or 'yellow' area for BI
 var BIThresholdLower; // The lower threshold value for the 'medium' or 'yellow' area for BI
@@ -60,12 +61,10 @@ $(window).on('resize', function() {
 
 
 $(document).ready(function() {
-
 	$(window).trigger('resize');
-
 	$( "#video-popup" ).enhanceWithin().popup();
+	$("#BIImgInnerWrapper").hide(); // Hide BI gauge chart while page is loading
 
-	
 	// Automatically close the chart tooltip popups after 10 seconds
 	$('#BIChartTooltip').on('popupafteropen', function (e) {
 		setTimeout(function(){
@@ -93,34 +92,31 @@ $(document).ready(function() {
 		// Redirect to login page
 		window.location.replace("../index.html");
 	}
-	
-	//$("#messageWrapperAI").hide(); // Initially hides the box displaying AI feedback messages
-	//$("#messageWrapperBI").hide(); // Initially hides the box displaying BI feedback messages
 
 	$("#userFullName").text(seniorFirstName + " " + seniorLastName); // Writes the full name of the logged in user to the DOM
 
-	$.when($.ajax({
-		// Get user details
-		url: "../api/seniorUserData.php?seniorUserID=" + seniorUserID,
+	$.ajax({
+		// Get all information needed for the senior view
+		url: "../api/allSeniorData.php?seniorUserID=" + seniorUserID,
 		type: 'GET',
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 		},
 		error: function(data, status) { // If the API request fails
-			console.log("Error attempting to call API: GET request to seniorUserData.php with parameter seniorUserID=" + seniorUserID);
+			console.log("Error attempting to call API: GET request to allSeniorData.php with parameter seniorUserID=" + seniorUserID);
+			hideLoader(); // Hides the loading widget
 		}, 
 		success: function(data, status) { // If the API request is successful
 			if (data.data) {
-				userData = data.data;
+				userData = data.data.seniorUserDetails;
+
 				if (userData.hasAccessedSystem === 0) {
 					// This is the first time this user accesses the system.
 					// Show tutorial video and store in the DB that the user has accessed the system.
 					openVideoPopup();
 
 					$.ajax({
-						/***************************
-						** Get user details
-						***************************/
+						// Store that the user has accessed the system, preventing popup from appearing on next login
 						url: "../api/hasAccessedSystem.php?seniorUserID=" + seniorUserID,
 						type: 'PUT',
 						beforeSend: function (request) {
@@ -136,402 +132,84 @@ $(document).ready(function() {
 				} else {
 					closeVideoPopup();
 				}
+
+				// Settings
+				BIThresholdUpper = data.data.settings.BIThresholdUpper;
+				BIThresholdLower = data.data.settings.BIThresholdLower;
+
+				// Newest change time
+				// Calculates the string to display to tell how long ago the information was last updated, and updates the DOM
+				var updateTimeDiffText = setUpdateTimeDiff(data.data.newestChangeTime.timeCalculated);
+
+
+				// BI chart
+				var balanceChartDataJSON = data.data.balanceIndexes;
+				if (balanceChartDataJSON !== null) {
+					drawBIChart(balanceChartDataJSON);
+				} else {
+					$("#balanceChartContainer").hide();
+				}
+
+				// AI chart
+				var activityChartDataJSON = data.data.activityIndexes;
+				if (activityChartDataJSON !== null) {
+					drawAIChart(activityChartDataJSON);
+				} else {
+					$("#activityChartContainer").hide();
+				}
+
+				// Feedback and exercises
+				if (data.data.feedback !== null) {
+					var customBIFeedback = userData.showPersonalizedBIFeedback;
+					var customAISittingFeedback = userData.showPersonalizedAISittingFeedback;
+					var customAIWalkingFeedback = userData.showPersonalizedAIWalkingFeedback;
+
+					for (var i=0; i<data.data.feedback.length; i++) {
+						var msg = data.data.feedback[i];
+						if (msg.category === 1 && msg.custom === customBIFeedback) {
+							BIFeedbackMsg = msg;
+						}
+						if (msg.category === 0 && msg.AIFeedbackType === 0 && msg.custom === customAISittingFeedback) {
+							AIFeedbackMsgSitting = msg;
+						}
+						if (msg.category === 0 && msg.AIFeedbackType === 1 && msg.custom === customAISittingFeedback) {
+							AIFeedbackMsgWalking = msg
+						}
+					}
+				} else {
+					$("#feedbackPageContent").html("");
+				}
+				
+
+				exerciseGroups = data.data.exerciseGroups;
+
+				var htmlBalanceExercises = "";
+
+				for (var i=0; i<exerciseGroups.length; i++) {
+					var exerciseType = exerciseGroups[i].exerciseType;
+					for (var j=0; j<exerciseGroups[i].exercises.length; j++) {
+						var exercise = exerciseGroups[i].exercises[j]; 
+						if (exercise.indexSection === BIIndexSection) {
+							htmlBalanceExercises += "<a onclick='displayExercise(" + exercise.exerciseID + ")' data-role='button'>" + exercise.title + "</a>";
+						}
+					}
+				}
+				$("#balanceExercisesBtnGroup").append(htmlBalanceExercises);
+				writeFeedback();
+				hideLoader(); // Hides the loading widget
+
 			} else {
 				// No data found
-				console.log(data.status_message);
+				console.log(data);
+				$("#BIImgInnerWrapper").hide();
+				$("#BIImgTooltipBtn").hide();
+				$(".chartWell").hide();
+				$("#BIImgHeader").html("Det har oppstått en feil.");
+				hideLoader(); // Hides the loading widget
 			}
 		}
-	}), $.ajax({
-		url: "../api/settings.php",
-		type: 'GET',
-		beforeSend: function (request) {
-			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-		},
-		error: function(data, status) {
-			console.log("Error fetching data from API settings.php");
-		},
-		success: function(data, status) { // If the API request is successful
-			if (data.data) {
-				BIThresholdUpper = data.data.BIThresholdUpper;
-				BIThresholdLower = data.data.BIThresholdLower;
-			} else {
-				console.log("Error loading data from the API settings.php");
-			}
-		}
-	})).then(function(data, textStatus, jqXHR) {
-		$.when($.ajax({
-			// Timestamp of most recent update
-			url: "../api/newestChangeTime.php?seniorUserID=" + seniorUserID,
-			type: 'GET',
-			beforeSend: function (request) {
-				request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-			},
-			error: function(data, status) { // If the API request fails
-				console.log("Error attempting to call API: GET request to newestChangeTime.php with parameter seniorUserID=" + seniorUserID);
-			}, 
-			success: function(data, status) { // If the API request is successful
-				if (data.data) {
-					var updateTimeDiffText = setUpdateTimeDiff(data.data.timeCalculated); // Calculates the string to display to tell how long ago the information was last updated, and updates the DOM
-				} else {
-					// No data registered for this user yet
-					console.log(data.status_message);
-				}
-			}
-		})).then(function(data, textStatus, jqXHR) {
-			var maxBalanceChartRange = 1000 * 60 * 60 * 24 * 90; // The maximum range of the x axis in milliseconds
-			//var numBalanceChartSeries = 0;
-			$.when($.ajax({
-				// Balance chart
-				url: "../api/balanceIdx.php?seniorUserID=" + seniorUserID,
-				type: 'GET',
-				beforeSend: function (request) {
-					request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-				},
-				error: function(data, status) { // If the API request fails
-					$("#balanceChartContainer").hide(); // Hide BI chart
-					console.log("Error attempting to call API: GET request to balanceIdx.php with parameter seniorUserID=" + seniorUserID);
-				}, 
-				success: function(data, status) { // If the API request is successful
-					var balanceChartDataJSON = data.data;
-					var balanceChartData = [];
-
-					if (balanceChartDataJSON !== null) {
-						for (var i=0; i<balanceChartDataJSON.length; i++) {
-							if (i != 0) {
-								// Draws an extra data point right before each data point (except the first) 
-								// to get a flat line instead of a straight, diagonal line between the points.
-								// Needs to be commented out if the chart is switched to a column chart.
-								var dataPointPre = [];
-								var datePre = moment.tz(balanceChartDataJSON[i].timeDataCollected, "UTC");
-								datePre.seconds(-1);
-								dataPointPre.push(datePre.valueOf());
-								dataPointPre.push(parseFloat(balanceChartDataJSON[i-1].value));
-								balanceChartData.push(dataPointPre);
-							}
-							
-							var bi = parseFloat(balanceChartDataJSON[i].value);
-
-							var dataPoint = [];
-							var date = moment.tz(balanceChartDataJSON[i].timeDataCollected, "UTC");
-							dataPoint.push(date.valueOf());
-							dataPoint.push(bi);
-							balanceChartData.push(dataPoint);
-
-							// If last data point from db, add a final data point 24 hours after
-							// the last recorded value to make the last change visible in the chart.
-							if (i+1 == balanceChartDataJSON.length) {
-								var dataPointFinal = [];
-								dataPointFinal.push(date.valueOf() + (1000 * 60 * 60 * 24));
-								dataPointFinal.push(parseFloat(balanceChartDataJSON[i].value));
-								balanceChartData.push(dataPointFinal);
-
-								currentBalanceIdx = balanceChartDataJSON[i].value; // Store the last data value as the current BI
-
-								if (currentBalanceIdx < BIThresholdLower) {
-									BIIndexSection = -1;
-								} else if (currentBalanceIdx >= BIThresholdLower && currentBalanceIdx < BIThresholdUpper) {
-									BIIndexSection = 0;
-								} else if (currentBalanceIdx > BIThresholdUpper) {
-									BIIndexSection = 1;
-								}
-
-								setBIImg(); // Displays the BI image corresponding to the current BI value
-							}
-						}
-
-						var xAxisMinValue = null;
-						if (balanceChartData[balanceChartData.length-1][0] - balanceChartData[0][0] > maxBalanceChartRange) {
-							xAxisMinValue = moment().valueOf() - maxBalanceChartRange;
-						}
-
-						/*balanceChartDataSplit = splitChartSeries(balanceChartData);
-						numBalanceChartSeries = balanceChartDataSplit.length;*/
-
-						var extraSpace = "";
-						var yAxisLabels = ["Lav" + extraSpace, "Medium" + extraSpace, "Høy" + extraSpace];
-						
-						colorMaxBI = "#" + getBIChartData(currentBalanceIdx).color;
-						colorMidBI = "#" + getBIChartData(currentBalanceIdx/2).color;
-						
-						balanceChartOptions = {
-							chart: {
-								renderTo: 'balanceChart', // ID of div where the chart is to be rendered
-								//zoomType: 'x', // Uncomment to make the chart zoomable along the x-axis
-								backgroundColor: null,
-								marginLeft: 100,
-								reflow: true
-							},
-							title: {
-								text: ''
-								//text: 'Din balanse over tid'
-							},
-							xAxis: {
-								type: 'datetime',
-								//maxTickInterval: 7 * 24 * 3600 * 1000, // How frequent a tick is displayed on the axis (set in milliseconds)
-								min: xAxisMinValue
-							},
-							yAxis: {
-								max: 1, // The ceiling value of the y-axis.
-								min: -1, // The floor of the y-axis. 
-								minRange : 0.1,
-								endOnTick: false,
-								alternateGridColor: '#DEE0E3',
-								tickInterval: 0.2, // How frequent a tick is displayed on the axis,
-								title: {
-									enabled: false
-								},
-								plotLines: [{
-									color: '#9E9E9E', // Color value
-									dashStyle: 'ShortDash', // Style of the plot line. Default to solid
-									value: 0, // Value of where the line will appear
-									width: 2, // Width of the line
-									zIndex: 5, // Draw the plot line on top of the series
-									label: { 
-										text: 'Normalverdi', // Content of the label. 
-										align: 'left',
-										style: {
-											fontSize:'18px',
-												color: '#363636'
-										}
-									},
-									line: {
-										lineWidth: 1,
-										softThreshold: false
-									}
-								}],
-								labels: {
-									formatter: function() {
-										return yAxisLabels[this.value+1];
-									}
-								}
-							},
-							plotOptions: {
-								series: {
-									pointWidth: 40,
-									enableMouseTracking: false,
-									marker: {
-										enabled: false
-									}/*,
-									color: {
-										linearGradient: {
-											x1: 0,
-											y1: 0,
-											x2: 0,
-											y2: 1
-										},
-										stops: [
-											// The 'grey' color is temporary, as the top and middle colors are calculated later.
-											[0, 'grey'],
-											[0.5, 'grey'],
-											[1, '#ED1E24']
-										]
-									}*/
-								}
-							},
-							legend: {
-								enabled: false // Hides the legend showing the name and toggle option for the series
-							},
-							credits: {
-								enabled: false // Hides the Highcharts credits
-							},
-							tooltip: {
-								enabled: false // Hides the tooltip from being displayed while hovering
-							},
-							series: [{
-								type: 'area',
-								threshold: -1,
-								fillOpacity: 1,
-								/*color: {
-									linearGradient: {
-										x1: 0,
-										y1: 0,
-										x2: 0,
-										y2: 1
-									},
-									stops: [
-										// The 'grey' color is temporary, as the top and middle colors are calculated later.
-										[0, colorMaxBI],
-										[0.5, colorMidBI],
-										[1, '#ED1E24']
-									]
-								},*/
-								lineWidth: 0,
-			            		enableMouseTracking: false,
-			            		data: balanceChartData
-							}]
-						};
-
-						balanceChart = new Highcharts.Chart(balanceChartOptions);
-
-						balanceChart.renderer.image('img/BIImg/gradient-bar.png', 88, 9, 12, 196).add();
-					} else {
-						// No BI values registered. BI chart is hidden.
-						$("#balanceChartContainer").hide();
-						//$("#balanceChart").html("<h3>Det er ikke registrert noen data om din balanse ennå.</h3>");
-					}
-				}
-			})).then(function(data, textStatus, jqXHR) {
-				$.when($.ajax({
-					// Activity chart
-					url: "../api/activityIdx.php?seniorUserID=" + seniorUserID,
-					type: 'GET',
-					beforeSend: function (request) {
-						request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-					},
-					error: function(data, status) { // If the API request fails
-						$("#activityChartContainer").hide(); // Hide AI chart
-						console.log("Error attempting to call API: GET request to activityIdx.php with parameter seniorUserID=" + seniorUserID);
-					}, 
-					success: function(data, status) { // If the API request is successful
-						var activityChartDataJSON = data.data;
-						if (activityChartDataJSON !== null) {
-							var activityChartData = [];
-							for (var i=0; i<activityChartDataJSON.length; i++) {
-								var dataPoint = [];
-								var date = moment.tz(activityChartDataJSON[i].timeDataCollected, "UTC");
-								dataPoint.push(date.valueOf());
-								dataPoint.push(activityChartDataJSON[i].value);
-								activityChartData.push(dataPoint);
-
-								if (i+1 == activityChartDataJSON.length) {
-									currentActivityIdx = activityChartDataJSON[i].value;
-								}
-							}
-
-							activityChartOptions = {
-								chart: {
-									renderTo: 'activityChart', // ID of div where the chart is to be rendered
-									type: 'column', // Chart type. Can e.g. be set to 'column' or 'area'
-									//zoomType: 'x', // Uncomment to make the chart zoomable along the x-axis
-									backgroundColor: null,
-									reflow: true
-								},
-								title: {
-									text: ''
-									//text: 'Din aktivitet over tid'
-								},
-								xAxis: {
-									type: 'datetime',
-									tickInterval: 24 * 3600 * 1000, // How frequent a tick is displayed on the axis (set in milliseconds)
-									min: new Date().getTime() - (31 * 24 * 3600 * 1000) // Set start of x-axis to 1 month ago
-								},
-								yAxis: {
-									title: {
-										enabled: false
-									},
-									max: 5, // The ceiling of the y-axis. Needs to be updated if the range of valid values changes!
-									min: 0, // The floor of the y-axis. 
-									alternateGridColor: '#DEE0E3',
-									tickInterval: 1, // How frequent a tick is displayed on the axis
-									plotLines: [{
-										color: '#9E9E9E', // Color value
-										dashStyle: 'ShortDash', // Style of the plot line. Default to solid
-										value: userData.AIChartLineValue, // Value of where the line will appear
-										width: 2, // Width of the line
-										zIndex: 5, // Draw the plot line on top of the series
-										label: { 
-											text: 'Normalverdi', // Content of the label. 
-											align: 'left',
-											style: {
-												fontSize:'18px',
-												color: '#363636'
-											}
-										}
-									}]
-								},
-								plotOptions: {
-									series: {
-										//pointWidth: 20
-									}
-								},
-								legend: {
-									enabled: false // Hides the legend showing the name and toggle option for the series
-								},
-								credits: {
-									enabled: false // Hides the Highcharts credits
-								},
-								tooltip: {
-									headerFormat: '',
-									pointFormat: '<b>{point.x:%A %e. %B}</b> ble din aktivitetsindeks målt til <b>{point.y}</b>.<br />{point.tooltipText}'
-								},
-								series: [{}]
-							};
-
-							activityChartOptions.series[0].data = activityChartData;
-
-							activityChart = new Highcharts.Chart(activityChartOptions);
-
-							for (var i=0; i<activityChart.series[0].data.length; i++) {
-								activityChart.series[0].data[i].tooltipText = activityChartTooltips[activityChartDataJSON[i].value];
-							}
-						} else {
-							$("#activityChartContainer").hide();
-							//$("#activityChart").html("<h3>Det er ikke registrert noen aktivitetsdata ennå.</h3>");
-						}
-					}
-				})).then(function(data, textStatus, jqXHR) {
-					$.when($.ajax({
-						// Get the AI feedback message for the user
-						url: "../api/feedback.php?seniorUserID=" + userData.userID + "&idx=" + currentActivityIdx + "&category=0",
-						type: 'GET',
-						beforeSend: function (request) {
-							request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-						},
-						error: function(data, status) { // If the API request fails
-							console.log("Error attempting to call API: GET request to feedback.php");
-						},
-						success: function(data, status) { // If the API request is successful
-							AIFeedbackMsg = data.data;
-						}
-					}), $.ajax({
-						// Get the BI feedback message for the user
-						url: "../api/feedback.php?seniorUserID=" + userData.userID + "&idx=" + currentBalanceIdx + "&category=1",
-						type: 'GET',
-						beforeSend: function (request) {
-							request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-						},
-						error: function(data, status) { // If the API request fails
-							console.log("Error attempting to call API: GET request to feedback.php");
-						},
-						success: function(data, status) { // If the API request is successful
-							BIFeedbackMsg = data.data;
-						}
-					})).then(function(data, textStatus, jqXHR) {
-						$.ajax({
-							// Get all exercise groups and exercises
-							url: "../api/exerciseGroups.php",
-							type: 'GET',
-							beforeSend: function (request) {
-								request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
-							},
-							error: function(data, status) { // If the API request fails
-								console.log("Error attempting to call API: GET request to exerciseGroups.php");
-								hideLoader(); // Hides the loading widget
-							},
-							success: function(data, status) { // If the API request is successful
-								exerciseGroups = data.data;
-
-								var htmlBalanceExercises = "";
-
-								for (var i=0; i<exerciseGroups.length; i++) {
-									var exerciseType = exerciseGroups[i].exerciseType;
-									for (var j=0; j<exerciseGroups[i].exercises.length; j++) {
-										var exercise = exerciseGroups[i].exercises[j]; 
-										if (exercise.indexSection === BIIndexSection) {
-											htmlBalanceExercises += "<a onclick='displayExercise(" + exercise.exerciseID + ")' data-role='button'>" + exercise.title + "</a>";
-										}
-									}
-								}
-								$("#balanceExercisesBtnGroup").append(htmlBalanceExercises);
-								writeFeedback();
-								hideLoader(); // Hides the loading widget
-							}
-						});
-					});
-				});
-			});
-		});
 	});
+
 
 	// Sets global options for the charts
 	Highcharts.setOptions({
@@ -568,60 +246,251 @@ $(document).ready(function() {
 });
 
 
-function writeFeedback() {
-	$("#balanceFeedbackContainer").append(BIFeedbackMsg.feedbackText);
+
+function drawBIChart(balanceChartDataJSON) {
+	var maxBalanceChartRange = 1000 * 60 * 60 * 24 * 90; // The maximum range of the x axis in milliseconds
+
+	var balanceChartData = [];
+
+	for (var i=0; i<balanceChartDataJSON.length; i++) {
+		if (i != 0) {
+			// Draws an extra data point right before each data point (except the first) 
+			// to get a flat line instead of a straight, diagonal line between the points.
+			// Needs to be commented out if the chart is switched to a column chart.
+			var dataPointPre = [];
+			var datePre = moment.tz(balanceChartDataJSON[i].timeDataCollected, "UTC");
+			datePre.seconds(-1);
+			dataPointPre.push(datePre.valueOf());
+			dataPointPre.push(parseFloat(balanceChartDataJSON[i-1].value));
+			balanceChartData.push(dataPointPre);
+		}
+		
+		var bi = parseFloat(balanceChartDataJSON[i].value);
+
+		var dataPoint = [];
+		var date = moment.tz(balanceChartDataJSON[i].timeDataCollected, "UTC");
+		dataPoint.push(date.valueOf());
+		dataPoint.push(bi);
+		balanceChartData.push(dataPoint);
+
+		// If last data point from db, add a final data point 24 hours after
+		// the last recorded value to make the last change visible in the chart.
+		if (i+1 == balanceChartDataJSON.length) {
+			var dataPointFinal = [];
+			dataPointFinal.push(date.valueOf() + (1000 * 60 * 60 * 24));
+			dataPointFinal.push(parseFloat(balanceChartDataJSON[i].value));
+			balanceChartData.push(dataPointFinal);
+
+			currentBalanceIdx = balanceChartDataJSON[i].value; // Store the last data value as the current BI
+
+			if (currentBalanceIdx < BIThresholdLower) {
+				BIIndexSection = -1;
+			} else if (currentBalanceIdx >= BIThresholdLower && currentBalanceIdx < BIThresholdUpper) {
+				BIIndexSection = 0;
+			} else if (currentBalanceIdx > BIThresholdUpper) {
+				BIIndexSection = 1;
+			}
+
+			setBIImg(); // Displays the BI image corresponding to the current BI value
+		}
+	}
+
+	var xAxisMinValue = null;
+	if (balanceChartData[balanceChartData.length-1][0] - balanceChartData[0][0] > maxBalanceChartRange) {
+		xAxisMinValue = moment().valueOf() - maxBalanceChartRange;
+	}
+
+	var yAxisLabels = ["Lav", "Medium", "Høy"];
 	
-	var balanceExercise = getExercise(BIFeedbackMsg.balanceExerciseID);
-	var strengthExercise = getExercise(BIFeedbackMsg.strengthExerciseID);
-	var htmlBalanceExercise = "<a onclick='displayExercise(" + balanceExercise.exerciseID + ")' data-role='button'>" + balanceExercise.title + "</a>";
-	var htmlStrengthExercise = "<a onclick='displayExercise(" + strengthExercise.exerciseID + ")' data-role='button'>" + strengthExercise.title + "</a>";
+	colorMaxBI = "#" + getBIChartData(currentBalanceIdx).color;
+	colorMidBI = "#" + getBIChartData(currentBalanceIdx/2).color;
+	
+	balanceChartOptions = {
+		chart: {
+			renderTo: 'balanceChart', // ID of div where the chart is to be rendered
+			//zoomType: 'x', // Uncomment to make the chart zoomable along the x-axis
+			backgroundColor: null,
+			marginLeft: 100,
+			reflow: true
+		},
+		title: {
+			text: ''
+			//text: 'Din balanse over tid'
+		},
+		xAxis: {
+			type: 'datetime',
+			//maxTickInterval: 7 * 24 * 3600 * 1000, // How frequent a tick is displayed on the axis (set in milliseconds)
+			min: xAxisMinValue
+		},
+		yAxis: {
+			max: 1, // The ceiling value of the y-axis.
+			min: -1, // The floor of the y-axis. 
+			minRange : 0.1,
+			endOnTick: false,
+			alternateGridColor: '#DEE0E3',
+			tickInterval: 0.2, // How frequent a tick is displayed on the axis,
+			title: {
+				enabled: false
+			},
+			plotLines: [{
+				color: '#9E9E9E', // Color value
+				dashStyle: 'ShortDash', // Style of the plot line. Default to solid
+				value: 0, // Value of where the line will appear
+				width: 2, // Width of the line
+				zIndex: 5, // Draw the plot line on top of the series
+				label: { 
+					text: 'Normalverdi', // Content of the label. 
+					align: 'left',
+					style: {
+						fontSize:'18px',
+							color: '#363636'
+					}
+				},
+				line: {
+					lineWidth: 1,
+					softThreshold: false
+				}
+			}],
+			labels: {
+				formatter: function() {
+					return yAxisLabels[this.value+1];
+				}
+			}
+		},
+		plotOptions: {
+			series: {
+				pointWidth: 40,
+				enableMouseTracking: false,
+				marker: {
+					enabled: false
+				}
+			}
+		},
+		legend: {
+			enabled: false // Hides the legend showing the name and toggle option for the series
+		},
+		credits: {
+			enabled: false // Hides the Highcharts credits
+		},
+		tooltip: {
+			enabled: false // Hides the tooltip from being displayed while hovering
+		},
+		series: [{
+			type: 'area',
+			threshold: -1,
+			fillOpacity: 1,
+			lineWidth: 0,
+    		enableMouseTracking: false,
+    		data: balanceChartData
+		}]
+	};
 
-	$("#balanceExerciceWrapper").append(htmlBalanceExercise);
-	$("#strengthExerciceWrapper").append(htmlStrengthExercise);
+	balanceChart = new Highcharts.Chart(balanceChartOptions);
 
-	$("#activityFeedbackContainer").append(AIFeedbackMsg.feedbackText);
-
-
+	balanceChart.renderer.image('img/BIImg/gradient-bar.png', 88, 9, 12, 196).add();
 }
 
 
-function splitChartSeries(chartData) {
-	// Splits the chart data into a separate serie for each month, in order to set alternating colors
-	if (chartData[0][0] !== null) {
-		var chartDataSplit = [];
-		var firstDate = moment(chartData[0][0]);
-		var monthToCheck = firstDate.month();
-		var serie = [];
+function drawAIChart(activityChartDataJSON) {
+	var activityChartData = [];
+	for (var i=0; i<activityChartDataJSON.length; i++) {
+		var dataPoint = [];
+		var date = moment.tz(activityChartDataJSON[i].timeDataCollected, "UTC");
+		dataPoint.push(date.valueOf());
+		dataPoint.push(activityChartDataJSON[i].value);
+		activityChartData.push(dataPoint);
 
-		for (var i=0; i<chartData.length; i++) {
-			var date = moment(chartData[i][0]);
-			if (date.month() == monthToCheck) {
-				serie.push(chartData[i]);
-			} else {
-				monthToCheck = date.month();
-
-				var dateNewMonth = moment([date.year(), date.month()]).valueOf();
-
-				var dataPointNewMonth = [];
-				dataPointNewMonth.push(dateNewMonth);
-				dataPointNewMonth.push(chartData[i-1][1]);
-				serie.push(dataPointNewMonth);
-
-				chartDataSplit.push(serie);
-
-				serie = [];
-				dataPointNewMonth[0] += 1;
-				serie.push(dataPointNewMonth);
-				serie.push(chartData[i]);
-			}
-
-			if (i+1 == chartData.length) {
-				chartDataSplit.push(serie);
-			}
+		if (i+1 == activityChartDataJSON.length) {
+			currentActivityIdx = activityChartDataJSON[i].value;
 		}
-		return chartDataSplit;
-	} else {
-		return chartData;
+	}
+
+	activityChartOptions = {
+		chart: {
+			renderTo: 'activityChart', // ID of div where the chart is to be rendered
+			type: 'column', // Chart type. Can e.g. be set to 'column' or 'area'
+			//zoomType: 'x', // Uncomment to make the chart zoomable along the x-axis
+			backgroundColor: null,
+			reflow: true
+		},
+		title: {
+			text: ''
+			//text: 'Din aktivitet over tid'
+		},
+		xAxis: {
+			type: 'datetime',
+			tickInterval: 24 * 3600 * 1000, // How frequent a tick is displayed on the axis (set in milliseconds)
+			min: new Date().getTime() - (31 * 24 * 3600 * 1000) // Set start of x-axis to 1 month ago
+		},
+		yAxis: {
+			title: {
+				enabled: false
+			},
+			max: 5, // The ceiling of the y-axis. Needs to be updated if the range of valid values changes!
+			min: 0, // The floor of the y-axis. 
+			alternateGridColor: '#DEE0E3',
+			tickInterval: 1, // How frequent a tick is displayed on the axis
+			plotLines: [{
+				color: '#9E9E9E', // Color value
+				dashStyle: 'ShortDash', // Style of the plot line. Default to solid
+				value: userData.AIChartLineValue, // Value of where the line will appear
+				width: 2, // Width of the line
+				zIndex: 5, // Draw the plot line on top of the series
+				label: { 
+					text: 'Normalverdi', // Content of the label. 
+					align: 'left',
+					style: {
+						fontSize:'18px',
+						color: '#363636'
+					}
+				}
+			}]
+		},
+		plotOptions: {
+			series: {
+				//pointWidth: 20
+			}
+		},
+		legend: {
+			enabled: false // Hides the legend showing the name and toggle option for the series
+		},
+		credits: {
+			enabled: false // Hides the Highcharts credits
+		},
+		tooltip: {
+			headerFormat: '',
+			pointFormat: '<b>{point.x:%A %e. %B}</b> ble din aktivitetsindeks målt til <b>{point.y}</b>.<br />{point.tooltipText}'
+		},
+		series: [{}]
+	};
+
+	activityChartOptions.series[0].data = activityChartData;
+
+	activityChart = new Highcharts.Chart(activityChartOptions);
+
+	for (var i=0; i<activityChart.series[0].data.length; i++) {
+		activityChart.series[0].data[i].tooltipText = activityChartTooltips[activityChartDataJSON[i].value];
+	}
+}
+
+function writeFeedback() {
+	if (BIFeedbackMsg !== null) {
+		$("#balanceFeedbackContainer").append(BIFeedbackMsg.feedbackText);
+		
+		var balanceExercise = getExercise(BIFeedbackMsg.balanceExerciseID);
+		var strengthExercise = getExercise(BIFeedbackMsg.strengthExerciseID);
+		var htmlBalanceExercise = "<a onclick='displayExercise(" + balanceExercise.exerciseID + ")' data-role='button'>" + balanceExercise.title + "</a>";
+		var htmlStrengthExercise = "<a onclick='displayExercise(" + strengthExercise.exerciseID + ")' data-role='button'>" + strengthExercise.title + "</a>";
+
+		$("#balanceExerciceWrapper").append(htmlBalanceExercise);
+		$("#strengthExerciceWrapper").append(htmlStrengthExercise);
+	}
+
+	if (AIFeedbackMsgSitting !== null) {
+		$("#activityFeedbackContainer").append("<b>Sitte mindre: </b>" + AIFeedbackMsgSitting.feedbackText);
+	}
+	if (AIFeedbackMsgWalking !== null) {
+		$("#activityFeedbackContainer").append("<br><br><b>Gå mer: </b>" + AIFeedbackMsgWalking.feedbackText);
 	}
 }
 
@@ -637,21 +506,13 @@ function setBIImg() {
 		var imgPath = "img/BIImg/" + $fileName;
 		var img = document.getElementById("BIImg");
 		img.src = imgPath;
+		$("#BIImgInnerWrapper").show();
 
 	} else {
 		$("#BIImgHeader").html("<h3>Det oppstod en feil.</h3>");
-		$("#BIImgInnerWrapper").hide();
 	}
 }
 
-
-/***************************
-** Time calculation
-***************************/
-function convertDateToUTC(date) {
-	// Converts the given date to UTC format.
-	return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds()); 
-}
 
 function setUpdateTimeDiff(timeCalculated) {
 	// Calculates a string saying how long ago the given timestamp is from the current time.
@@ -732,12 +593,6 @@ function getBIChartData(BI) {
 		}
 	}
 	return null;
-}
-
-function getNewestChartValue(chart, seriesIdx) {
-	// Returns the most recent data value from a given chart
-	var data = chart.series[seriesIdx].data;
-	return data[data.length-1].y;
 }
 
 function openVideoPopup() {

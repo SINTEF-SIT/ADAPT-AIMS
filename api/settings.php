@@ -1,39 +1,7 @@
 <?php
 	include('inc/deliver_response.inc.php');
 	include('inc/jwt.inc.php');
-
-	function getData() {
-		include('inc/db.inc.php');
-
-		if ($stmt = $conn->prepare("SELECT * FROM Settings;")) {
-			$stmt->execute();
-			$result = $stmt->get_result();
-			$stmt->close();
-
-			if (mysqli_num_rows($result) > 0) {
-				$conn->close();
-				return mysqli_fetch_assoc($result);
-			}
-		}
-		$conn->close();
-		return NULL;
-	}
-
-	function putData($BIThresholdLower, $BIThresholdUpper) {
-		
-		include('inc/db.inc.php');
-			
-		if ($stmt = $conn->prepare("UPDATE Settings SET BIThresholdLower=?, BIThresholdUpper=?;")) {
-			$stmt->bind_param("dd", $BIThresholdLower, $BIThresholdUpper);
-			$stmt->execute();
-
-			$stmt->close();
-			$conn->close();
-			return true;
-		}
-		$conn->close();
-		return false;
-	}
+	include('dbFunctions/settingsFunctions.php');
 
 	$tokenUserID = validateToken();
 
@@ -44,7 +12,7 @@
 		switch ($method) {
 			case 'GET':
 				// Get settings values
-				$res = getData();
+				$res = getSettings();
 
 				if (empty($res)) {
 					deliver_response(200, "Ingen innstillinger funnet.", NULL);
@@ -56,7 +24,7 @@
 			case 'PUT':
 				// Update settings values
 				if (isset($_GET["BIThresholdLower"]) && isset($_GET["BIThresholdUpper"])) {
-					$dbWriteSuccess = putData($_GET["BIThresholdLower"], $_GET["BIThresholdUpper"]);
+					$dbWriteSuccess = putSettings($_GET["BIThresholdLower"], $_GET["BIThresholdUpper"]);
 
 					if ($dbWriteSuccess) {
 						deliver_response(200, "Innstillingene ble lagret i databasen.", true);

@@ -13,7 +13,7 @@
 
 		<!-- Custom jQuery mobile theme -->
 		<link rel="stylesheet" href="../jquery-custom-theme/theme.css" />
-  		<link rel="stylesheet" href="../jquery-custom-theme/jquery.mobile.icons.min.css" />
+		<link rel="stylesheet" href="../jquery-custom-theme/jquery.mobile.icons.min.css" />
 		
 		<!-- jQuery Mobile -->
 		<link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile.structure-1.4.5.min.css" />
@@ -27,22 +27,25 @@
 		<script src="http://momentjs.com/downloads/moment.min.js"></script>
 		<script src="http://momentjs.com/downloads/moment-timezone-with-data-2010-2020.min.js"></script>
 
-		<!-- jQuery-CSV -->
-		<script src="lib/jquery-csv/jquery.csv.min.js"></script>
-
 		<!-- Common (used by more than one of the system's main views) -->
-		<script src="../common/script.js"></script>
-		<link rel="stylesheet" href="../common/style.css">
+		<script src="../common/common.js"></script>
+		<link rel="stylesheet" href="../common/common.css">
 
-		<!-- Main JS -->
-		<script src="script.js" async></script>
+		<!-- Additional JS files -->
+		<script src="js/dbCommunication.js"></script>
+		<script src="js/eventListeners.js"></script>
+		<script src="js/manipulateDOM.js"></script>
+		<script src="js/drawCharts.js"></script>
+
+		<!-- Main JS file -->
+		<script src="js/script.js"></script>
 	</head>
 	
 	<body>
 
-		<!-- ******************************************************* -->
-		<!-- ********************** MAIN PAGE ********************** -->
-		<!-- ******************************************************* -->
+		<!--********************************************************
+									MAIN PAGE
+			******************************************************** -->
 		<div data-role="page" id="mainPage">
 			<div data-role="header" data-backbtn="false">
 				<h1>Oversikt over brukere</h1>
@@ -51,7 +54,7 @@
 				</div>
 			</div><!-- /header -->
 
-			<div data-role="content" data-theme="a">
+			<div data-role="content">
 				<form>
 					<input id="filterTable-input" data-type="search">
 				</form>
@@ -69,22 +72,17 @@
 
 				<div id='toastMainPage' class="toast">
 					<div class="toast-content">
-						<img id="toastMainPageImg" class="toast-icon" src="//:0"/> <span id="toastMainPageText"></span>
+						<img id="toastMainPageImg" class="toast-icon" src="../placeholder.png"/> <span id="toastMainPageText"></span>
 					</div>
 				</div>
 			</div><!-- /content -->
-
-			<!--<div data-role="footer">
-				<div>Logget inn som: <?php /*echo $firstName . " " . $lastName*/ ?></div>
-			</div>-->
 		</div><!-- /mainPage -->
 
 
 
-		<!-- ******************************************************* -->
-		<!-- ****************** USER DETAIL PAGE ******************* -->
-		<!-- ******************************************************* -->
-
+		<!--********************************************************
+								USER DETAIL PAGE
+			******************************************************** -->
 		<div data-role="page" id="user-detail-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
 				<h1 id="headerTitleDetailPage">Brukerdetaljer</h1>
@@ -93,7 +91,7 @@
 				</div>
 			</div><!-- /header -->
 
-			<div data-role="content" data-theme="a">
+			<div data-role="content">
 				<h1 id="activeUserFullName"></h1>
 
 				<div id="containerInfoAndBtns">
@@ -174,8 +172,7 @@
 						</div>
 
 						<div id="btnGroupUserDetails" class="floatItem">
-							<a onclick="$.mobile.changePage('index.html#register-bi-page');" data-role="button" data-icon="plus">Registrer ny balance idx</a>
-							<a onclick="$.mobile.changePage('index.html#register-ai-page');" data-role="button" data-icon="plus">Registrer ny activity idx</a>
+							<a onclick="$.mobile.changePage('index.html#register-data-page');" data-role="button" data-icon="plus">Registrer AI/BI</a>
 							<a onclick="$.mobile.changePage('index.html#personalized-feedback-page');" data-role="button" data-icon="comment">Skriv personalisert råd</a>
 							<a onclick="$.mobile.changePage('index.html#send-sms-page');" data-role="button" data-icon="comment">Send SMS</a>
 							<a onclick="$.mobile.changePage('index.html#edit-data-page');" data-role="button" data-icon="edit">Rediger opplysninger</a>
@@ -205,54 +202,21 @@
 				</div>
 				
 			</div><!-- /content -->
-
-			<!--<div data-role="footer">
-
-			</div>--><!-- /footer -->
 		</div><!-- /user-detail-apge -->
 
 
-		<!-- ******************************************************* -->
-		<!-- ************** REGISTER BALANCE IDX PAGE ************** -->
-		<!-- ******************************************************* -->
-		<div data-role="page" id="register-bi-page">
+		<!--********************************************************
+							REGISTER DATA PAGE
+			******************************************************** -->
+		<div data-role="page" id="register-data-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
-				<h1>Registrer BI</h1>
+				<h1>Registrer data</h1>
 				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
 					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
 				</div>
 			</div><!-- /header -->
 
-			<div data-role="content" data-theme="a">
-				<div id="balanceIdxFileInputContainer">
-					<input type="file" id="csvFileInputBI"/>
-					<a onclick="readCSVFile(false)" data-role="button" data-icon="check">Lagre</a>
-				</div>
-
-				<div id='toastBalanceIdxFileUpload' class="toast">
-					<div class="toast-content">
-						<img id="toastBalanceIdxFileUploadImg" class="toast-icon" src="//:0"/> <span id="toastBalanceIdxFileUploadText"></span>
-					</div>
-				</div>
-
-				<a onclick="$.mobile.changePage('index.html#register-bi-manual-page');" data-role="button" data-inline="true">Skriv inn manuelt</a>
-
-			</div><!-- /content -->
-		</div><!-- /register-bi-page -->
-
-
-		<!-- ******************************************************* -->
-		<!-- *********** REGISTER BALANCE IDX MANUAL PAGE ********** -->
-		<!-- ******************************************************* -->
-		<div data-role="page" id="register-bi-manual-page">
-			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
-				<h1>Registrer BI manuelt</h1>
-				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
-					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
-				</div>
-			</div><!-- /header -->
-
-			<div data-role="content" data-theme="a">
+			<div data-role="content">
 
 				<form id="balanceIdxForm" method="post">
 					
@@ -266,57 +230,10 @@
 
 					<div id='toastBalanceIdxManualForm' class="toast">
 						<div class="toast-content">
-							<img id="toastBalanceIdxManualFormImg" class="toast-icon" src="//:0"/> <span id="toastBalanceIdxManualFormText"></span>
+							<img id="toastBalanceIdxManualFormImg" class="toast-icon" src="../placeholder.png"/> <span id="toastBalanceIdxManualFormText"></span>
 						</div>
 					</div>
-					
 				</form>
-
-			</div><!-- /content -->
-		</div><!-- /register-bi-manual-page -->
-
-
-		<!-- ******************************************************* -->
-		<!-- ************* REGISTER ACTIVITY IDX PAGE ************** -->
-		<!-- ******************************************************* -->
-		<div data-role="page" id="register-ai-page">
-			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
-				<h1>Registrer AI</h1>
-				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
-					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
-				</div>
-			</div><!-- /header -->
-
-			<div data-role="content" data-theme="a">
-				<div id="activityIdxFileInputContainer">
-					<input type="file" id="csvFileInputAI"/>
-					<a onclick="readCSVFile(true)" data-role="button" data-icon="check">Lagre</a>
-				</div>
-
-				<div id='toastActivityIdxFileUpload' class="toast">
-					<div class="toast-content">
-						<img id="toastActivityIdxFileUploadImg" class="toast-icon" src="//:0"/> <span id="toastActivityIdxFileUploadText"></span>
-					</div>
-				</div>
-
-				<a onclick="$.mobile.changePage('index.html#register-ai-manual-page');" data-role="button" data-inline="true">Skriv inn manuelt</a>
-
-			</div><!-- /content -->
-		</div><!-- /register-ai-page -->
-
-
-		<!-- ******************************************************* -->
-		<!-- ********** REGISTER ACTIVITY IDX MANUAL PAGE ********** -->
-		<!-- ******************************************************* -->
-		<div data-role="page" id="register-ai-manual-page">
-			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
-				<h1>Registrer AI manuelt</h1>
-				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
-					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
-				</div>
-			</div><!-- /header -->
-
-			<div data-role="content" data-theme="a">
 
 				<form id="activityIdxForm" method="post">
 					
@@ -330,19 +247,18 @@
 
 					<div id='toastActivityIdxManualForm' class="toast">
 						<div class="toast-content">
-							<img id="toastActivityIdxManualFormImg" class="toast-icon" src="//:0"/> <span id="toastActivityIdxManualFormText"></span>
+							<img id="toastActivityIdxManualFormImg" class="toast-icon" src="../placeholder.png"/> <span id="toastActivityIdxManualFormText"></span>
 						</div>
 					</div>
-					
 				</form>
 
 			</div><!-- /content -->
-		</div><!-- /register-ai-manual-page -->
+		</div><!-- /register-data-page -->
 
 
-		<!-- ******************************************************* -->
-		<!-- ************* CONFIRM OVERWRITE BI DIALOG ************* -->
-		<!-- ******************************************************* -->
+		<!--********************************************************
+							CONFIRM OVERWRITE BI DIALOG
+			******************************************************** -->
 		<div data-role="page" data-dialog="true" data-close-btn="right" id="confirm-overwrite-bi-dialog">
 			<div data-role="header" data-theme="b">
 				<h1>Bekreft ny BI</h1>
@@ -357,9 +273,9 @@
 		</div> <!-- /confirm overwrite bi dialog -->
 
 
-		<!-- ******************************************************* -->
-		<!-- ************* CONFIRM OVERWRITE AI DIALOG ************* -->
-		<!-- ******************************************************* -->
+		<!--********************************************************
+							CONFIRM OVERWRITE AI DIALOG
+			******************************************************** -->
 		<div data-role="page" data-dialog="true" data-close-btn="right" id="confirm-overwrite-ai-dialog">
 			<div data-role="header" data-theme="b">
 				<h1>Bekreft ny AI</h1>
@@ -374,9 +290,9 @@
 		</div> <!-- /confirm overwrite ai dialog -->
 
 
-		<!-- ******************************************************* -->
-		<!-- ***************** EDIT USER DATA PAGE ***************** -->
-		<!-- ******************************************************* -->
+		<!--********************************************************
+								EDIT USER DATA PAGE
+			 ******************************************************* -->
 		<div data-role="page" id="edit-data-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
 				<h1>Rediger opplysninger</h1>
@@ -385,7 +301,7 @@
 				</div>
 			</div><!-- /header -->
 
-			<div data-role="content" data-theme="a">
+			<div data-role="content">
 				<form id="editUserDataForm" method="post">
 					<div class="ui-field-contain">
 						<label for="inputFieldEditFirstName">Fornavn:</label>
@@ -467,7 +383,7 @@
 
 					<div id='toastEditUserDataForm' class="toast">
 						<div class="toast-content">
-							<img id="toastEditUserDataFormImg" class="toast-icon" src="//:0"/> <span id="toastEditUserDataFormText"></span>
+							<img id="toastEditUserDataFormImg" class="toast-icon" src="../placeholder.png"/> <span id="toastEditUserDataFormText"></span>
 						</div>
 					</div>
 				</form>
@@ -475,9 +391,10 @@
 		</div><!-- /edit-user-data-page -->
 
 
-		<!-- ******************************************************* -->
-		<!-- ************** CONFIRM DELETE USER DIALOG ************* -->
-		<!-- ******************************************************* -->
+
+		<!--********************************************************
+							CONFIRM DELETE USER DIALOG
+			 ******************************************************* -->
 		<div data-role="page" data-dialog="true" data-close-btn="right" id="confirm-delete-user-dialog">
 			<div data-role="header" data-theme="b">
 				<h1>Bekreft sletting av bruker</h1>
@@ -492,9 +409,10 @@
 		</div> <!-- /confirm delete user dialog -->
 
 
-		<!-- ******************************************************* -->
-		<!-- ******************** NEW USER PAGE ******************** -->
-		<!-- ******************************************************* -->
+
+		<!--********************************************************
+								NEW USER PAGE
+			 ******************************************************* -->
 		<div data-role="page" id="new-user-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
 				<h1>Registrer ny bruker</h1>
@@ -503,7 +421,7 @@
 				</div>
 			</div><!-- /header -->
 
-			<div data-role="content" data-theme="a">
+			<div data-role="content">
 				<form id="newUserForm" method="post">
 					<div class="ui-field-contain">
 						<label for="inputFieldNewFirstName">Fornavn (*):</label>
@@ -601,16 +519,17 @@
 
 				<div id='toastNewUserForm' class="toast">
 					<div class="toast-content">
-						<img id="toastNewUserFormImg" class="toast-icon" src="//:0"/> <span id="toastNewUserFormText"></span>
+						<img id="toastNewUserFormImg" class="toast-icon" src="../placeholder.png"/> <span id="toastNewUserFormText"></span>
 					</div>
 				</div>
 			</div><!-- /content -->
 		</div><!-- /new user page -->
 
 
-		<!-- ******************************************************* -->
-		<!-- ******************** SETTINGS PAGE ******************** -->
-		<!-- ******************************************************* -->
+
+		<!--********************************************************
+									SETTINGS PAGE
+			 ******************************************************* -->
 		<div data-role="page" id="settings-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
 				<h1>Innstillinger</h1>
@@ -619,22 +538,22 @@
 				</div>
 			</div><!-- /header -->
 
-			<div data-role="content" data-theme="a">
+			<div data-role="content">
 				<form id="settingsForm">
 					<div class="ui-field-contain">
 						<label for="BIThresholdUpperInput">Grenseverdi BI, øvre:</label>
-						<input type="number" name="BIThresholdUpper" id="BIThresholdUpperInput" required min="-1" max="1" step="0.1"></input>
+						<input type="number" name="BIThresholdUpper" id="BIThresholdUpperInput" required min="-1" max="1" step="0.1">
 					</div>
 					<div class="ui-field-contain">
 						<label for="BIThresholdLowerInput">Grenseverdi BI, nedre:</label>
-						<input type="number" name="BIThresholdLower" id="BIThresholdLowerInput" required min="-1" max="1" step="0.1"></input>
+						<input type="number" name="BIThresholdLower" id="BIThresholdLowerInput" required min="-1" max="1" step="0.1">
 					</div>
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 				</form>
 
 				<div id='toastSettingsForm' class="toast">
 					<div class="toast-content">
-						<img id="toastSettingsFormImg" class="toast-icon" src="//:0"/> <span id="toastSettingsFormText"></span>
+						<img id="toastSettingsFormImg" class="toast-icon" src="../placeholder.png"/> <span id="toastSettingsFormText"></span>
 					</div>
 				</div>
 
@@ -642,9 +561,10 @@
 		</div><!-- /settings-page -->
 
 
-		<!-- ******************************************************* -->
-		<!-- **************** DEFAULT FEEDBACK PAGE **************** -->
-		<!-- ******************************************************* -->
+
+		<!--********************************************************
+								DEFAULT FEEDBACK PAGE
+			 ******************************************************* -->
 		<div data-role="page" id="default-feedback-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
 				<h1>Rediger standard-råd</h1>
@@ -653,7 +573,7 @@
 				</div>
 			</div>
 
-			<div data-role="content" data-theme="a">
+			<div data-role="content">
 				<form id="registerDefaultFeedbackForm" method="post">
 					<h1>Balanseråd</h1>
 					<table id="BIDefaultFeedbackTable" data-role="table" class="ui-responsive table-stripe ui-shadow feedbackTable">
@@ -688,7 +608,7 @@
 
 					<div id='toastDefaultFeedbackForm' class="toast">
 						<div class="toast-content">
-							<img id="toastDefaultFeedbackFormImg" class="toast-icon" src="//:0"/> <span id="toastDefaultFeedbackFormText"></span>
+							<img id="toastDefaultFeedbackFormImg" class="toast-icon" src="../placeholder.png"/> <span id="toastDefaultFeedbackFormText"></span>
 						</div>
 					</div>
 					
@@ -697,9 +617,9 @@
 		</div>
 
 
-		<!-- ******************************************************* -->
-		<!-- **************** SEND MULTIPLE SMS PAGE *************** -->
-		<!-- ******************************************************* -->
+		<!--********************************************************
+							SEND MULTIPLE SMS PAGE
+			 ******************************************************* -->
 		<div data-role="page" id="send-multiple-sms-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
 				<h1>SMS masseutsending</h1>
@@ -708,7 +628,7 @@
 				</div>
 			</div><!-- /header -->
 
-			<div data-role="content" data-theme="a">
+			<div data-role="content">
 
 				<h2>Send masseutsending</h2>
 				<form id="sendBulkSMSForm" method="post">
@@ -717,28 +637,28 @@
 						<textarea name="msg" id="bulkSMSContentField" onkeyup="countSMSChar(this, 'charCounterBulkSMS')" required></textarea>
 						<div id="charCounterBulkSMS"></div>
 					</div>
-				    <fieldset id="SMSRecipientCheckboxGroup" data-role="controlgroup">
-				        <legend>Send til:</legend>
+					<fieldset id="SMSRecipientCheckboxGroup" data-role="controlgroup">
+						<legend>Send til:</legend>
 						<div id="SMSCheckboxesSelectAllOrNone">
 							<a id="selectAllSMSRecipients">Velg&nbsp;alle</a> | <a id="selectNoSMSRecipients">Velg&nbsp;ingen</a>
 						</div>
-				    </fieldset>
+					</fieldset>
 					<input type="hidden" name="bulk" value="1">
 					<input type="submit" value="Send" data-icon="check" data-iconpos="right" data-theme="b">
 				</form>
 
 				<div id='toastSendBulkSMS' class="toast">
 					<div class="toast-content">
-						<img id="toastSendBulkSMSImg" class="toast-icon" src="//:0"/> <span id="toastSendBulkSMSText"></span>
+						<img id="toastSendBulkSMSImg" class="toast-icon" src="../placeholder.png"/> <span id="toastSendBulkSMSText"></span>
 					</div>
 				</div>
 			</div><!-- /content -->
 		</div><!-- /send-multiple-sms-page -->
 
 
-		<!-- ******************************************************* -->
-		<!-- ******************** SEND SMS PAGE ******************** -->
-		<!-- ******************************************************* -->
+		<!--********************************************************
+								SEND SMS PAGE
+			 ******************************************************* -->
 		<div data-role="page" id="send-sms-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
 				<h1>Send SMS</h1>
@@ -747,7 +667,7 @@
 				</div>
 			</div><!-- /header -->
 
-			<div data-role="content" data-theme="a">
+			<div data-role="content">
 
 				<h2>Send SMS</h2>
 				<form id="sendSingleSMSForm" method="post">
@@ -764,16 +684,16 @@
 
 				<div id='toastSendSingleSMS' class="toast">
 					<div class="toast-content">
-						<img id="toastSendSingleSMSImg" class="toast-icon" src="//:0"/> <span id="toastSendSingleSMSText"></span>
+						<img id="toastSendSingleSMSImg" class="toast-icon" src="../placeholder.png"/> <span id="toastSendSingleSMSText"></span>
 					</div>
 				</div>
 			</div><!-- /content -->
 		</div><!-- /send-sms-page -->
 
 
-		<!-- ******************************************************* -->
-		<!-- ************* PERSONALIZED FEEDBACK PAGE ************** -->
-		<!-- ******************************************************* -->
+		<!--********************************************************
+							PERSONALIZED FEEDBACK PAGE
+			 ******************************************************* -->
 		<div data-role="page" id="personalized-feedback-page">
 			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
 				<h1>Personaliserte råd</h1>
@@ -782,13 +702,16 @@
 				</div>
 			</div><!-- /header -->
 
-			<div data-role="content" data-theme="a">
+			<div data-role="content">
 
-				<h2>Råd knyttet til balanseindeks (BI):</h2>
-				
+				<h2>BI-råd:</h2>
+
 				<div class="ui-field-contain">
-				    <label for="flipPersonalizedBI">Personaliserte BI-råd:</label>
-				    <input type="checkbox" data-role="flipswitch" name="personalizedBI" id="flipPersonalizedBI" data-on-text="På" data-off-text="Av">
+					<label for="flipPersonalizedBI">Personaliserte BI-råd:</label>
+					<select id="flipPersonalizedBI" data-role="flipswitch">
+						<option value="0">Av</option>
+						<option value="1">På</option>
+					</select>
 				<div>
 
 				<br><br>
@@ -812,7 +735,7 @@
 				<form id="registerPersonalizedBIFeedbackForm" method="post">
 					<div class="ui-field-contain">
 						<label for="textareaPersonalizedBIFeedback">Nytt BI-råd:</label>
-						<input type="text" name="feedbackText" id="textareaPersonalizedBIFeedback" required></input>
+						<input type="text" name="feedbackText" id="textareaPersonalizedBIFeedback" required>
 					</div>
 					<div class="ui-field-contain">
 						<label>Balanseøvelse:</label>
@@ -829,7 +752,7 @@
 
 					<div id='toastPersonalizedFeedback' class="toast">
 						<div class="toast-content">
-							<img id="toastPersonalizedFeedbackImg" class="toast-icon" src="//:0"/> <span id="toastPersonalizedFeedbackText"></span>
+							<img id="toastPersonalizedFeedbackImg" class="toast-icon" src="../placeholder.png"/> <span id="toastPersonalizedFeedbackText"></span>
 						</div>
 					</div>
 					
@@ -839,17 +762,20 @@
 				<hr>
 				<br><br>
 
-				<h2>Råd knyttet til aktivitetsindeks (AI):</h2>
+				<h2>AI-tips om å sitte mindre:</h2>
 
 				<div class="ui-field-contain">
-				    <label for="flipPersonalizedAI">Personaliserte AI-råd:</label>
-				    <input type="checkbox" data-role="flipswitch" name="personalizedAI" id="flipPersonalizedAI" data-on-text="På" data-off-text="Av">
+					<label for="flipPersonalizedAISitting">Personaliserte AI-tips om å sitte mindre:</label>
+					<select id="flipPersonalizedAISitting" data-role="flipswitch">
+						<option value="0">Av</option>
+						<option value="1">På</option>
+					</select>
 				<div>
 
 				<br><br>
 
-				<div id="personalizedAIFeedbackMsgsContainer" class="personalizedFeedbackMsgsContainer">
-					<table id="tablePersonalizedAIFeedbackMsgs" data-role="table" class="ui-responsive table-stripe ui-shadow">
+				<div id="personalizedAIFeedbackMsgsSittingContainer" class="personalizedFeedbackMsgsContainer">
+					<table id="tablePersonalizedAIFeedbackMsgsSitting" data-role="table" class="ui-responsive table-stripe ui-shadow">
 						<thead>
 							<th>Dato</th>
 							<th>Tekst</th>
@@ -862,20 +788,60 @@
 
 				<br>
 
-				<form id="registerPersonalizedAIFeedbackForm" method="post">
+				<form id="registerPersonalizedAIFeedbackSittingForm" method="post">
 					<div class="ui-field-contain">
-						<label for="textareaPersonalizedAIFeedback">Nytt AI-råd:</label>
-						<input type="text" name="feedbackText" id="textareaPersonalizedAIFeedback" required></input>
+						<label for="textareaPersonalizedAISittingFeedback">Nytt AI-tips:</label>
+						<input type="text" name="feedbackText" id="textareaPersonalizedAISittingFeedback" required>
 					</div>
-					<!--<div class="ui-field-contain">
-						<label>Øvelse:</label>
-						<select id="selectPersonalizedAIFeedbackExercise" name="exerciseID"></select>
-					</div>-->
 
+					<input type="hidden" name="AIFeedbackType" value="0">
 					<input type="hidden" name="category" value="0">
 
 					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
-				</form>				
+				</form>
+
+
+				<br><br>
+				<hr>
+				<br><br>
+
+				<h2>AI-tips om å gå mer:</h2>
+
+				<div class="ui-field-contain">
+					<label for="flipPersonalizedAIWalking">Personaliserte AI-tips om å gå mer:</label>
+					<select id="flipPersonalizedAIWalking" data-role="flipswitch">
+						<option value="0">Av</option>
+						<option value="1">På</option>
+					</select>
+				<div>
+
+				<br><br>
+
+				<div id="personalizedAIFeedbackMsgsWalkingContainer" class="personalizedFeedbackMsgsContainer">
+					<table id="tablePersonalizedAIFeedbackMsgsWalking" data-role="table" class="ui-responsive table-stripe ui-shadow">
+						<thead>
+							<th>Dato</th>
+							<th>Tekst</th>
+							<th>Slett</th>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
+
+				<br>
+
+				<form id="registerPersonalizedAIFeedbackWalkingForm" method="post">
+					<div class="ui-field-contain">
+						<label for="textareaPersonalizedAIWalkingFeedback">Nytt AI-tips:</label>
+						<input type="text" name="feedbackText" id="textareaPersonalizedAIWalkingFeedback" required>
+					</div>
+
+					<input type="hidden" name="AIFeedbackType" value="1">
+					<input type="hidden" name="category" value="0">
+
+					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
+				</form>	
 			</div><!-- /content -->
 		</div><!-- /personalized-feedback-page -->
 

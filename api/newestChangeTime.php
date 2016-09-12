@@ -1,37 +1,7 @@
 <?php
 	include('inc/deliver_response.inc.php');
 	include('inc/jwt.inc.php');
-
-	function getData($seniorUserID, $tokenUserID) {
-		include('inc/db.inc.php');
-
-		// If the userID in the token belongs to an expert user, check that this expert is allowed to access this senior user's data
-		if ($tokenUserID != $seniorUserID) {
-			if (checkExpertSeniorLink($conn, $tokenUserID, $seniorUserID) == false) {
-				return null;
-			}
-		}
-
-		if ($stmt = $conn->prepare("SELECT timeCalculated FROM  ActivityIndexes AS ai WHERE ai.userID = ?
-				UNION SELECT timeCalculated FROM BalanceIndexes AS bi WHERE bi.userID = ?
-				UNION SELECT timeCreated FROM FeedbackMsgCustom AS fmc WHERE fmc.userID = ?
-				ORDER BY timeCalculated DESC LIMIT 1;")) {
-			$stmt->bind_param("iii", $seniorUserID, $seniorUserID, $seniorUserID);
-			$stmt->execute();
-			$result = $stmt->get_result();
-			$stmt->close();
-			$conn->close();
-
-			if (mysqli_num_rows($result) > 0) {
-				return mysqli_fetch_assoc($result);
-			} else {
-				return NULL;
-			}
-		} else {
-			$conn->close();
-			return NULL;
-		}
-	}
+	include('dbFunctions/newestChangeTimeFunctions.php');
 
 	$tokenUserID = validateToken();
 
@@ -44,7 +14,7 @@
 				// Get the most recent timeCalculated value for either MI, AI, BI or custom feedback.
 				if (isset($_GET["seniorUserID"])) {
 					
-					$time = getData($_GET["seniorUserID"], $tokenUserID);
+					$time = getNewestChangeTime($tokenUserID, $_GET["seniorUserID"]);
 
 					if (empty($time)) {
 						deliver_response(200, "Ingen data er registrert ennå.", NULL);

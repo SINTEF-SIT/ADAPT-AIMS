@@ -1,49 +1,7 @@
 <?php
 	include('inc/deliver_response.inc.php');
 	include('inc/jwt.inc.php');
-
-	function getData() {
-		include('inc/db.inc.php');
-
-		if ($stmt = $conn->prepare("SELECT msgID, feedbackText, category, idx, AIFeedbackType, balanceExerciseID, strengthExerciseID
-				FROM FeedbackMsgDefault;")) {
-			$stmt->execute();
-			$result = $stmt->get_result();
-			$stmt->close();
-
-			if (mysqli_num_rows($result) > 0) {
-				$rows = array();
-				while ($r = mysqli_fetch_assoc($result)) {
-					$rows[] = $r;
-				}
-				$conn->close();
-				return $rows;
-			} else {
-				$conn->close();
-				return NULL;
-			}
-		} else {
-			$conn->close();
-			return NULL;
-		}
-	}
-
-	function putData($msgID, $balanceExerciseID, $strengthExerciseID, $feedbackText) {
-		
-		include('inc/db.inc.php');
-			
-		if ($stmt = $conn->prepare("UPDATE FeedbackMsgDefault SET feedbackText=?, balanceExerciseID=?, strengthExerciseID=? WHERE msgID=?;")) {
-			$stmt->bind_param("siii", $feedbackText, $balanceExerciseID, $strengthExerciseID, $msgID);
-			$stmt->execute();
-
-			$stmt->close();
-			$conn->close();
-			return true;
-		} else {
-			$conn->close();
-			return false;
-		}
-	}
+	include('dbFunctions/feedbackDefaultFunctions.php');
 
 	$tokenUserID = validateToken();
 
@@ -54,7 +12,7 @@
 		switch ($method) {
 			case 'GET':
 				// Get default feedback messages
-				$res = getData();
+				$res = getFeedbackDefault();
 
 				if (empty($res)) {
 					deliver_response(200, "Ingen feedback-meldinger er lagret i databasen.", NULL);
@@ -81,7 +39,7 @@
 							$balanceExerciseID = $_POST[$balanceExerciseKey];
 							$strengthExerciseID = $_POST[$strengthExerciseKey];
 
-							$dbWriteSuccess = putData($msgID, $balanceExerciseID, $strengthExerciseID, $feedbackText);
+							$dbWriteSuccess = putFeedbackDefault($msgID, $balanceExerciseID, $strengthExerciseID, $feedbackText);
 							if ($dbWriteSuccess) {
 								$successCounter++;
 							}

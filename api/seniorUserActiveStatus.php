@@ -1,26 +1,7 @@
 <?php
 	include('inc/deliver_response.inc.php');
 	include('inc/jwt.inc.php');
-
-	function putData($expertUserID, $seniorUserID) {
-		include('inc/db.inc.php');
-
-		if (checkExpertSeniorLink($conn, $expertUserID, $seniorUserID)) {
-			if ($stmt = $conn->prepare("UPDATE SeniorUsers SET active = b'0' WHERE userID = ?")) {
-				$stmt->bind_param("i", $seniorUserID);
-				$stmt->execute();
-				$stmt->close();
-				$conn->close();
-				return true;
-			} else {
-				$stmt->close();
-				$conn->close();
-				return false;
-			}
-		} else {
-			return false;
-		}
-	}
+	include('dbFunctions/seniorUserActiveStatusFunctions.php');
 
 	$tokenUserID = validateToken();
 
@@ -32,7 +13,7 @@
 			case 'PUT':
 				// Set a senior user as inactive
 				if (isset($_GET["seniorUserID"])) {
-					$dbWriteSuccess = putData($tokenUserID, $_GET["seniorUserID"]);
+					$dbWriteSuccess = putSeniorUserActiveStatus($tokenUserID, $_GET["seniorUserID"]);
 					
 					if ($dbWriteSuccess) {
 						deliver_response(200, "Brukeren ble satt som inaktiv.", true);
