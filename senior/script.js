@@ -139,8 +139,11 @@ $(document).ready(function() {
 
 				// Newest change time
 				// Calculates the string to display to tell how long ago the information was last updated, and updates the DOM
-				var updateTimeDiffText = setUpdateTimeDiff(data.data.newestChangeTime.timeUpdated);
-
+				if (data.data.newestChangeTime) {
+					setUpdateTimeDiff(data.data.newestChangeTime.timeUpdated);
+				} else {
+					$("#lastUpdatedWrapper").hide();
+				}
 
 				// BI chart
 				var balanceChartDataJSON = data.data.balanceIndexes;

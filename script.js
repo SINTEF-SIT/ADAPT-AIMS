@@ -3,7 +3,7 @@ $(document).ready(function() {
 		//console.log("localstorage is supported!");
 	} else {
 		console.log("localstorage not supported");
-		showToast("#toastloginForm", false, "LocalStorage støttes ikke. Prøv å bruke en annen nettleser.", null);
+		showToast("#toastLoginForm", false, "LocalStorage støttes ikke. Prøv å bruke en annen nettleser.", null);
 	}
 
 	// Redirect to correct page if user is already logged in
@@ -58,12 +58,12 @@ $(document).ready(function() {
 					}
 				} else {
 					// Display toast with error message if login credentials were incorrect
-					showToast("#toastloginForm", false, data.status_message);
+					showToast("#toastLoginForm", false, data.status_message, 3000);
 				}
 			},
 			error: function(data, status) {
 				// Display toast with error message if an error occured during API call
-				showToast("#toastloginForm", false, data.status_message);
+				showToast("#toastLoginForm", false, data.status_message, 3000);
 			}
 		});
 		return false;

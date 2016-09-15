@@ -79,7 +79,6 @@
 				}
 				$stmtExpert->close();
 			}
-			$stmt->close();
 		}
 		return null;
 	}

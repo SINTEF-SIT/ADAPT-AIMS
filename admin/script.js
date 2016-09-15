@@ -169,6 +169,9 @@ function initEventListeners() {
 
 							var newUser = data.data;
 							newUser.seniorUsers = [];
+							if (expertUserData === null || expertUserData === undefined) {
+								expertUserData = [];
+							}
 							expertUserData.push(newUser);
 							populateExpertUsersList();
 						} else {
@@ -196,13 +199,15 @@ function initEventListeners() {
 //  	Writes expert user data to the expertUsersList in DOM 
 //********************************************************************
 function populateExpertUsersList() {
-	var html = "";
-	for (var i=0; i<expertUserData.length; i++) { // Iterates the user data to build a table row for each entry
-		html += "<li><a href='#' onclick='setActiveExpertUser(" + i + ")'>" + expertUserData[i].firstName + " " + expertUserData[i].lastName + "</a></li>";
+	if (expertUserData) {
+		var html = "";
+		for (var i=0; i<expertUserData.length; i++) { // Iterates the user data to build a table row for each entry
+			html += "<li><a href='#' onclick='setActiveExpertUser(" + i + ")'>" + expertUserData[i].firstName + " " + expertUserData[i].lastName + "</a></li>";
+		}
+		
+		$("#expertUsersList").html(html);
+		$("#expertUsersList").listview("refresh");
 	}
-	
-	$("#expertUsersList").html(html);
-	$("#expertUsersList").listview("refresh");
 }
 
 
@@ -211,21 +216,30 @@ function setActiveExpertUser(idx) {
 	$("#expertFullName").html(expertUserData[idx].firstName + " " + expertUserData[idx].lastName);
 
 	var html = "";
-	for (var i=0; i<seniorUserData.length; i++) {
-		seniorUser = seniorUserData[i];
-		html += "<input type='checkbox' name='seniorUserID[]' id='SeniorUserCheckbox-" + i + "' value='" + seniorUser.userID + "'";
+	if (seniorUserData) {
+		for (var i=0; i<seniorUserData.length; i++) {
+			seniorUser = seniorUserData[i];
+			html += "<input type='checkbox' name='seniorUserID[]' id='SeniorUserCheckbox-" + i + "' value='" + seniorUser.userID + "'";
 
-		for (var j=0; j<activeExpertUser.seniorUsers.length; j++) {
-			if (seniorUser.userID === activeExpertUser.seniorUsers[j]) {
-				html += " checked";
-				break;
+			for (var j=0; j<activeExpertUser.seniorUsers.length; j++) {
+				if (seniorUser.userID === activeExpertUser.seniorUsers[j]) {
+					html += " checked";
+					break;
+				}
 			}
+
+			html += "><label for='SeniorUserCheckbox-" + i + "'>" + seniorUser.firstName + " " + seniorUser.lastName + " (ID=" + seniorUser.userID + ")</label>"
 		}
+	}
+	
+	if (seniorUserData) {
+		$("#seniorUsersCheckboxes").html(html);
+		$("#seniorUsersCheckboxGroup").trigger('create');
+	} else {
+		$("#editExpertSeniorLinksForm").hide();
+		$("#errorMsgContainer").html("Ingen seniorbrukere er registrert ennå. Logg inn som en ekspertbruker for å opprette seniorbrukere.");
 
-		html += "><label for='SeniorUserCheckbox-" + i + "'>" + seniorUser.firstName + " " + seniorUser.lastName + " (ID=" + seniorUser.userID + ")</label>"
-	}	
+	}
 
-	$("#seniorUsersCheckboxes").html(html);
-	$("#seniorUsersCheckboxGroup").trigger('create');
 	$.mobile.changePage("index.html#user-detail-page");
 }

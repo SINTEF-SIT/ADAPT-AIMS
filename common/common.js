@@ -10,6 +10,8 @@ function showToast(formID, success, msg, duration) {
 
 	console.log("Toast message displayed: " + msg);
 
+	if (!duration) duration = 3000;
+
 	if (success) {
 		$(formID).removeClass("toast-error").addClass("toast-success"); // Replaces toast-error class (if set) with toast-success class
 		$(formID + 'Img').attr("src","../expert/img/check.png"); // Sets source of img tag inside toast to check icon

@@ -68,6 +68,74 @@ function getData() {
 
 
 //********************************************************************
+//     			Writes a new senior user to the db
+//********************************************************************
+function submitNewUser() {
+	showLoader(); // Shows the loading widget
+
+	var username = $("#inputFieldNewUsername").val();
+	var usernameUnique = false;
+
+	// Serialize the form data and append the senior user ID
+	formData = $("#newUserForm").serialize();
+	formData += ("&expertUserID=" + expertUserID);
+
+
+	$.when($.ajax({
+		type: "GET",
+		beforeSend: function (request) {
+			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+		},
+		url: "../api/checkUsernameAvailability.php?username=" + username,
+		success: function(data, status) { // If the API request is successful
+			
+			if (data.data) {
+				usernameUnique = (data.data === -1); // -1 is returned if no match found for the given username was found
+			} else {
+				showToast("#toastNewUserForm", false, "Det ble ikke opprettet forbindelse med databasen", 3000); // Shows toast with error msg
+			}
+		},
+		error: function(data, status) {
+			hideLoader(); // Hides the loading widget
+			console.log("Error writing new user to database. " + data);
+			showToast("#toastNewUserForm", false, "Det oppstod en feil", 3000); // Shows toast with error msg
+		}
+	})).then(function(data, textStatus, jqXHR) {
+
+		if (usernameUnique) {
+			$.ajax({
+				type: "POST",
+				beforeSend: function (request) {
+					request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
+				},
+				url: "../api/seniorUserData.php",
+				data: formData,
+				success: function(data, status) { // If the API request is successful
+					hideLoader(); // Hides the loading widget
+					if (data.data) {
+						$.mobile.back();
+						getData(); // Updates the DOM with new data from db
+						document.getElementById("newUserForm").reset(); // Clears all the input fields in the new user form
+						showToast("#toastMainPage", true, data.status_message, 3000);
+					} else {
+						showToast("#toastNewUserForm", false, data.status_message, 3000); // Shows toast with error msg
+					}
+					
+				},
+				error: function(data, status) {
+					hideLoader(); // Hides the loading widget
+					showToast("#toastNewUserForm", false, data.status_message, 3000); // Shows toast with error msg
+				}
+			});
+		} else {
+			showToast("#toastNewUserForm", false, "Det oppgitte brukernavnet er allerede i bruk.", 3000); // Shows toast with error msg
+			hideLoader(); // Hides the loading widget
+		}
+	});
+}
+
+
+//********************************************************************
 //                   Writes new/updates BI to DB
 //********************************************************************
 function writeNewBI(formData, update) {
