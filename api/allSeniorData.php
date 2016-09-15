@@ -33,12 +33,12 @@
 						$balanceIndexes = getBalanceIdx($tokenUserID, $seniorUserID);
 						$activityIndexes = getActivityIdx($tokenUserID, $seniorUserID);
 						
-						$newestBI = ($balanceIndexes !== null) ? end($balanceIndexes).value : null;
-						$newestAI = ($activityIndexes !== null) ? end($activityIndexes).value : null;
+						$newestBI = ($balanceIndexes !== null) ? end($balanceIndexes)["value"] : null;
+						$newestAI = ($activityIndexes !== null) ? end($activityIndexes)["value"] : null;
 
 						$feedback = null;
 						if ($newestBI !== null && $newestAI !== null) {
-							$feedback = getFeedback($tokenUserID, $seniorUserID, 0, $newestBI, $newestAI);
+							$feedback = getFeedback($tokenUserID, $seniorUserID, $newestBI, $newestAI);
 						}
 
 						$exerciseGroups = getExerciseGroups();
@@ -51,6 +51,7 @@
 							"balanceIndexes" => $balanceIndexes,
 							"feedback" => $feedback,
 							"exerciseGroups" => $exerciseGroups,
+							"newestAI" => $newestAI,
 						];
 
 						deliver_response(200, "Data found", $res);

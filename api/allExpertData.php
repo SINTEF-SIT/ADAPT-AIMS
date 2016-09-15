@@ -47,13 +47,23 @@
 							array_push($seniorUsers, $seniorUser);
 						}
 
-						$feedbackDefault = getFeedbackDefault();
+						$feedbackDefault = [];
+						for ($i=0; $i<=5; $i++) { // Loop to get all default feedback messages of category 0 (AI)
+							array_push($feedbackDefault, getFeedbackDefault(0, $i, 0));
+							array_push($feedbackDefault, getFeedbackDefault(0, $i, 1));
+						}
+						for ($i=-1; $i<=1; $i++) { // Loop to get all default feedback messages of category 1 (BI)
+							array_push($feedbackDefault, getFeedbackDefault(1, $i, null));
+						}
+
+						$feedbackDefaultAll = getAllFeedbackDefault();
 						$exerciseGroups = getExerciseGroups();
 						$settings = getSettings();
 
 						$res = [
 							"seniorUsers" => $seniorUsers,
 							"feedbackDefault" => $feedbackDefault,
+							"feedbackDefaultAll" => $feedbackDefaultAll,
 							"exerciseGroups" => $exerciseGroups,
 							"settings" => $settings,
 						];

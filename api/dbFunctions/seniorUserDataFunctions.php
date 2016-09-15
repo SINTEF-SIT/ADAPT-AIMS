@@ -1,4 +1,37 @@
 <?php
+	function getAllSeniorUserData() {
+		include('inc/db.inc.php');
+
+		if ($stmt = $conn->prepare("SELECT su.*, u.firstName, u.lastName, u.username
+				FROM Users AS u
+				INNER JOIN SeniorUsers AS su ON u.userID = su.userID;")) {
+			$stmt->execute();
+			$result = $stmt->get_result();
+			$stmt->close();
+
+			if (mysqli_num_rows($result) > 0) {
+				$rows = array();
+				while ($row = mysqli_fetch_assoc($result)) {
+					if ($row["firstName"] !== null) $row["firstName"] = decrypt($row["firstName"]);
+					if ($row["lastName"] !== null) $row["lastName"] = decrypt($row["lastName"]);
+					if ($row["username"] !== null) $row["username"] = decrypt($row["username"]);
+					if ($row["address"] !== null) $row["address"] = decrypt($row["address"]);
+					if ($row["zipCode"] !== null) $row["zipCode"] = decrypt($row["zipCode"]);
+					if ($row["city"] !== null) $row["city"] = decrypt($row["city"]);
+					if ($row["email"] !== null) $row["email"] = decrypt($row["email"]);
+					if ($row["phoneNumber"] !== null) $row["phoneNumber"] = decrypt($row["phoneNumber"]);
+					if ($row["birthDate"] !== null) $row["birthDate"] = decrypt($row["birthDate"]);
+					if ($row["comment"] !== null) $row["comment"] = decrypt($row["comment"]);
+					$rows[] = $row;
+				}
+				$conn->close();
+				return $rows;
+			}
+		}
+		$conn->close();
+		return NULL;
+	}
+
 	function getSeniorUserData($tokenUserID, $seniorUserID) {
 		include('inc/db.inc.php');
 

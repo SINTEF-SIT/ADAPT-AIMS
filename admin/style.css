@@ -1,0 +1,13 @@
+#mainPageContent {
+	max-width: 500px;
+	margin: 0 auto;
+	text-align: center;
+}
+
+#SeniorUseresCheckboxesSelectAllOrNone {
+	margin-bottom: 	20px;
+}
+
+#SeniorUseresCheckboxesSelectAllOrNone > a {
+	cursor: pointer;
+}

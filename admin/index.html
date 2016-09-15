@@ -31,23 +31,102 @@
 
 		<!-- Main page -->
 		<div data-role="page" id="main-page">
-			<div data-role="content">
-				<h1>Admin-side</h1>
-			</div>
-
-			<!-- Footer -->
-			<!--
-			<div data-role="footer" data-position="fixed" data-tap-toggle="false">
-				<div data-role="navbar">
-					<ul>
-						<li><a data-icon="grid" class="ui-btn-active ui-state-persist">Oversikt</a></li>
-						<li><a href="#details-page" data-icon="bars" data-transition="none">Mer</a></li>
-						<li><a href="#help-page" data-icon="info" data-transition="none">Hjelp</a></li>
-					</ul>
+			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
+				<h1 id="headerTitleDetailPage">Admin hovedside</h1>
+				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
+					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
 				</div>
+			</div><!-- /header -->
+
+			<div data-role="content" id="mainPageContent">
+				<h1>Admin-side</h1>
+
+				<h2>Ekspertbrukere:</h2>
+
+				<ul data-role="listview" id="expertUsersList" data-inset="true">
+				</ul>
+
+				<br><br>
+				<a onclick="$.mobile.changePage('index.html#new-user-page');" data-role="button" data-icon="plus">Ny ekspertbruker</a>
 			</div>
-			-->
 		</div>
+
+
+
+		<div data-role="page" id="user-detail-page">
+			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
+				<h1 id="headerTitleDetailPage">Detaljer om ekspertbruker</h1>
+				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
+					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
+				</div>
+			</div><!-- /header -->
+
+			<div data-role="content">
+				<h1 id="expertFullName"></h1>
+
+				<form id="editExpertSeniorLinksForm" method="post">
+					<fieldset id="seniorUsersCheckboxGroup" data-role="controlgroup">
+						<legend>Tilknyttede seniorbrukere:</legend>
+						<div id="SeniorUseresCheckboxesSelectAllOrNone">
+							<a id="selectAllSeniorUsers">Velg&nbsp;alle</a> | <a id="selectNoSeniorUsers">Velg&nbsp;ingen</a>
+						</div>
+						<div id="seniorUsersCheckboxes">
+						</div>
+					</fieldset>
+					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right">
+				</form>
+
+				<div id='toastEditExpertSeniorLinks' class="toast">
+					<div class="toast-content">
+						<img id="toastEditExpertSeniorLinksImg" class="toast-icon" src="../placeholder.png"/> <span id="toastEditExpertSeniorLinksText"></span>
+					</div>
+				</div>
+			</div><!-- /content -->
+		</div><!-- /user-detail-page -->
+
+
+
+		<div data-role="page" id="new-user-page">
+			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
+				<h1 id="headerTitleDetailPage">Ny ekspertbruker</h1>
+				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
+					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
+				</div>
+			</div><!-- /header -->
+
+			<div data-role="content">
+
+				<form id="newExpertUserForm" method="post">
+					<div class="ui-field-contain">
+						<label for="inputFieldNewFirstName">Fornavn (*):</label>
+						<input type="text" name="firstName" id="inputFieldNewFirstName" required>
+					</div>
+					
+					<div class="ui-field-contain">
+						<label for="inputFieldNewLastName">Etternavn (*):</label>
+						<input type="text" name="lastName" id="inputFieldNewLastName" required>
+					</div>
+					
+					<div class="ui-field-contain">
+						<label for="inputFieldNewUsername">Brukernavn (*):</label>
+						<input type="text" name="username" id="inputFieldNewUsername" autocomplete="new-username" required>
+					</div>
+					
+					<div class="ui-field-contain">
+						<label for="inputFieldNewPassword">Passord (*):</label>
+						<input type="password" name="password" id="inputFieldNewPassword" autocomplete="new-password" required>
+					</div>
+
+					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right">
+				</form>
+
+				<div id='toastNewExpertUser' class="toast">
+					<div class="toast-content">
+						<img id="toastNewExpertUserImg" class="toast-icon" src="../placeholder.png"/> <span id="toastNewExpertUserText"></span>
+					</div>
+				</div>
+			</div><!-- /content -->
+		</div><!-- /new-user-page -->
 
 	</body>
 </html>

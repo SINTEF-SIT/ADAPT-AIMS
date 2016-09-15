@@ -90,44 +90,45 @@ function initEventListenersDocumentReady() {
 	//            Submit form for storing new balance index
 	//********************************************************************
 	$("#balanceIdxForm").submit(function(e){
-		showLoader(); // Shows the loading widget
+		if ($('#balanceIdxToDatePicker').val() > $('#balanceIdxFromDatePicker').val()) {
+			showLoader(); // Shows the loading widget
 
-		// Fetch the BI form value from the DOM
-		$balanceIdxValue = $('#balanceIdxInputField').val();
+			// Fetch the BI form value from the DOM
+			$balanceIdxValue = $('#balanceIdxInputField').val();
 
-		// Serialize the form data and append the senior user ID
-		formData = $("#balanceIdxForm").serialize();
-		formData += "&userID=" + activeUser.userData.userID;
+			// Serialize the form data and append the senior user ID
+			formData = $("#balanceIdxForm").serialize();
+			formData += "&userID=" + activeUser.userData.userID;
 
-		// Check if a BI value is already registered for the given date
-		var match = null;
-		if (activeUser.balanceIndexes) {
-			for (var i=0; i<activeUser.balanceIndexes.length; i++) {
-				if (activeUser.balanceIndexes[i].timeDataCollected == $("#balanceIdxDatePicker").val()) {
-					match = activeUser.balanceIndexes[i];
+			writeNewBI(formData, false);
+
+			// Check if a BI value is already registered for the given date
+			/*var match = null;
+			if (activeUser.balanceIndexes) {
+				for (var i=0; i<activeUser.balanceIndexes.length; i++) {
+					if (activeUser.balanceIndexes[i].dateFrom == $("#balanceIdxFromDatePicker").val()) {
+						match = activeUser.balanceIndexes[i];
+					}
 				}
 			}
-		}
 
-		if (match == null) {
-			// No conflicting dates. Form data is sent to DB.
-			writeNewBI(formData, false);
+			if (match == null) {
+				// No conflicting dates. Form data is sent to DB.
+				writeNewBI(formData, false);
+			} else {
+				// A match was found for the submitted date in the DB.
+				// Page for confirming overwrite is prepared and displayed.
+				formData += "&balanceIndexID=" + match.balanceIndexID;
+				tempBIFormData = formData;
+				$("#overwriteBIDialogOldValue").html(match.value);
+				$("#overwriteBIDialogDate").html(match.dateFrom);
+				$("#overwriteBIDialogNewValue").html($balanceIdxValue);
+				
+				$.mobile.changePage( "index.html#confirm-overwrite-bi-dialog", { transition: "pop" });
+			}*/
 		} else {
-			// A match was found for the submitted date in the DB.
-			// Page for confirming overwrite is prepared and displayed.
-			formData += "&balanceIndexID=" + match.balanceIndexID;
-			tempBIFormData = formData;
-			$("#overwriteBIDialogOldValue").html(match.value);
-			$("#overwriteBIDialogDate").html(match.timeDataCollected);
-			$("#overwriteBIDialogNewValue").html($balanceIdxValue);
-			
-			$.mobile.changePage( "index.html#confirm-overwrite-bi-dialog", { transition: "pop" });
+			showToast("#toastRegisterDataPage", false, "Til-dato må være etter fra-dato!", 3000); // Shows toast with error msg
 		}
-
-		// Empties the form
-		$('#balanceIdxDatePicker').val("");
-		$('#balanceIdxInputField').val("");
-		$('#balanceIdxInputField').focus();
 
 		return false; // Returns false to stop the default form behaviour
 	});
@@ -138,44 +139,52 @@ function initEventListenersDocumentReady() {
 	//            Submit form for storing new activity index
 	//********************************************************************
 	$("#activityIdxForm").submit(function(e){
-		showLoader(); // Shows the loading widget
+		if ($('#activityIdxToDatePicker').val() > $('#activityIdxFromDatePicker').val()) {
+			showLoader(); // Shows the loading widget
 
-		// Fetch the AI form value from the DOM
-		$activityIdxValue = $('#activityIdxInputField').val();
+			// Fetch the AI form value from the DOM
+			$activityIdxValue = $('#activityIdxInputField').val();
 
-		// Serialize the form data and append the senior user ID
-		formData = $("#activityIdxForm").serialize();
-		formData += "&userID=" + activeUser.userData.userID;
-		
-		// Check if an AI value is already registered for the given date
-		var match = null;
-		if (activeUser.activityIndexes) {
-			for (var i=0; i<activeUser.activityIndexes.length; i++) {
-				if (activeUser.activityIndexes[i].timeDataCollected == $("#activityIdxDatePicker").val()) {
-					match = activeUser.activityIndexes[i];
+			// Serialize the form data and append the senior user ID
+			formData = $("#activityIdxForm").serialize();
+			formData += "&userID=" + activeUser.userData.userID;
+
+			writeNewAI(formData, false);
+			
+			// Check if an AI value is already registered for the given date
+			/*var match = null;
+			if (activeUser.activityIndexes) {
+				for (var i=0; i<activeUser.activityIndexes.length; i++) {
+					if (activeUser.activityIndexes[i].dateFrom == $("#activityIdxFromDatePicker").val()) {
+						match = activeUser.activityIndexes[i];
+					}
 				}
 			}
-		}
 
-		if (match == null) {
-			// No conflicting dates. Form data is sent to DB.
-			writeNewAI(formData, false);
-		} else {
-			// A match was found for the submitted date in the DB.
-			// Page for confirming overwrite is prepared and displayed.
-			formData += "&activityIndexID=" + match.activityIndexID;
-			tempAIFormData = formData;
-			$("#overwriteAIDialogOldValue").html(match.value);
-			$("#overwriteAIDialogDate").html(match.timeDataCollected);
-			$("#overwriteAIDialogNewValue").html($activityIdxValue);
+			if (match == null) {
+				// No conflicting dates. Form data is sent to DB.
+				writeNewAI(formData, false);
+			} else {
+				// A match was found for the submitted date in the DB.
+				// Page for confirming overwrite is prepared and displayed.
+				formData += "&activityIndexID=" + match.activityIndexID;
+				tempAIFormData = formData;
+				$("#overwriteAIDialogOldValue").html(match.value);
+				$("#overwriteAIDialogDate").html(match.dateFrom);
+				$("#overwriteAIDialogNewValue").html($activityIdxValue);
+				
+				$.mobile.changePage( "index.html#confirm-overwrite-ai-dialog", { transition: "pop" });
+			}*/
 			
-			$.mobile.changePage( "index.html#confirm-overwrite-ai-dialog", { transition: "pop" });
+			// Resets the form
+			$('#activityIdxFromDatePicker').attr('readonly', 'readonly'); // Disables the from datepicker in case this was the first AI registered
+			$("#activityIdxFromDatePicker").val($('#activityIdxToDatePicker').val());
+			$('#activityIdxToDatePicker').val("");
+			$('#activityIdxInputField').val("");
+			$('#activityIdxInputField').focus();
+		} else {
+			showToast("#toastRegisterDataPage", false, "Til-dato må være etter fra-dato!", 3000); // Shows toast with error msg
 		}
-		
-		// Empties the form
-		$('#activityIdxDatePicker').val("");
-		$('#activityIdxInputField').val("");
-		$('#activityIdxInputField').focus();
 
 		return false; // Returns false to stop the default form behaviour
 	});
@@ -280,8 +289,21 @@ function initEventListenersDocumentReady() {
 							if (data.data) {
 								activeUser.userData.firstName = $("#inputFieldEditFirstName").val();
 								activeUser.userData.lastName = $("#inputFieldEditLastName").val();
+								activeUser.userData.username = $("#inputFieldEditUsername").val();
+								activeUser.userData.address = $("#inputFieldEditAddress").val();
+								activeUser.userData.zipCode = $("#inputFieldEditZipCode").val();
+								activeUser.userData.city = $("#inputFieldEditCity").val();
+								activeUser.userData.email = $("#inputFieldEditEmail").val();
+								activeUser.userData.phoneNumber = $("#inputFieldEditPhone").val();
+								activeUser.userData.weight = $("#inputFieldEditWeight").val();
+								activeUser.userData.height = $("#inputFieldEditHeight").val();
+								activeUser.userData.numFalls3Mths = $("#inputFieldEditNumFalls3Mths").val();
+								activeUser.userData.numFalls12Mths = $("#inputFieldEditNumFalls12Mths").val();
+								activeUser.userData.AIChartLineValue = $("#inputFieldEditAIChartLineValue").val();
+								activeUser.userData.comment = $("#inputFieldEditComment").val();
+								activeUser.userData.usesWalkingAid = $("#inputFieldEditUsesWalkingAid").val();
+								activeUser.userData.livingIndependently = $("#inputFieldEditLivingIndependently").val();
 
-								// TODO: function below will not do anything. replace with direct DOM manipulation
 								setActiveUser(activeUser.userData.userID, false); // Sets the active user, which in turn updates the DOM with new user data
 								updateUsersTableRow(); // Updates the values in the row in the user overview table corresponding to the active user
 

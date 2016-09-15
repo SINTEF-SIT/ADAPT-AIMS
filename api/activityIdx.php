@@ -27,11 +27,11 @@
 
 			case 'POST':
 				// Write new activity index to DB
-				if (isset($_POST["userID"]) && isset($_POST["timeDataCollected"]) && isset($_POST["activityIdx"])) {
+				if (isset($_POST["userID"]) && isset($_POST["dateFrom"]) && isset($_POST["dateTo"]) && isset($_POST["activityIdx"])) {
 					$dbWriteSuccess = postActivityIdx($tokenUserID);
 
 					if ($dbWriteSuccess) {
-						deliver_response(200, "Verdien " . $_POST["activityIdx"] . " for bruker-ID=" . $_POST["userID"] . " på dato " . $_POST["timeDataCollected"] . " ble lagret i databasen.", true);
+						deliver_response(200, "Verdien " . $_POST["activityIdx"] . " for bruker-ID=" . $_POST["userID"] . " på dato " . $_POST["dateFrom"] . " ble lagret i databasen.", true);
 					} else {
 						deliver_response(200, "Det ble ikke opprettet forbindelse med databasen.", false);
 					}

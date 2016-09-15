@@ -318,6 +318,32 @@ body {
 	margin-bottom: 0;
 }
 
+#suggestedExercises {
+	max-width: 1200px;
+	text-align: justify;
+	-ms-text-justify: distribute-all-lines;
+	text-justify: distribute-all-lines;
+}
+
+.suggestedExerciseWrapper {
+	max-width: 500px;
+	height: inherit;
+	margin: 20px !important;
+	padding: 10px !important;
+	vertical-align: top;
+	display: inline-block;
+	*display: inline;
+	zoom: 1;
+	text-align: center;
+}
+
+.stretch {
+    width: 100%;
+    display: inline-block;
+    font-size: 0;
+    line-height: 0
+}
+
 
 
 /***************************
@@ -394,4 +420,5 @@ body {
 .feedbackWell {
 	height: inherit;
 	padding: 10px !important;
+	font-size: 22px;
 }

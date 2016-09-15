@@ -57,7 +57,7 @@
 					
 					/*$userID = $r["userID"];
 
-					if ($stmt2 = $conn->prepare("SELECT value FROM BalanceIndexes WHERE userID=? ORDER BY timeDataCollected DESC LIMIT 1;")) {
+					if ($stmt2 = $conn->prepare("SELECT value FROM BalanceIndexes WHERE userID=? ORDER BY dateFrom DESC LIMIT 1;")) {
 						$stmt2->bind_param("i", $userID);
 						$stmt2->execute();
 						$balanceIdxResult = $stmt2->get_result();
@@ -74,7 +74,7 @@
 						return NULL;
 					}
 
-					if ($stmt3 = $conn->prepare("SELECT value FROM ActivityIndexes WHERE userID=? ORDER BY timeDataCollected DESC LIMIT 1;")) {
+					if ($stmt3 = $conn->prepare("SELECT value FROM ActivityIndexes WHERE userID=? ORDER BY dateFrom DESC LIMIT 1;")) {
 						$stmt3->bind_param("i", $userID);
 						$stmt3->execute();
 						$activityIdxResult = $stmt3->get_result();

@@ -19,6 +19,7 @@ function getData() {
 				seniorUsers = data.data.seniorUsers;
 				exerciseGroups = data.data.exerciseGroups;
 				feedbackDefault = data.data.feedbackDefault;
+				feedbackDefaultAll = data.data.feedbackDefaultAll;
 
 				if (seniorUsers !== null) { // Checks that the API call returned data
 					
@@ -86,17 +87,33 @@ function writeNewBI(formData, update) {
 		success: function(data, status) { // If the API request is successful
 			hideLoader(); // Hides the loading widget
 			if (data.data) {
-				showToast("#toastBalanceIdxManualForm", true, data.status_message, 3000); // Shows toast with success msg
+				showToast("#toastRegisterDataPage", true, data.status_message, 3000); // Shows toast with success msg
+
+				var newBI = {
+					dateFrom: $('#balanceIdxFromDatePicker').val(),
+					dateTo: $('#balanceIdxToDatePicker').val(),
+					value: parseFloat($('#balanceIdxInputField').val())
+				};
+				activeUser.balanceIndexes.push(newBI);
+				activeUser.userData.balanceIdx = newBI.value;
+
+				setActiveUser(activeUser.userData.userID, false); // Sets the active user, which in turn updates the active user data and charts
+				updateUsersTableRow(); // Updates the values in the row in the user overview table corresponding to the active user
+
 			} else {
-				showToast("#toastBalanceIdxManualForm", false, data.status_message, 3000); // Shows toast with error msg
+				showToast("#toastRegisterDataPage", false, data.status_message, 3000); // Shows toast with error msg
 			}
-			
-			setActiveUser(activeUser.userData.userID, false); // Sets the active user, which in turn updates the active user data and charts
-			updateUsersTableRow(); // Updates the values in the row in the user overview table corresponding to the active user
+
+			// Resets the form
+			$('#balanceIdxFromDatePicker').attr('readonly', 'readonly'); // Disables the from datepicker in case this was the first BI registered
+			$("#balanceIdxFromDatePicker").val($('#balanceIdxToDatePicker').val());
+			$('#balanceIdxToDatePicker').val("");
+			$('#balanceIdxInputField').val("");
+			$('#balanceIdxInputField').focus();
 		},
 		error: function(data, status) {
 			hideLoader(); // Hides the loading widget
-			showToast("#toastBalanceIdxManualForm", false, data.status_message, 3000); // Shows toast with error msg
+			showToast("#toastRegisterDataPage", false, data.status_message, 3000); // Shows toast with error msg
 		}
 	});
 }
@@ -121,17 +138,25 @@ function writeNewAI(formData, update) {
 		success: function(data, status) { // If the API request is successful
 			hideLoader(); // Hides the loading widget
 			if (data.data) {
-				showToast("#toastActivityIdxManualForm", true, data.status_message, 3000); // Shows toast with success msg
+				showToast("#toastRegisterDataPage", true, data.status_message, 3000); // Shows toast with success msg
+
+				var newAI = {
+					dateFrom: $('#activityIdxFromDatePicker').val(),
+					dateTo: $('#activityIdxToDatePicker').val(),
+					value: parseFloat($('#activityIdxInputField').val())
+				};
+				activeUser.activityIndexes.push(newAI);
+				activeUser.userData.activityIdx = newAI.value;
+
+				setActiveUser(activeUser.userData.userID, false); // Sets the active user, which in turn updates the active user data and charts
+				updateUsersTableRow(); // Updates the values in the row in the user overview table corresponding to the active user
 			} else {
-				showToast("#toastActivityIdxManualForm", false, data.status_message, 3000); // Shows toast with error msg
+				showToast("#toastRegisterDataPage", false, data.status_message, 3000); // Shows toast with error msg
 			}
-			
-			setActiveUser(activeUser.userData.userID, false); // Sets the active user, which in turn updates the active user data and charts
-			updateUsersTableRow(); // Updates the values in the row in the user overview table corresponding to the active user
 		},
 		error: function(data, status) {
 			hideLoader(); // Hides the loading widget
-			showToast("#toastActivityIdxManualForm", false, data.status_message, 3000); // Shows toast with error msg
+			showToast("#toastRegisterDataPage", false, data.status_message, 3000); // Shows toast with error msg
 		}
 	});
 }
@@ -324,15 +349,30 @@ function submitDefaultFeedbackMsg() {
 	formData = $("#registerDefaultFeedbackForm").serialize(); // Serialize the form data
 
 	$.ajax({
-		type: "PUT",
+		type: "POST",
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 		},
 		url: "../api/feedbackDefault.php",
 		data: formData,
 		success: function(data, status) { // If the API request is successful
+			if (data.data) {
+				showToast("#toastDefaultFeedbackForm", true, data.status_message, 3000); // Shows toast with success msg
+				var changedFeedback = data.data;
+				for (var i=0; i<changedFeedback.length; i++) {
+					feedbackDefaultAll.push(changedFeedback[i].newRecord);
+					for (var j=0; j<feedbackDefault.length; j++) {
+						if (changedFeedback[i].oldRecord.msgID === feedbackDefault[j].msgID) {
+							feedbackDefault[j] = changedFeedback[i].newRecord;
+							break;
+						}
+					}
+				}
+				populateDefaultFeedbackTables();
+			} else {
+				showToast("#toastDefaultFeedbackForm", false, data.status_message, 3000); // Shows toast with error msg
+			}
 			hideLoader(); // Hides the loading widget
-			showToast("#toastDefaultFeedbackForm", true, data.status_message, 3000); // Shows toast with success msg
 		},
 		error: function(data, status) {
 			hideLoader(); // Hides the loading widget

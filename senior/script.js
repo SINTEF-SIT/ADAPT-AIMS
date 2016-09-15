@@ -139,7 +139,7 @@ $(document).ready(function() {
 
 				// Newest change time
 				// Calculates the string to display to tell how long ago the information was last updated, and updates the DOM
-				var updateTimeDiffText = setUpdateTimeDiff(data.data.newestChangeTime.timeCalculated);
+				var updateTimeDiffText = setUpdateTimeDiff(data.data.newestChangeTime.timeUpdated);
 
 
 				// BI chart
@@ -247,7 +247,7 @@ $(document).ready(function() {
 
 
 
-function drawBIChart(balanceChartDataJSON) {
+function drawBIChart(balanceChartDataJSON, startTime, endTime) {
 	var maxBalanceChartRange = 1000 * 60 * 60 * 24 * 90; // The maximum range of the x axis in milliseconds
 
 	var balanceChartData = [];
@@ -258,7 +258,7 @@ function drawBIChart(balanceChartDataJSON) {
 			// to get a flat line instead of a straight, diagonal line between the points.
 			// Needs to be commented out if the chart is switched to a column chart.
 			var dataPointPre = [];
-			var datePre = moment.tz(balanceChartDataJSON[i].timeDataCollected, "UTC");
+			var datePre = moment.tz(balanceChartDataJSON[i].dateFrom, "UTC");
 			datePre.seconds(-1);
 			dataPointPre.push(datePre.valueOf());
 			dataPointPre.push(parseFloat(balanceChartDataJSON[i-1].value));
@@ -268,17 +268,17 @@ function drawBIChart(balanceChartDataJSON) {
 		var bi = parseFloat(balanceChartDataJSON[i].value);
 
 		var dataPoint = [];
-		var date = moment.tz(balanceChartDataJSON[i].timeDataCollected, "UTC");
+		var date = moment.tz(balanceChartDataJSON[i].dateFrom, "UTC");
 		dataPoint.push(date.valueOf());
 		dataPoint.push(bi);
 		balanceChartData.push(dataPoint);
 
-		// If last data point from db, add a final data point 24 hours after
-		// the last recorded value to make the last change visible in the chart.
+		// If last data point from db, add the dateTo value as the final data point.
 		if (i+1 == balanceChartDataJSON.length) {
 			var dataPointFinal = [];
-			dataPointFinal.push(date.valueOf() + (1000 * 60 * 60 * 24));
-			dataPointFinal.push(parseFloat(balanceChartDataJSON[i].value));
+			var dateFinal = moment.tz(balanceChartDataJSON[i].dateTo, "UTC");
+			dataPointFinal.push(dateFinal.valueOf());
+			dataPointFinal.push(bi);
 			balanceChartData.push(dataPointFinal);
 
 			currentBalanceIdx = balanceChartDataJSON[i].value; // Store the last data value as the current BI
@@ -295,15 +295,14 @@ function drawBIChart(balanceChartDataJSON) {
 		}
 	}
 
-	var xAxisMinValue = null;
-	if (balanceChartData[balanceChartData.length-1][0] - balanceChartData[0][0] > maxBalanceChartRange) {
-		xAxisMinValue = moment().valueOf() - maxBalanceChartRange;
+	if (startTime === null) {
+		startTime = balanceChartData[0][0];
+	}
+	if (endTime === null) {
+		endTIme = balanceChartData[balanceChartData.length-1][0];
 	}
 
 	var yAxisLabels = ["Lav", "Medium", "Høy"];
-	
-	colorMaxBI = "#" + getBIChartData(currentBalanceIdx).color;
-	colorMidBI = "#" + getBIChartData(currentBalanceIdx/2).color;
 	
 	balanceChartOptions = {
 		chart: {
@@ -319,8 +318,9 @@ function drawBIChart(balanceChartDataJSON) {
 		},
 		xAxis: {
 			type: 'datetime',
-			//maxTickInterval: 7 * 24 * 3600 * 1000, // How frequent a tick is displayed on the axis (set in milliseconds)
-			min: xAxisMinValue
+			minTickInterval: 24 * 3600 * 1000,
+			min: startTime,
+			max: endTime
 		},
 		yAxis: {
 			max: 1, // The ceiling value of the y-axis.
@@ -380,8 +380,8 @@ function drawBIChart(balanceChartDataJSON) {
 			threshold: -1,
 			fillOpacity: 1,
 			lineWidth: 0,
-    		enableMouseTracking: false,
-    		data: balanceChartData
+			enableMouseTracking: false,
+			data: balanceChartData
 		}]
 	};
 
@@ -391,25 +391,52 @@ function drawBIChart(balanceChartDataJSON) {
 }
 
 
-function drawAIChart(activityChartDataJSON) {
+function drawAIChart(activityChartDataJSON, startTime, endTime) {
 	var activityChartData = [];
 	for (var i=0; i<activityChartDataJSON.length; i++) {
+		if (i !== 0) {
+			// Draws an extra data point right before each data point (except the first) 
+			// to get a flat line instead of a straight, diagonal line between the points.
+			// Needs to be commented out if the chart is switched to a column chart.
+			var dataPointPre = [];
+			var datePre = moment.tz(activityChartDataJSON[i].dateFrom, "UTC");
+			datePre.seconds(-1);
+			dataPointPre.push(datePre.valueOf());
+			dataPointPre.push(parseFloat(activityChartDataJSON[i-1].value));
+			activityChartData.push(dataPointPre);
+		}
+
 		var dataPoint = [];
-		var date = moment.tz(activityChartDataJSON[i].timeDataCollected, "UTC");
+		var date = moment.tz(activityChartDataJSON[i].dateFrom, "UTC");
 		dataPoint.push(date.valueOf());
 		dataPoint.push(activityChartDataJSON[i].value);
 		activityChartData.push(dataPoint);
 
-		if (i+1 == activityChartDataJSON.length) {
+		// If last data point from db, add the dateTo value as the final data point.
+		if (i+1 === activityChartDataJSON.length) {
+			var dataPointFinal = [];
+			var dateFinal = moment.tz(activityChartDataJSON[i].dateTo, "UTC");
+			dataPointFinal.push(dateFinal.valueOf());
+			dataPointFinal.push(activityChartDataJSON[i].value);
+			activityChartData.push(dataPointFinal);
+
 			currentActivityIdx = activityChartDataJSON[i].value;
 		}
+	}
+
+	if (startTime === null) {
+		startTime = activityChartData[0][0];
+	}
+	if (endTime === null) {
+		endTIme = activityChartData[activityChartData.length-1][0];
 	}
 
 	activityChartOptions = {
 		chart: {
 			renderTo: 'activityChart', // ID of div where the chart is to be rendered
-			type: 'column', // Chart type. Can e.g. be set to 'column' or 'area'
+			type: 'area', // Chart type. Can e.g. be set to 'column' or 'area'
 			//zoomType: 'x', // Uncomment to make the chart zoomable along the x-axis
+			marginLeft: 100, // To align with BI chart
 			backgroundColor: null,
 			reflow: true
 		},
@@ -419,8 +446,9 @@ function drawAIChart(activityChartDataJSON) {
 		},
 		xAxis: {
 			type: 'datetime',
-			tickInterval: 24 * 3600 * 1000, // How frequent a tick is displayed on the axis (set in milliseconds)
-			min: new Date().getTime() - (31 * 24 * 3600 * 1000) // Set start of x-axis to 1 month ago
+			minTickInterval: 24 * 3600 * 1000,
+			min: startTime,
+			max: endTime
 		},
 		yAxis: {
 			title: {
@@ -448,7 +476,11 @@ function drawAIChart(activityChartDataJSON) {
 		},
 		plotOptions: {
 			series: {
-				//pointWidth: 20
+				pointWidth: 40,
+				enableMouseTracking: false,
+				marker: {
+					enabled: false
+				}
 			}
 		},
 		legend: {
@@ -458,19 +490,23 @@ function drawAIChart(activityChartDataJSON) {
 			enabled: false // Hides the Highcharts credits
 		},
 		tooltip: {
-			headerFormat: '',
-			pointFormat: '<b>{point.x:%A %e. %B}</b> ble din aktivitetsindeks målt til <b>{point.y}</b>.<br />{point.tooltipText}'
+			/*headerFormat: '',
+			pointFormat: '<b>{point.x:%A %e. %B}</b> ble din aktivitetsindeks målt til <b>{point.y}</b>.<br />{point.tooltipText}'*/
+			enabled: false
 		},
-		series: [{}]
+		series: [{
+			fillOpacity: 1,
+			lineWidth: 0,
+			enableMouseTracking: false,
+			data: activityChartData
+		}]
 	};
-
-	activityChartOptions.series[0].data = activityChartData;
 
 	activityChart = new Highcharts.Chart(activityChartOptions);
 
-	for (var i=0; i<activityChart.series[0].data.length; i++) {
+	/*for (var i=0; i<activityChart.series[0].data.length; i++) {
 		activityChart.series[0].data[i].tooltipText = activityChartTooltips[activityChartDataJSON[i].value];
-	}
+	}*/
 }
 
 function writeFeedback() {
@@ -479,11 +515,9 @@ function writeFeedback() {
 		
 		var balanceExercise = getExercise(BIFeedbackMsg.balanceExerciseID);
 		var strengthExercise = getExercise(BIFeedbackMsg.strengthExerciseID);
-		var htmlBalanceExercise = "<a onclick='displayExercise(" + balanceExercise.exerciseID + ")' data-role='button'>" + balanceExercise.title + "</a>";
-		var htmlStrengthExercise = "<a onclick='displayExercise(" + strengthExercise.exerciseID + ")' data-role='button'>" + strengthExercise.title + "</a>";
-
-		$("#balanceExerciceWrapper").append(htmlBalanceExercise);
-		$("#strengthExerciceWrapper").append(htmlStrengthExercise);
+		
+		generateExerciseHTML(balanceExercise, "balanceExercise");
+		generateExerciseHTML(strengthExercise, "strengthExercise");
 	}
 
 	if (AIFeedbackMsgSitting !== null) {
@@ -514,9 +548,9 @@ function setBIImg() {
 }
 
 
-function setUpdateTimeDiff(timeCalculated) {
+function setUpdateTimeDiff(timeUpdated) {
 	// Calculates a string saying how long ago the given timestamp is from the current time.
-	var timestamp = moment.tz(timeCalculated, "UTC");
+	var timestamp = moment.tz(timeUpdated, "UTC");
 	$updateTimeDiffText = "";
 	$milliDiff = moment().valueOf() - timestamp.valueOf();
 	if (isNaN($milliDiff)) {
@@ -610,17 +644,17 @@ function closeVideoPopup() {
 function displayExercise(exerciseID) {
 	var exercise = getExercise(exerciseID);
 	if (exercise !== null) {
-		generateExerciseHTML(exercise);
+		generateExerciseHTML(exercise, "exercise");
 		$.mobile.changePage( "index.html#exercise-info-page", { transition: "pop" });
 	}
 }
 
-function generateExerciseHTML(data) {
+function generateExerciseHTML(data, idSelectorStart) {
 	// Builds a HTML string for an exercise to be inserted into the DOM
-	$("#exerciseHeader").html(data.title);
+	$("#" + idSelectorStart + "Header").html(data.title);
 
 	if (data.imgFilename !== null && data.imgFilename !== "") {
-		$("#exerciseImg").attr("src","img/exercises/" + data.imgFilename);
+		$("#" + idSelectorStart + "Img").attr("src","img/exercises/" + data.imgFilename);
 	}
 
 	var html = "";
@@ -645,7 +679,7 @@ function generateExerciseHTML(data) {
 		html += "<strong>" + data.textPostListBold + "</strong>";
 	}
 
-	$("#exerciseDesc").html(html);
+	$("#" + idSelectorStart + "Desc").html(html);
 }
 
 

@@ -14,6 +14,7 @@ var token; // The JWT used for communicating with the API
 
 var exerciseGroups; // Exercise groups and their exercises that can be recommended to the senior users
 var feedbackDefault; // The default AI and BI feedback messages, with links to exercises
+var feedbackDefaultAll; // feedbackDefault + older messages
 var BIThresholdUpper; // The upper threshold value for the 'medium' or 'yellow' area for BI
 var BIThresholdLower; // The lower threshold value for the 'medium' or 'yellow' area for BI
 
@@ -28,7 +29,6 @@ var balanceChart = null;
 var activityChart = null;
 var balanceChartOptions = null;
 var activityChartOptions = null;
-
 
 
 //********************************************************************
@@ -114,13 +114,14 @@ function generateExerciseDropdownOptionHTML(indexSection, selectedID, exerciseTy
 // Stores which senior user is currently active, and writes to the DOM   
 //********************************************************************
 function setActiveUser(userID, changePage) {
-	activeUser = null;
 
 	// Don't update DOM if the DOM already contains the data for the requested user
 	if (changePage && activeUser !== null && activeUser.userData.userID == userID) {
 		$.mobile.changePage("index.html#user-detail-page");
 		return;
 	}
+
+	activeUser = null;
 
 	balanceChart = null;
 	activityChart = null;
@@ -152,7 +153,27 @@ function setActiveUser(userID, changePage) {
 		$.mobile.changePage("index.html#user-detail-page");
 	}
 
-	activeUser = getSeniorUser(userID);
+
+	activeUser = getSeniorUser(userID); // Stores the data about the selected user in the activeUser variable
+
+
+	// Sets default values for datepickers on register data page
+	$("#balanceIdxToDatePicker").val(moment().format('YYYY-MM-DD')); // Sets current date
+	$("#activityIdxToDatePicker").val(moment().format('YYYY-MM-DD')); // Sets current date
+
+	if (activeUser.balanceIndexes !== null) {
+		$('#balanceIdxFromDatePicker').attr('readonly', 'readonly');
+		$('#balanceIdxFromDatePicker').val(activeUser.balanceIndexes[activeUser.balanceIndexes.length-1].dateTo);
+	} else {
+		$('#balanceIdxFromDatePicker').val(moment().subtract(7, 'days').format('YYYY-MM-DD')); // 7 days ago
+	}
+	if (activeUser.activityIndexes !== null) {
+		$('#activityIdxFromDatePicker').attr('readonly', 'readonly');
+		$('#activityIdxFromDatePicker').val(activeUser.activityIndexes[activeUser.activityIndexes.length-1].dateTo);
+
+	} else {
+		$('#balanceIdxFromDatePicker').val(moment().subtract(7, 'days').format('YYYY-MM-DD')); // 7 days ago
+	}
 	
 	// Adds change listeners to the flip switches. Functions are found in eventListeners.js
 	$("#flipPersonalizedBI").on("change", BIFlipChanged);
@@ -161,8 +182,31 @@ function setActiveUser(userID, changePage) {
 
 	populateCustomFeedbackTables(); // Populated custom feedback tables in DOM
 
-	drawBIChart();
-	drawAIChart();
+	if (activeUser.activityIndexes === null || activeUser.balanceIndexes === null) {
+		drawBIChart(null, null);
+		drawAIChart(null, null);
+	} else {
+		// Set equal x-axis interval for both charts
+		var maxChartInterval = 1000 * 60 * 60 * 24 * 30.4 * 2;
+
+		var AIFirst = moment.tz(activeUser.activityIndexes[0].dateFrom, "UTC").valueOf();
+		var BIFirst = moment.tz(activeUser.balanceIndexes[0].dateFrom, "UTC").valueOf();
+		var AILast = moment.tz(activeUser.activityIndexes[activeUser.activityIndexes.length-1].dateTo, "UTC").valueOf();
+		var BILast = moment.tz(activeUser.balanceIndexes[activeUser.balanceIndexes.length-1].dateTo, "UTC").valueOf();
+
+		var chartsEndTime = (AILast > BILast) ? AILast : BILast;
+
+		var AISpan = chartsEndTime - AIFirst;
+		var BISpan = chartsEndTime - BIFirst;
+
+		var chartsInterval = (AISpan > BISpan) ? AISpan : BISpan; // Find the longest interval of the two charts
+		// If the chart data interval is longer than the max interval, use the max interval
+		var chartsStartTime = (chartsInterval > maxChartInterval) ? chartsEndTime-maxChartInterval : chartsEndTime-chartsInterval;
+
+		// Draw the charts
+		drawBIChart(chartsStartTime, chartsEndTime);
+		drawAIChart(chartsStartTime, chartsEndTime);
+	}
 
 	if (activeUser.balanceIndexes) {
 		// Calculates whether the current BI value for this user is classified as low, medium or high
@@ -181,7 +225,7 @@ function setActiveUser(userID, changePage) {
 	updateDOM(); // Populates the user detail and edit user data pages with data from activeUser
 }
 
-
+/*
 //********************************************************************
 //  Called from the confirm dialog for overwriting existing BI value
 //********************************************************************
@@ -197,7 +241,7 @@ function updateAI(doUpdate) {
 	if (doUpdate) writeNewAI(tempAIFormData, true);
 	tempAIFormData = null;
 }
-
+*/
 
 //********************************************************************
 //				Stores BI, AI (sitting) and AI (walking) 

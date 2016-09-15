@@ -1,9 +1,24 @@
 $(document).ready(function() {
 	if (Modernizr.localstorage) {
-		console.log("localstorage is supported!");
+		//console.log("localstorage is supported!");
 	} else {
 		console.log("localstorage not supported");
 		showToast("#toastloginForm", false, "LocalStorage støttes ikke. Prøv å bruke en annen nettleser.", null);
+	}
+
+	// Redirect to correct page if user is already logged in
+	if (localStorage.token && localStorage.userid) {
+		if (localStorage.userid === 0) { // Admin user
+			window.location.replace("admin/index.html"); // Redirect to admin page
+		} else {
+			if (localStorage.firstname && localStorage.lastname && localStorage.username && localStorage.isexpert !== null) {
+				if (localStorage.isexpert === "true") {
+					window.location.href = "expert/index.html";
+				} else {
+					window.location.href = "senior/index.html";
+				}
+			}
+		}
 	}
 
 	// Listens for the submit of the login form

@@ -116,6 +116,8 @@ function populateDefaultFeedbackTables() {
 		// Inserts the generated HTML into the DOM
 		$("#AIDefaultFeedbackTable tbody").append(htmlAI);
 		$("#BIDefaultFeedbackTable tbody").append(htmlBI);
+
+		$("#registerDefaultFeedbackForm").trigger("create");
 	} else {
 		console.log("No feedback messages returned from API.");
 	}

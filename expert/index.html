@@ -202,7 +202,7 @@
 				</div>
 				
 			</div><!-- /content -->
-		</div><!-- /user-detail-apge -->
+		</div><!-- /user-detail-page -->
 
 
 		<!--********************************************************
@@ -218,39 +218,58 @@
 
 			<div data-role="content">
 
+				<h1>Register BI:</h1>
+
 				<form id="balanceIdxForm" method="post">
-					
-					<label for="balanceIdxDatePicker">Dato:</label>
-					<input type="date" name="timeDataCollected" id="balanceIdxDatePicker" required>
+					<div class="ui-grid-b">
+						<div class="ui-block-a">
+							<label for="balanceIdxFromDatePicker">Fra-dato:</label>
+							<input type="date" name="dateFrom" id="balanceIdxFromDatePicker" required>
+						</div>
 
-					<label for="balanceIdxInputField">Balance index:</label>
-					<input type="number" name="balanceIdx" id="balanceIdxInputField" min="-1" max="1" step="0.1" required>
-					
-					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
+						<div class="ui-block-b">
+							<label for="balanceIdxToDatePicker">Til-dato:</label>
+							<input type="date" name="dateTo" id="balanceIdxToDatePicker" required>
+						</div>
 
-					<div id='toastBalanceIdxManualForm' class="toast">
-						<div class="toast-content">
-							<img id="toastBalanceIdxManualFormImg" class="toast-icon" src="../placeholder.png"/> <span id="toastBalanceIdxManualFormText"></span>
+						<div class="ui-block-c">
+							<label for="balanceIdxInputField">BI:</label>
+							<input type="number" name="balanceIdx" id="balanceIdxInputField" min="-1" max="1" step="0.1" required>
 						</div>
 					</div>
+					
+					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 				</form>
+
+				<br><br>
+				<h1>Register AI:</h1>
 
 				<form id="activityIdxForm" method="post">
-					
-					<label for="activityIdxDatePicker">Dato:</label>
-					<input type="date" name="timeDataCollected" id="activityIdxDatePicker" required>
+					<div class="ui-grid-b">
+						<div class="ui-block-a">
+							<label for="activityIdxFromDatePicker">Fra-dato:</label>
+							<input type="date" name="dateFrom" id="activityIdxFromDatePicker" required>
+						</div>
 
-					<label for="activityIdxInputField">Activity index:</label>
-					<input type="number" name="activityIdx" id="activityIdxInputField" min="0" max="5" step="0.5" required>
-					
-					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
+						<div class="ui-block-b">
+							<label for="activityIdxToDatePicker">Til-dato:</label>
+							<input type="date" name="dateTo" id="activityIdxToDatePicker" required>
+						</div>
 
-					<div id='toastActivityIdxManualForm' class="toast">
-						<div class="toast-content">
-							<img id="toastActivityIdxManualFormImg" class="toast-icon" src="../placeholder.png"/> <span id="toastActivityIdxManualFormText"></span>
+						<div class="ui-block-c">
+							<label for="activityIdxInputField">AI:</label>
+							<input type="number" name="activityIdx" id="activityIdxInputField" min="0" max="5" step="0.5" required>
 						</div>
 					</div>
+
+					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
 				</form>
+
+				<div id='toastRegisterDataPage' class="toast">
+					<div class="toast-content">
+						<img id="toastRegisterDataPageImg" class="toast-icon" src="../placeholder.png"/> <span id="toastRegisterDataPageText"></span>
+					</div>
+				</div>
 
 			</div><!-- /content -->
 		</div><!-- /register-data-page -->
@@ -259,7 +278,7 @@
 		<!--********************************************************
 							CONFIRM OVERWRITE BI DIALOG
 			******************************************************** -->
-		<div data-role="page" data-dialog="true" data-close-btn="right" id="confirm-overwrite-bi-dialog">
+		<!--<div data-role="page" data-dialog="true" data-close-btn="right" id="confirm-overwrite-bi-dialog">
 			<div data-role="header" data-theme="b">
 				<h1>Bekreft ny BI</h1>
 			</div>
@@ -270,13 +289,13 @@
 				<a id="confirmOverwriteBIBtn" onclick="updateBI(true);" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Ja, lagre ny verdi</a>
 				<a onclick="updateBI(false);" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Nei, avbryt</a>
 			</div>
-		</div> <!-- /confirm overwrite bi dialog -->
+		</div>--> <!-- /confirm overwrite bi dialog -->
 
 
 		<!--********************************************************
 							CONFIRM OVERWRITE AI DIALOG
 			******************************************************** -->
-		<div data-role="page" data-dialog="true" data-close-btn="right" id="confirm-overwrite-ai-dialog">
+		<!--<div data-role="page" data-dialog="true" data-close-btn="right" id="confirm-overwrite-ai-dialog">
 			<div data-role="header" data-theme="b">
 				<h1>Bekreft ny AI</h1>
 			</div>
@@ -287,7 +306,7 @@
 				<a id="confirmOverwriteAIBtn" onclick="updateAI(true);" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Ja, lagre ny verdi</a>
 				<a onclick="updateAI(false);" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Nei, avbryt</a>
 			</div>
-		</div> <!-- /confirm overwrite ai dialog -->
+		</div>--> <!-- /confirm overwrite ai dialog -->
 
 
 		<!--********************************************************
@@ -765,14 +784,14 @@
 				<h2>AI-tips om å sitte mindre:</h2>
 
 				<div class="ui-field-contain">
-					<label for="flipPersonalizedAISitting">Personaliserte AI-tips om å sitte mindre:</label>
+					<label for="flipPersonalizedAISitting">Personaliserte AI-tips (sitte mindre):</label>
 					<select id="flipPersonalizedAISitting" data-role="flipswitch">
 						<option value="0">Av</option>
 						<option value="1">På</option>
 					</select>
 				<div>
 
-				<br><br>
+				<br><br><br>
 
 				<div id="personalizedAIFeedbackMsgsSittingContainer" class="personalizedFeedbackMsgsContainer">
 					<table id="tablePersonalizedAIFeedbackMsgsSitting" data-role="table" class="ui-responsive table-stripe ui-shadow">
@@ -808,14 +827,14 @@
 				<h2>AI-tips om å gå mer:</h2>
 
 				<div class="ui-field-contain">
-					<label for="flipPersonalizedAIWalking">Personaliserte AI-tips om å gå mer:</label>
+					<label for="flipPersonalizedAIWalking">Personaliserte AI-tips (gå mer):</label>
 					<select id="flipPersonalizedAIWalking" data-role="flipswitch">
 						<option value="0">Av</option>
 						<option value="1">På</option>
 					</select>
 				<div>
 
-				<br><br>
+				<br><br><br>
 
 				<div id="personalizedAIFeedbackMsgsWalkingContainer" class="personalizedFeedbackMsgsContainer">
 					<table id="tablePersonalizedAIFeedbackMsgsWalking" data-role="table" class="ui-responsive table-stripe ui-shadow">

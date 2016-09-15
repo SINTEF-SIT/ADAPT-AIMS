@@ -11,7 +11,7 @@
 
 		switch ($method) {
 			case 'GET':
-				// Get the most recent timeCalculated value for either MI, AI, BI or custom feedback.
+				// Get the most recent timeUpdated value for either AI, BI or custom feedback.
 				if (isset($_GET["seniorUserID"])) {
 					
 					$time = getNewestChangeTime($tokenUserID, $_GET["seniorUserID"]);

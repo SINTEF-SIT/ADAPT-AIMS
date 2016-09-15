@@ -10,19 +10,23 @@
 
 		switch ($method) {
 			case 'GET':
-				// Get data about a senior user from DB
-				if (isset($_GET["seniorUserID"])) {
-					$seniorUserID = $_GET["seniorUserID"];
-					
-					$seniorUserDetails = getSeniorUserData($tokenUserID, $seniorUserID);
-
-					if (empty($seniorUserDetails)) {
-						deliver_response(200, "No results found.", NULL);
-					} else {
-						deliver_response(200, "Senior user details found.", $seniorUserDetails);
-					}
+				$seniorUserDetails = null;
+				if ($tokenUserID === 0) { // if user is admin
+					$seniorUserDetails = getAllSeniorUserData();
 				} else {
-					deliver_response(400, "Ugyldig GET-forespørsel: mangler parameter.", NULL);
+					// Get data about a senior user from DB
+					if (isset($_GET["seniorUserID"])) {
+						$seniorUserID = $_GET["seniorUserID"];
+						$seniorUserDetails = getSeniorUserData($tokenUserID, $seniorUserID);
+					} else {
+						deliver_response(400, "Ugyldig GET-forespørsel: mangler parameter.", NULL);
+					}
+				}
+
+				if (empty($seniorUserDetails)) {
+					deliver_response(200, "No results found.", NULL);
+				} else {
+					deliver_response(200, "Senior user details found.", $seniorUserDetails);
 				}
 				break;
 

@@ -9,18 +9,10 @@
 			}
 		}
 
-		$query = "SELECT activityIndexID, value, timeDataCollected, timeCalculated
+		$query = "SELECT activityIndexID, value, dateFrom, dateTo, timeUpdated
 				FROM ActivityIndexes
 				WHERE userID=? 
-				ORDER BY timeDataCollected ";
-
-		if (isset($_GET["getNewest"])) {
-			// Get the newest activity index for a user
-			$query .= "DESC LIMIT 1;";
-		} else {
-			// Get all activity indexes for a user
-			$query .= "ASC;";
-		}
+				ORDER BY dateFrom ASC;";
 
 		if ($stmt = $conn->prepare($query)) {
 			$stmt->bind_param("i", $seniorUserID);
@@ -30,15 +22,11 @@
 			$conn->close();
 
 			if (mysqli_num_rows($result) > 0) {
-				if (isset($_GET["getNewest"])) {
-					return mysqli_fetch_assoc($result);
-				} else {
-					$rows = array();
-					while($r = mysqli_fetch_assoc($result)) {
-						$rows[] = $r;
-					}
-					return $rows;
+				$rows = array();
+				while($r = mysqli_fetch_assoc($result)) {
+					$rows[] = $r;
 				}
+				return $rows;
 			} else {
 				return NULL;
 			}
@@ -52,8 +40,8 @@
 		include('inc/db.inc.php');
 
 		if (checkExpertSeniorLink($conn, $expertUserID, $_POST["userID"])) {
-			if ($stmt = $conn->prepare("INSERT INTO ActivityIndexes (userID, timeCalculated, timeDataCollected, value) VALUES (?, UTC_TIMESTAMP(), ?, ?);")) {
-				$stmt->bind_param("isd", $_POST["userID"], $_POST["timeDataCollected"], $_POST["activityIdx"]);
+			if ($stmt = $conn->prepare("INSERT INTO ActivityIndexes (userID, timeUpdated, dateFrom, dateTo, value) VALUES (?, UTC_TIMESTAMP(), ?, ?, ?);")) {
+				$stmt->bind_param("issd", $_POST["userID"], $_POST["dateFrom"], $_POST["dateTo"], $_POST["activityIdx"]);
 				$stmt->execute();
 
 				$stmt->close();
@@ -81,7 +69,7 @@
 				$row = mysqli_fetch_assoc($result);
 				if (checkExpertSeniorLink($conn, $expertUserID, $row["userID"])) {
 
-					if ($stmt = $conn->prepare("UPDATE ActivityIndexes SET timeCalculated=UTC_TIMESTAMP(), value=? WHERE activityIndexID=?;")) {
+					if ($stmt = $conn->prepare("UPDATE ActivityIndexes SET timeUpdated=UTC_TIMESTAMP(), value=? WHERE activityIndexID=?;")) {
 						$stmt->bind_param("di", $activityIdx, $activityIndexID);
 						$stmt->execute();
 

@@ -1,7 +1,7 @@
 //********************************************************************
 //                   Draws the balance idx chart
 //********************************************************************
-function drawBIChart() {
+function drawBIChart(startTime, endTime) {
 	if (activeUser.balanceIndexes !== null) {
 		var balanceChartData = [];
 
@@ -12,7 +12,7 @@ function drawBIChart() {
 				// to get a flat line instead of a straight, diagonal line between the points.
 				// Needs to be commented out if the chart is switched to a column chart.
 				var dataPointPre = [];
-				var datePre = moment.tz(activeUser.balanceIndexes[i].timeDataCollected, "UTC");
+				var datePre = moment.tz(activeUser.balanceIndexes[i].dateFrom, "UTC");
 				datePre.seconds(-1);
 				dataPointPre.push(datePre.valueOf());
 				dataPointPre.push(parseFloat(activeUser.balanceIndexes[i-1].value));
@@ -22,22 +22,29 @@ function drawBIChart() {
 			var bi = parseFloat(activeUser.balanceIndexes[i].value);
 
 			var dataPoint = [];
-			var date = moment.tz(activeUser.balanceIndexes[i].timeDataCollected, "UTC");
+			var date = moment.tz(activeUser.balanceIndexes[i].dateFrom, "UTC");
 			dataPoint.push(date.valueOf());
 			dataPoint.push(bi);
 			balanceChartData.push(dataPoint);
 
 			// Comment out if chart is changed to a column chart!
-			// If last data point from db, add a final data point at the current datetime
+			// If last data point from db, add a final data point using the last dateTo value
 			if (i+1 == activeUser.balanceIndexes.length) {
 				var dataPointFinal = [];
-				dataPointFinal.push(date.valueOf() + (1000 * 60 * 60 * 24));
-				dataPointFinal.push(parseFloat(activeUser.balanceIndexes[i].value));
-				var value = parseFloat(activeUser.balanceIndexes[i].value);
+				var dateFinal = moment.tz(activeUser.balanceIndexes[i].dateTo, "UTC");
+				dataPointFinal.push(dateFinal.valueOf());
+				dataPointFinal.push(bi);
 				balanceChartData.push(dataPointFinal);
 
-				activeUser.userData.balanceIdx = value;
+				activeUser.userData.balanceIdx = bi;
 			}
+		}
+
+		if (startTime === null) {
+			startTime = balanceChartData[0][0];
+		}
+		if (endTime === null) {
+			endTIme = balanceChartData[balanceChartData.length-1][0];
 		}
 
 		balanceChartOptions = {
@@ -53,7 +60,9 @@ function drawBIChart() {
 			},
 			xAxis: {
 				type: 'datetime',
-				tickInterval: 24 * 3600 * 1000 // How frequent a tick is displayed on the axis (set in milliseconds)
+				min: startTime,
+				max: endTime,
+				minTickInterval: 24 * 3600 * 1000
 			},
 			yAxis: {
 				title: {
@@ -96,15 +105,22 @@ function drawBIChart() {
 //********************************************************************
 //                   Draws the activity idx chart
 //********************************************************************
-function drawAIChart() {
+function drawAIChart(startTime, endTime) {
 	if (activeUser.activityIndexes !== null) {
 		var activityChartData = [];
 		for (var i=0; i<activeUser.activityIndexes.length; i++) {
 			var dataPoint = [];
-			var date = moment.tz(activeUser.activityIndexes[i].timeDataCollected, "UTC");
+			var date = moment.tz(activeUser.activityIndexes[i].dateFrom, "UTC");
 			dataPoint.push(date.valueOf());
 			dataPoint.push(activeUser.activityIndexes[i].value);
 			activityChartData.push(dataPoint);
+		}
+
+		if (startTime === null) {
+			startTime = activityChartData[0][0];
+		}
+		if (endTime === null) {
+			endTIme = activityChartData[activityChartData.length-1][0];
 		}
 
 		activityChartOptions = {
@@ -120,7 +136,9 @@ function drawAIChart() {
 			},
 			xAxis: {
 				type: 'datetime',
-				tickInterval: 24 * 3600 * 1000 // How frequent a tick is displayed on the axis (set in milliseconds)
+				min: startTime,
+				max: endTime,
+				minTickInterval: 24 * 3600 * 1000
 			},
 			yAxis: {
 				title: {

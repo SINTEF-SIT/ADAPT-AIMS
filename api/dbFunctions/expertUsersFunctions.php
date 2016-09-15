@@ -1,5 +1,5 @@
 <?php
-	function getExpertUserOverview() {
+	function getExpertUsers() {
 		include('inc/db.inc.php');
 
 		if ($stmt = $conn->prepare("SELECT u.userID, u.username, u.firstName, u.lastName
@@ -45,5 +45,28 @@
 		}
 		$conn->close();
 		return NULL;
+	}
+
+	function postExpertUser($username, $password, $firstName, $lastName) {
+		include('inc/db.inc.php');
+
+		if ($stmt1 = $conn->prepare("INSERT INTO Users (username, password, firstName, lastName) VALUES (?,?,?,?)")) {
+			$stmt1->bind_param("ssss", encrypt($username), hashword($password), encrypt($firstName), encrypt($lastName));
+			$stmt1->execute();
+
+			$expertUserID = (int) mysqli_insert_id($conn);
+			$stmt1->close();
+
+			if ($stmt2 = $conn->prepare("INSERT INTO ExpertUsers (userID) VALUES (?)")) {
+				$stmt2->bind_param("i", $expertUserID);
+				$stmt2->execute();
+				$stmt2->close();
+
+				$conn->close();
+				return $expertUserID;
+			}
+		}
+		$conn->close();
+		return null;
 	}
 ?>
