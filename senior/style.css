@@ -319,13 +319,17 @@ body {
 }
 
 #suggestedExercises {
+    width: 90%;
 	max-width: 1200px;
+    min-width: 200px;
+    margin: 0 auto;
 	text-align: justify;
 	-ms-text-justify: distribute-all-lines;
 	text-justify: distribute-all-lines;
 }
 
 .suggestedExerciseWrapper {
+    width: inherit;
 	max-width: 500px;
 	height: inherit;
 	margin: 20px !important;

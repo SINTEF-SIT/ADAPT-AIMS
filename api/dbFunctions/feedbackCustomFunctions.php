@@ -22,6 +22,9 @@
 				$rows = array();
 				while ($r = mysqli_fetch_assoc($result)) {
 					$r["feedbackText"] = decrypt($r["feedbackText"]);
+					if ($r["internalComment"]) {
+						$r["internalComment"] = decrypt($r["internalComment"]);
+					}
 					$rows[] = $r;
 				}
 				$conn->close();
@@ -32,14 +35,15 @@
 		return NULL;
 	}
 
-	function postFeedbackCustom($seniorUserID, $feedbackText, $category, $AIFeedbackType, $balanceExerciseID, $strengthExerciseID, $expertUserID) {
+	function postFeedbackCustom($seniorUserID, $feedbackText, $category, $AIFeedbackType, $balanceExerciseID, $strengthExerciseID, $expertUserID, $comment) {
 		
 		include('inc/db.inc.php');
 
 		if (checkExpertSeniorLink($conn, $expertUserID, $seniorUserID)) {
+			$comment = ($comment !== null) ? encrypt($comment) : null;
 
-			if ($stmt = $conn->prepare("INSERT INTO FeedbackMsgCustom (userID, feedbackText, timeCreated, category, AIFeedbackType, balanceExerciseID, strengthExerciseID) VALUES (?, ?, UTC_TIMESTAMP(), ?, ?, ?, ?);")) {
-				$stmt->bind_param("isiiii", $seniorUserID, encrypt($feedbackText), $category, $AIFeedbackType, $balanceExerciseID, $strengthExerciseID);
+			if ($stmt = $conn->prepare("INSERT INTO FeedbackMsgCustom (userID, feedbackText, timeCreated, category, AIFeedbackType, balanceExerciseID, strengthExerciseID, internalComment) VALUES (?, ?, UTC_TIMESTAMP(), ?, ?, ?, ?, ?);")) {
+				$stmt->bind_param("isiiiis", $seniorUserID, encrypt($feedbackText), $category, $AIFeedbackType, $balanceExerciseID, $strengthExerciseID, $comment);
 				$stmt->execute();
 				$msgID = (int) mysqli_insert_id($conn);
 				$stmt->close();

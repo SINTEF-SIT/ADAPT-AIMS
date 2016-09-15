@@ -27,8 +27,7 @@ var AIFeedbackMsgSitting = null;
 var AIFeedbackMsgWalking = null;
 var BIFeedbackMsg = null;
 
-var BIThresholdUpper; // The upper threshold value for the 'medium' or 'yellow' area for BI
-var BIThresholdLower; // The lower threshold value for the 'medium' or 'yellow' area for BI
+var settings; // General settings and text strings used in the system
 var BIIndexSection; // -1 means the BI is in the 'low zone', 0 means medium, and 1 means high
 
 var BIMax = 1;
@@ -47,6 +46,7 @@ $(document).delegate('#main-page', 'pageshow', function () {
 	************************************************************/
 	if (balanceChart !== null && typeof balanceChart !== 'undefined') balanceChart.reflow();
 	if (activityChart !== null && typeof activityChart !== 'undefined') activityChart.reflow();
+	$(window).trigger('resize');
 });
 
 
@@ -56,12 +56,14 @@ $(document).delegate('#help-page', 'pagehide', function () {
 
 
 $(window).on('resize', function() {
-	$('.chartHeader').quickfit({ max: 30, min: 15, truncate: true, tolerance: 0.06 });      
+	if (settings) {
+		populateDOMTextStrings();
+		$('.chartHeader').quickfit({ max: 30, min: 15, truncate: true, tolerance: 0.06 });
+	}
 });
 
 
 $(document).ready(function() {
-	$(window).trigger('resize');
 	$( "#video-popup" ).enhanceWithin().popup();
 	$("#BIImgInnerWrapper").hide(); // Hide BI gauge chart while page is loading
 
@@ -134,8 +136,10 @@ $(document).ready(function() {
 				}
 
 				// Settings
-				BIThresholdUpper = data.data.settings.BIThresholdUpper;
-				BIThresholdLower = data.data.settings.BIThresholdLower;
+				settings = data.data.settings;
+
+				// Triggers windows rezise, which in turn updates text strings
+				$(window).trigger('resize');
 
 				// Newest change time
 				// Calculates the string to display to tell how long ago the information was last updated, and updates the DOM
@@ -145,20 +149,41 @@ $(document).ready(function() {
 					$("#lastUpdatedWrapper").hide();
 				}
 
-				// BI chart
 				var balanceChartDataJSON = data.data.balanceIndexes;
-				if (balanceChartDataJSON !== null) {
-					drawBIChart(balanceChartDataJSON);
-				} else {
-					$("#balanceChartContainer").hide();
-				}
-
-				// AI chart
 				var activityChartDataJSON = data.data.activityIndexes;
-				if (activityChartDataJSON !== null) {
-					drawAIChart(activityChartDataJSON);
+
+				if (activityChartDataJSON === null || balanceChartDataJSON === null) {
+					if (activityChartDataJSON) {
+						drawAIChart(activityChartDataJSON, null, null);
+					} else {
+						$("#activityChartContainer").hide();
+					}
+					if (balanceChartDataJSON) {
+						drawBIChart(balanceChartDataJSON, null, null);
+					} else {
+						$("#balanceChartContainer").hide();
+					}
 				} else {
-					$("#activityChartContainer").hide();
+					// Both charts will be displayed. Calculates the xAxis interval to use for both charts.
+					var maxChartInterval = 1000 * 60 * 60 * 24 * settings.maxXAxisIntervalDays;
+
+					var AIFirst = moment.tz(activityChartDataJSON[0].dateFrom, "UTC").valueOf();
+					var BIFirst = moment.tz(balanceChartDataJSON[0].dateFrom, "UTC").valueOf();
+					var AILast = moment.tz(activityChartDataJSON[activityChartDataJSON.length-1].dateTo, "UTC").valueOf();
+					var BILast = moment.tz(balanceChartDataJSON[balanceChartDataJSON.length-1].dateTo, "UTC").valueOf();
+
+					var chartsEndTime = (AILast > BILast) ? AILast : BILast;
+
+					var AISpan = chartsEndTime - AIFirst;
+					var BISpan = chartsEndTime - BIFirst;
+
+					var chartsInterval = (AISpan > BISpan) ? AISpan : BISpan; // Find the longest interval of the two charts
+					// If the chart data interval is longer than the max interval, use the max interval
+					var chartsStartTime = (chartsInterval > maxChartInterval) ? chartsEndTime-maxChartInterval : chartsEndTime-chartsInterval;
+
+					// Draw the charts
+					drawBIChart(balanceChartDataJSON, chartsStartTime, chartsEndTime);
+					drawAIChart(activityChartDataJSON, chartsStartTime, chartsEndTime);
 				}
 
 				// Feedback and exercises
@@ -199,6 +224,9 @@ $(document).ready(function() {
 				}
 				$("#balanceExercisesBtnGroup").append(htmlBalanceExercises);
 				writeFeedback();
+
+				$('div[data-role=content]').trigger('create');
+				
 				hideLoader(); // Hides the loading widget
 
 			} else {
@@ -251,8 +279,6 @@ $(document).ready(function() {
 
 
 function drawBIChart(balanceChartDataJSON, startTime, endTime) {
-	var maxBalanceChartRange = 1000 * 60 * 60 * 24 * 90; // The maximum range of the x axis in milliseconds
-
 	var balanceChartData = [];
 
 	for (var i=0; i<balanceChartDataJSON.length; i++) {
@@ -286,11 +312,11 @@ function drawBIChart(balanceChartDataJSON, startTime, endTime) {
 
 			currentBalanceIdx = balanceChartDataJSON[i].value; // Store the last data value as the current BI
 
-			if (currentBalanceIdx < BIThresholdLower) {
+			if (currentBalanceIdx < settings.BIThresholdLower) {
 				BIIndexSection = -1;
-			} else if (currentBalanceIdx >= BIThresholdLower && currentBalanceIdx < BIThresholdUpper) {
+			} else if (currentBalanceIdx >= settings.BIThresholdLower && currentBalanceIdx < settings.BIThresholdUpper) {
 				BIIndexSection = 0;
-			} else if (currentBalanceIdx > BIThresholdUpper) {
+			} else if (currentBalanceIdx > settings.BIThresholdUpper) {
 				BIIndexSection = 1;
 			}
 
@@ -305,7 +331,7 @@ function drawBIChart(balanceChartDataJSON, startTime, endTime) {
 		endTIme = balanceChartData[balanceChartData.length-1][0];
 	}
 
-	var yAxisLabels = ["Lav", "Medium", "Høy"];
+	var yAxisLabels = [settings.BIChartSpectrumLabelLow, settings.BIChartSpectrumLabelMedium, settings.BIChartSpectrumLabelHigh];
 	
 	balanceChartOptions = {
 		chart: {
@@ -342,7 +368,7 @@ function drawBIChart(balanceChartDataJSON, startTime, endTime) {
 				width: 2, // Width of the line
 				zIndex: 5, // Draw the plot line on top of the series
 				label: { 
-					text: 'Normalverdi', // Content of the label. 
+					text: settings.BIChartLineText, // Content of the label. 
 					align: 'left',
 					style: {
 						fontSize:'18px',
@@ -468,7 +494,7 @@ function drawAIChart(activityChartDataJSON, startTime, endTime) {
 				width: 2, // Width of the line
 				zIndex: 5, // Draw the plot line on top of the series
 				label: { 
-					text: 'Normalverdi', // Content of the label. 
+					text: settings.AIChartLineText, // Content of the label. 
 					align: 'left',
 					style: {
 						fontSize:'18px',
@@ -510,6 +536,19 @@ function drawAIChart(activityChartDataJSON, startTime, endTime) {
 	/*for (var i=0; i<activityChart.series[0].data.length; i++) {
 		activityChart.series[0].data[i].tooltipText = activityChartTooltips[activityChartDataJSON[i].value];
 	}*/
+}
+
+function populateDOMTextStrings() {
+	$("#BIImgHeader").html(settings.BIImgHeader);
+	$("#BIChartHeader").html(settings.BIChartHeader);
+	$("#AIChartHeader").html(settings.AIChartHeader);
+
+	$("#BIGaugeChartTextHighRisk").html(settings.BIImgLabelLow);
+	$("#BIGaugeChartTextLowRisk").html(settings.BIImgLabelHigh);
+
+	$("#BIImgHelpTooltipText").html(settings.BIImgHelpTooltipText);
+	$("#BIChartHelpTooltipText").html(settings.BIChartHelpTooltipText);
+	$("#AIChartHelpTooltipText").html(settings.AIChartHelpTooltipText);
 }
 
 function writeFeedback() {

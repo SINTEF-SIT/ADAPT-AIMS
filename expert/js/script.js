@@ -15,8 +15,7 @@ var token; // The JWT used for communicating with the API
 var exerciseGroups; // Exercise groups and their exercises that can be recommended to the senior users
 var feedbackDefault; // The default AI and BI feedback messages, with links to exercises
 var feedbackDefaultAll; // feedbackDefault + older messages
-var BIThresholdUpper; // The upper threshold value for the 'medium' or 'yellow' area for BI
-var BIThresholdLower; // The lower threshold value for the 'medium' or 'yellow' area for BI
+var settings; // General settings and text strings used in the system
 
 // If expert user tries to submit a new BI/AI with a date that already has an BI/AI
 // for this senior user, a prompt appears asking to confirm overwrite. The form
@@ -187,7 +186,7 @@ function setActiveUser(userID, changePage) {
 		drawAIChart(null, null);
 	} else {
 		// Set equal x-axis interval for both charts
-		var maxChartInterval = 1000 * 60 * 60 * 24 * 30.4 * 2;
+		var maxChartInterval = 1000 * 60 * 60 * 24 * settings.maxXAxisIntervalDays;
 
 		var AIFirst = moment.tz(activeUser.activityIndexes[0].dateFrom, "UTC").valueOf();
 		var BIFirst = moment.tz(activeUser.balanceIndexes[0].dateFrom, "UTC").valueOf();
@@ -211,9 +210,9 @@ function setActiveUser(userID, changePage) {
 	if (activeUser.balanceIndexes) {
 		// Calculates whether the current BI value for this user is classified as low, medium or high
 		var BISection = -1;
-		if (activeUser.userData.balanceIdx >= BIThresholdLower && activeUser.userData.balanceIdx < BIThresholdUpper) {
+		if (activeUser.userData.balanceIdx >= settings.BIThresholdLower && activeUser.userData.balanceIdx < settings.BIThresholdUpper) {
 			BISection = 0;
-		} else if (activeUser.userData.balanceIdx > BIThresholdUpper) {
+		} else if (activeUser.userData.balanceIdx > settings.BIThresholdUpper) {
 			BISection = 1;
 		}
 

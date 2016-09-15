@@ -196,7 +196,7 @@ function initEventListenersDocumentReady() {
 	//********************************************************************
 	$("#registerPersonalizedBIFeedbackForm").submit(function(e){
 		showLoader(); // Shows the loading widget
-		formData = $("#registerPersonalizedBIFeedbackForm").serialize();// Serialize the form data
+		formData = $("#registerPersonalizedBIFeedbackForm").serialize(); // Serialize the form data
 		
 		submitCustomFeedbackMsg(formData, "#toastPersonalizedFeedback", false, null); // Calls the API to store the new feedback msg
 		
@@ -405,7 +405,7 @@ function initEventListenersDocumentReady() {
 			var formData = $("#settingsForm").serialize(); // Serialize the form data
 			submitSettings(formData);
 		} else {
-			showToast("#toastSettingsForm", false, "Øvre verdi må være høyere enn den nedre!", 3000); // Shows toast with error msg
+			showToast("#toastSettingsForm", false, "Øvre grenseverdi for BI må være høyere enn den nedre!", 3000); // Shows toast with error msg
 		}
 
 		return false; // Returns false to stop the default form behaviour

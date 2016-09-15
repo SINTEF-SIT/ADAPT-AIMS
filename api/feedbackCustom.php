@@ -36,7 +36,9 @@
 						$AIFeedbackType = $_POST["AIFeedbackType"];
 					}
 
-					$msgID = postFeedbackCustom($seniorUserID, $_POST["feedbackText"], $_POST["category"], $AIFeedbackType, $_POST["balanceExerciseID"], $_POST["strengthExerciseID"], $tokenUserID);
+					$comment = (isset($_POST["comment"]) && $_POST["comment"] !== "") ? $_POST["comment"] : null;
+
+					$msgID = postFeedbackCustom($seniorUserID, $_POST["feedbackText"], $_POST["category"], $AIFeedbackType, $_POST["balanceExerciseID"], $_POST["strengthExerciseID"], $tokenUserID, $comment);
 
 					if ($msgID) {
 						$res = array(

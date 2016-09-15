@@ -52,17 +52,17 @@
 				<!-- Balance index image (BIImg) -->
 				<div id="BIImgOuterWrapper" class="pageMainElement">
 					<div id="BIImgWell" class="well">
-						<div id="BIImgHeader" class="chartHeader">Din balanse</div>
+						<div id="BIImgHeader" class="chartHeader"></div>
 						<div id="BIImgInnerWrapper">
 							<img src="../placeholder.png" alt="Balanseindeks" id="BIImg">
-							<span id="BIGaugeChartTextHighRisk">&nbsp;Høy fallrisiko</span>
-							<span id="BIGaugeChartTextLowRisk">Lav fallrisiko&nbsp;</span>
+							<span id="BIGaugeChartTextHighRisk"></span>
+							<span id="BIGaugeChartTextLowRisk"></span>
 						</div>
 						<a href="#BIImgTooltip" data-rel="popup" data-role="button" id="BIImgTooltipBtn" class="tooltipBtn ui-link ui-btn ui-btn-a ui-icon-info ui-btn-icon-notext ui-btn-inline ui-shadow ui-corner-all" data-inline="true" data-transition="pop" data-icon="info" data-theme="a" data-iconpos="notext" data-corners="true" data-shadow="true" data-iconshadow="true" data-wrapperels="span" title="Forklaring av bildet"></a>
 
 						<div data-role="popup" id="BIImgTooltip">
 							<a href="#" data-rel="back" data-role="button" data-theme="b" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
-							<p>Dette er en representasjon av din mobilitetsindeks. Dette er en verdi som påvirkes både av <i>hvor mye</i> du beveger deg, og <i>hvordan</i> du beveger deg. En høy mobilitetsindeks vil bety lavere risiko for å falle. Grønt betyr høy mobilitetsindeks, rød betyr lav.</p>
+							<p id="BIImgHelpTooltipText"></p>
 						</div>
 						<br>
 					</div>
@@ -71,13 +71,13 @@
 				<!-- Balance index chart -->
 				<div id="balanceChartContainer" class="pageMainElement chartContainer">
 					<div class="well chartWell">
-						<div class="chartHeader">Din balanse over tid</div>
+						<div id="BIChartHeader" class="chartHeader"></div>
 						<div id="balanceChart"></div>
 						<a href="#BIChartTooltip" data-rel="popup" data-role="button" id="BIChartTooltipBtn" class="tooltipBtn ui-link ui-btn ui-btn-a ui-icon-info ui-btn-icon-notext ui-btn-inline ui-shadow ui-corner-all" data-inline="true" data-transition="pop" data-icon="info" data-theme="a" data-iconpos="notext" data-corners="true" data-shadow="true" data-iconshadow="true" data-wrapperels="span" title="Forklaring av diagrammet"></a>
 
 						<div data-role="popup" id="BIChartTooltip">
 							<a href="#" data-rel="back" data-role="button" data-theme="b" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
-							<p>Dette diagrammet viser hvordan balansen din har utviklet seg i løpet av den siste måneden.</p>
+							<p id="BIChartHelpTooltipText"></p>
 						</div>
 					</div>
 				</div>
@@ -85,13 +85,13 @@
 				<!-- Activity index chart -->
 				<div id="activityChartContainer" class="pageMainElement chartContainer">
 					<div class="well chartWell">
-						<div class="chartHeader">Din aktivitet over tid</div>
+						<div id="AIChartHeader" class="chartHeader"></div>
 						<div id="activityChart"></div>
 						<a href="#AIChartTooltip" data-rel="popup" data-role="button" id="AIChartTooltipBtn" class="tooltipBtn ui-link ui-btn ui-btn-a ui-icon-info ui-btn-icon-notext ui-btn-inline ui-shadow ui-corner-all" data-inline="true" data-transition="pop" data-icon="info" data-theme="a" data-iconpos="notext" data-corners="true" data-shadow="true" data-iconshadow="true" data-wrapperels="span" title="Forklaring av diagrammet"></a>
 
 						<div data-role="popup" id="AIChartTooltip">
 							<a href="#" data-rel="back" data-role="button" data-theme="b" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
-							<p>Dette diagrammet viser hvor fysisk aktiv du har vært den siste måneden, basert på hvor mange skritt du har gått.</p>
+							<p id="AIChartHelpTooltipText"></p>
 						</div>
 					</div>
 				</div>

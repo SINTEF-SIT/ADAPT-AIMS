@@ -51,6 +51,9 @@
 				$array = array();
 				while ($row = mysqli_fetch_assoc($result)) {
 					$row["feedbackText"] = decrypt($row["feedbackText"]);
+					if ($r["internalComment"]) {
+						$r["internalComment"] = decrypt($r["internalComment"]);
+					}
 					$array[] = $row;
 				}
 			}

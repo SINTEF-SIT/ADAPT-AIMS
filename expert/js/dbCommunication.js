@@ -46,10 +46,23 @@ function getData() {
 					populateDefaultFeedbackTables();
 
 					// BI threshold settings
-					BIThresholdUpper = data.data.settings.BIThresholdUpper;
-					BIThresholdLower = data.data.settings.BIThresholdLower;
-					$("#BIThresholdUpperInput").val(BIThresholdUpper);
-					$("#BIThresholdLowerInput").val(BIThresholdLower);
+					settings = data.data.settings;
+					$("#BIThresholdUpperInput").val(settings.BIThresholdUpper);
+					$("#BIThresholdLowerInput").val(settings.BIThresholdLower);
+					$("#maxXAxisIntervalDaysInput").val(settings.maxXAxisIntervalDays);
+					$("#BIImgHeaderInput").val(settings.BIImgHeader);
+					$("#BIChartHeaderInput").val(settings.BIChartHeader);
+					$("#AIChartHeaderInput").val(settings.AIChartHeader);
+					$("#BIImgLabelLowInput").val(settings.BIImgLabelLow);
+					$("#BIImgLabelHighInput").val(settings.BIImgLabelHigh);
+					$("#BIChartSpectrumLabelLowInput").val(settings.BIChartSpectrumLabelLow);
+					$("#BIChartSpectrumLabelMediumInput").val(settings.BIChartSpectrumLabelMedium);
+					$("#BIChartSpectrumLabelHighInput").val(settings.BIChartSpectrumLabelHigh);
+					$("#BIChartLineTextInput").val(settings.BIChartLineText);
+					$("#AIChartLineTextInput").val(settings.AIChartLineText);
+					$("#BIImgHelpTooltipTextInput").val(settings.BIImgHelpTooltipText);
+					$("#BIChartHelpTooltipTextInput").val(settings.BIChartHelpTooltipText);
+					$("#AIChartHelpTooltipTextInput").val(settings.AIChartHelpTooltipText);
 
 					hideLoader(); // Hides the loading widget
 
@@ -513,7 +526,7 @@ function sendSingleSMS(formData) {
 //********************************************************************
 //      		Sends updated general settings to DB
 //********************************************************************
-function submitSetings(formData) {
+function submitSettings(formData) {
 	showLoader(); // Shows the loading widget
 	
 	$.ajax({
@@ -521,12 +534,12 @@ function submitSetings(formData) {
 		beforeSend: function (request) {
 			request.setRequestHeader("Authorization", "Bearer " + token); // Sets the authorization header with the token
 		},
-		url: "../api/settings.php?BIThresholdUpper=" + $BIThresholdUpperInput + "&BIThresholdLower=" + $BIThresholdLowerInput,
+		url: "../api/settings.php",
+		data: formData,
 		success: function(data, status) { // If the API request is successful
 			if (data.data) {
 				showToast("#toastSettingsForm", true, data.status_message, 3000); // Shows toast with success msg
-				BIThresholdUpper = $BIThresholdUpperInput;
-				BIThresholdLower = $BIThresholdLowerInput;
+				settings = data.data;
 			} else {
 				showToast("#toastSettingsForm", false, "Det oppstod en feil ved skriving til databasen.", 3000); // Shows toast with error msg
 			}

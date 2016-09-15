@@ -135,10 +135,13 @@ function populateCustomFeedbackTables() {
 		for (var i=0; i<activeUser.feedbackCustomBI.length; i++) {
 			var timeCreated = moment(activeUser.feedbackCustomBI[i].timeCreated + "Z");
 			timeCreated.tz('Europe/Oslo'); // Converts time to the correct time zone
+
+			var comment = (activeUser.feedbackCustomBI[i].internalComment) ? activeUser.feedbackCustomBI[i].internalComment : "";
 			
 			htmlBI += "<tr>"
 			+ "<td>" + timeCreated.format('YYYY-MM-DD HH:mm') + "</td>"
 			+ "<td>" + activeUser.feedbackCustomBI[i].feedbackText + "</td>"
+			+ "<td>" + comment + "</td>"
 			+ "<td>" + getExerciseTitle(activeUser.feedbackCustomBI[i].balanceExerciseID) + "</td>"
 			+ "<td>" + getExerciseTitle(activeUser.feedbackCustomBI[i].strengthExerciseID) + "</td>"
 			+ "<td><button data-role='button' data-inline='true' data-mini='true'"
@@ -160,9 +163,12 @@ function populateCustomFeedbackTables() {
 			var timeCreated = moment(activeUser.feedbackCustomAISitting[i].timeCreated + "Z");
 			timeCreated.tz('Europe/Oslo'); // Converts time to the correct time zone
 
+			var comment = (activeUser.feedbackCustomAISitting[i].internalComment) ? activeUser.feedbackCustomAISitting[i].internalComment : "";
+
 			htmlAISitting += "<tr>"
 			+ "<td>" + timeCreated.format('YYYY-MM-DD HH:mm') + "</td>"
 			+ "<td>" + activeUser.feedbackCustomAISitting[i].feedbackText + "</td>"
+			+ "<td>" + comment + "</td>"
 			+ "<td><button data-role='button' data-inline='true' data-mini='true'"
 			+ "onclick='deleteFeedbackMsg(" + activeUser.feedbackCustomAISitting[i].msgID + ",0,0)'>Slett</button>" 
 			+ "</td></tr>";
@@ -182,9 +188,12 @@ function populateCustomFeedbackTables() {
 			var timeCreated = moment(activeUser.feedbackCustomAIWalking[i].timeCreated + "Z");
 			timeCreated.tz('Europe/Oslo'); // Converts time to the correct time zone
 
+			var comment = (activeUser.feedbackCustomAIWalking[i].internalComment) ? activeUser.feedbackCustomAIWalking[i].internalComment : "";
+
 			htmlAIWalking += "<tr>"
 			+ "<td>" + timeCreated.format('YYYY-MM-DD HH:mm') + "</td>"
 			+ "<td>" + activeUser.feedbackCustomAIWalking[i].feedbackText + "</td>"
+			+ "<td>" + comment + "</td>"
 			+ "<td><button data-role='button' data-inline='true' data-mini='true'"
 			+ "onclick='deleteFeedbackMsg(" + activeUser.feedbackCustomAIWalking[i].msgID + ",0,1)'>Slett</button>" 
 			+ "</td></tr>";
@@ -222,6 +231,7 @@ function updateDOM() {
 		$("#activeUserFullName").html($fullName);
 		$("#headerTitleDetailPage").html("Brukerdetaljer - " + $fullName);
 
+		$("#cellUserID").html(userData.userID);
 		$("#cellBalanceIdx").html(userData.balanceIdx);
 		$("#cellActivityIdx").html(userData.activityIdx);
 
@@ -356,6 +366,7 @@ function clearUserDetailsTable() {
 	$("#activeUserFullName").html("");
 	$("#headerTitleDetailPage").html("");
 	
+	$("#cellUserID").html("");
 	$("#cellBalanceIdx").html("");
 	$("#cellActivityIdx").html("");
 	$("#cellBirthDate").html("");

@@ -16,17 +16,17 @@
 		return NULL;
 	}
 
-	function putSettings($BIThresholdLower, $BIThresholdUpper) {
+	function putSettings($BIThresholdLower, $BIThresholdUpper, $maxXAxisIntervalDays, $BIImgHeader, $BIChartHeader, $AIChartHeader, $BIImgLabelLow, $BIImgLabelHigh, $BIChartSpectrumLabelLow, $BIChartSpectrumLabelMedium, $BIChartSpectrumLabelHigh, $BIChartLineText, $AIChartLineText, $BIImgHelpTooltipText, $BIChartHelpTooltipText, $AIChartHelpTooltipText) {
 		
 		include('inc/db.inc.php');
 			
-		if ($stmt = $conn->prepare("UPDATE Settings SET BIThresholdLower=?, BIThresholdUpper=?;")) {
-			$stmt->bind_param("dd", $BIThresholdLower, $BIThresholdUpper);
+		if ($stmt = $conn->prepare("UPDATE Settings SET BIThresholdLower=?, BIThresholdUpper=?, maxXAxisIntervalDays=?, BIImgHeader=?, BIChartHeader=?, AIChartHeader=?, BIImgLabelLow=?, BIImgLabelHigh=?, BIChartSpectrumLabelLow=?, BIChartSpectrumLabelMedium=?, BIChartSpectrumLabelHigh=?, BIChartLineText=?, AIChartLineText=?, BIImgHelpTooltipText=?, BIChartHelpTooltipText=?, AIChartHelpTooltipText=?;")) {
+			$stmt->bind_param("ddisssssssssssss", $BIThresholdLower, $BIThresholdUpper, $maxXAxisIntervalDays, $BIImgHeader, $BIChartHeader, $AIChartHeader, $BIImgLabelLow, $BIImgLabelHigh, $BIChartSpectrumLabelLow, $BIChartSpectrumLabelMedium, $BIChartSpectrumLabelHigh, $BIChartLineText, $AIChartLineText, $BIImgHelpTooltipText, $BIChartHelpTooltipText, $AIChartHelpTooltipText);
 			$stmt->execute();
 
 			$stmt->close();
 			$conn->close();
-			return true;
+			return getSettings();
 		}
 		$conn->close();
 		return false;
