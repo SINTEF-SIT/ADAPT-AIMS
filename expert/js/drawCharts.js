@@ -109,11 +109,33 @@ function drawAIChart(startTime, endTime) {
 	if (activeUser.activityIndexes !== null) {
 		var activityChartData = [];
 		for (var i=0; i<activeUser.activityIndexes.length; i++) {
+			if (i !== 0) {
+				// Draws an extra data point right before each data point (except the first) 
+				// to get a flat line instead of a straight, diagonal line between the points.
+				// Needs to be commented out if the chart is switched to a column chart.
+				var dataPointPre = [];
+				var datePre = moment.tz(activeUser.activityIndexes[i].dateFrom, "UTC");
+				datePre.seconds(-1);
+				dataPointPre.push(datePre.valueOf());
+				dataPointPre.push(parseFloat(activeUser.activityIndexes[i-1].value));
+				activityChartData.push(dataPointPre);
+			}
+
+
 			var dataPoint = [];
 			var date = moment.tz(activeUser.activityIndexes[i].dateFrom, "UTC");
 			dataPoint.push(date.valueOf());
 			dataPoint.push(activeUser.activityIndexes[i].value);
 			activityChartData.push(dataPoint);
+
+			// If last data point from db, add the dateTo value as the final data point.
+			if (i+1 === activeUser.activityIndexes.length) {
+				var dataPointFinal = [];
+				var dateFinal = moment.tz(activeUser.activityIndexes[i].dateTo, "UTC");
+				dataPointFinal.push(dateFinal.valueOf());
+				dataPointFinal.push(activeUser.activityIndexes[i].value);
+				activityChartData.push(dataPointFinal);
+			}
 		}
 
 		if (startTime === null) {
@@ -126,7 +148,7 @@ function drawAIChart(startTime, endTime) {
 		activityChartOptions = {
 			chart: {
 				renderTo: 'activityChart', // ID of div where the chart is to be rendered
-				type: 'column', // Chart type. Can e.g. be set to 'column' or 'area'
+				type: 'area', // Chart type. Can e.g. be set to 'column' or 'area'
 				zoomType: 'x', // The chart is zoomable along the x-axis by clicking and draging over a portion of the chart
 				backgroundColor: null,
 				reflow: true

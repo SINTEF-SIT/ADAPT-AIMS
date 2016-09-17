@@ -2,6 +2,7 @@
 	include('inc/deliver_response.inc.php');
 	include('inc/jwt.inc.php');
 	include('dbFunctions/balanceIdxFunctions.php');
+	include('dbFunctions/feedbackCustomFunctions.php');
 
 	$tokenUserID = validateToken();
 
@@ -27,13 +28,25 @@
 
 			case 'POST':
 				// Write new balance index to DB
-				if (isset($_POST["userID"]) && isset($_POST["dateFrom"]) && isset($_POST["dateTo"]) && isset($_POST["balanceIdx"])) {
+				if (isset($_POST["userID"]) && isset($_POST["dateFrom"]) && isset($_POST["dateTo"]) && isset($_POST["balanceIdx"]) && isset($_POST["customFeedbackOn"])) {
 					$dbWriteSuccess = postBalanceIdx($tokenUserID);
 
 					if ($dbWriteSuccess) {
-						deliver_response(200, "Verdien " . $_POST["balanceIdx"] . " for bruker-ID=" . $_POST["userID"] . " på dato " . $_POST["dateFrom"] . " ble lagret i databasen.", true);
+						// Turn custom feedback messages of this category off
+						if ($_POST["customFeedbackOn"] === '1') {
+							putFeedbackCustom($tokenUserID, $_POST["userID"], 1, null, 0);
+							if (isset($_POST["currentCustomFeedbackMsgID"])) {
+								logCustomFeedback($_POST["currentCustomFeedbackMsgID"], false);
+							}
+						}
+
+						$res = array(
+							"timestamp" => date("Y-m-d H:i:s"),
+						);
+
+						deliver_response(200, "Verdien " . $_POST["balanceIdx"] . " for bruker-ID=" . $_POST["userID"] . " på dato " . $_POST["dateFrom"] . " ble lagret i databasen.", $res);
 					} else {
-						deliver_response(200, "Det ble ikke opprettet forbindelse med databasen.", false);
+						deliver_response(200, "Det ble ikke opprettet forbindelse med databasen.", NULL);
 					}
 				} else {
 					deliver_response(400, "Ugyldig POST-forespørsel: mangler parametre.", NULL);

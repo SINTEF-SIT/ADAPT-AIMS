@@ -175,13 +175,6 @@ function initEventListenersDocumentReady() {
 				
 				$.mobile.changePage( "index.html#confirm-overwrite-ai-dialog", { transition: "pop" });
 			}*/
-			
-			// Resets the form
-			$('#activityIdxFromDatePicker').attr('readonly', 'readonly'); // Disables the from datepicker in case this was the first AI registered
-			$("#activityIdxFromDatePicker").val($('#activityIdxToDatePicker').val());
-			$('#activityIdxToDatePicker').val("");
-			$('#activityIdxInputField').val("");
-			$('#activityIdxInputField').focus();
 		} else {
 			showToast("#toastRegisterDataPage", false, "Til-dato må være etter fra-dato!", 3000); // Shows toast with error msg
 		}
@@ -198,7 +191,8 @@ function initEventListenersDocumentReady() {
 		showLoader(); // Shows the loading widget
 		formData = $("#registerPersonalizedBIFeedbackForm").serialize(); // Serialize the form data
 		
-		submitCustomFeedbackMsg(formData, "#toastPersonalizedFeedback", false, null); // Calls the API to store the new feedback msg
+		// Calls the API to store the new feedback msg
+		submitCustomFeedbackMsg(formData, "#toastPersonalizedFeedback", false, null, activeUser.userData.showPersonalizedBIFeedback);
 		
 		$('#textareaPersonalizedBIFeedback').val(""); // Empties the feedback input field
 		return false; // Returns false to stop the default form behaviour
@@ -214,7 +208,8 @@ function initEventListenersDocumentReady() {
 		showLoader(); // Shows the loading widget
 		formData = $("#registerPersonalizedAIFeedbackSittingForm").serialize(); // Serialize the form data
 		
-		submitCustomFeedbackMsg(formData, "#toastPersonalizedFeedback", true, 0); // Calls the API to store the new feedback msg
+		// Calls the API to store the new feedback msg
+		submitCustomFeedbackMsg(formData, "#toastPersonalizedFeedback", true, 0, activeUser.userData.showPersonalizedAISittingFeedback);
 		
 		$('#textareaPersonalizedAISittingFeedback').val(""); // Empties the feedback input field
 		return false; // Returns false to stop the default form behaviour
@@ -230,7 +225,8 @@ function initEventListenersDocumentReady() {
 		showLoader(); // Shows the loading widget
 		formData = $("#registerPersonalizedAIFeedbackWalkingForm").serialize(); // Serialize the form data
 		
-		submitCustomFeedbackMsg(formData, "#toastPersonalizedFeedback", true, 1); // Calls the API to store the new feedback msg
+		// Calls the API to store the new feedback msg
+		submitCustomFeedbackMsg(formData, "#toastPersonalizedFeedback", true, 1, activeUser.userData.showPersonalizedAIWalkingFeedback);
 		
 		$('#textareaPersonalizedAIWalkingFeedback').val(""); // Empties the feedback input field
 		return false; // Returns false to stop the default form behaviour

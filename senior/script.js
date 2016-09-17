@@ -316,7 +316,7 @@ function drawBIChart(balanceChartDataJSON, startTime, endTime) {
 				BIIndexSection = -1;
 			} else if (currentBalanceIdx >= settings.BIThresholdLower && currentBalanceIdx < settings.BIThresholdUpper) {
 				BIIndexSection = 0;
-			} else if (currentBalanceIdx > settings.BIThresholdUpper) {
+			} else if (currentBalanceIdx >= settings.BIThresholdUpper) {
 				BIIndexSection = 1;
 			}
 

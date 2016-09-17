@@ -20,6 +20,11 @@ function getData() {
 				exerciseGroups = data.data.exerciseGroups;
 				feedbackDefault = data.data.feedbackDefault;
 				feedbackDefaultAll = data.data.feedbackDefaultAll;
+				if (data.data.feedbackCustomLog !== null) {
+					feedbackCustomLog = data.data.feedbackCustomLog;
+				} else {
+					feedbackCustomLog = [];
+				}
 
 				if (seniorUsers !== null) { // Checks that the API call returned data
 					
@@ -156,7 +161,26 @@ function writeNewBI(formData, update) {
 
 	// Calls different API depending on whether the data is 
 	// stored as a new entry, or updating an existing entry
-	var requestType = (update ? "PUT" : "POST"); 
+	var requestType = (update ? "PUT" : "POST");
+
+	var customFeedbackOnBit = (activeUser.userData.showPersonalizedBIFeedback) ? 1 : 0;
+	formData += "&customFeedbackOn=" + customFeedbackOnBit;
+
+	// Find current custom BI feedback msg (if any)
+	var currentCustomFeedbackMsgID = null;
+	if (activeUser.feedbackCustom !== null) {
+		for (var i=0; i<feedbackCustomLog.length && currentCustomFeedbackMsgID === null; i++) {
+			if (feedbackCustomLog[i].timeEnd === null) {
+				for (var j=0; j<activeUser.feedbackCustom.length; j++) {
+					if (feedbackCustomLog[i].msgID === activeUser.feedbackCustom[j].msgID && activeUser.feedbackCustom[j].category === 1) {
+						currentCustomFeedbackMsgID = feedbackCustomLog[i].msgID;
+						formData += "&currentCustomFeedbackMsgID=" + currentCustomFeedbackMsgID;
+						break;
+					}
+				}
+			}
+		}
+	}
 	
 	$.ajax({
 		type: requestType,
@@ -166,7 +190,6 @@ function writeNewBI(formData, update) {
 		url: "../api/balanceIdx.php",
 		data: formData,
 		success: function(data, status) { // If the API request is successful
-			hideLoader(); // Hides the loading widget
 			if (data.data) {
 				showToast("#toastRegisterDataPage", true, data.status_message, 3000); // Shows toast with success msg
 
@@ -175,12 +198,31 @@ function writeNewBI(formData, update) {
 					dateTo: $('#balanceIdxToDatePicker').val(),
 					value: parseFloat($('#balanceIdxInputField').val())
 				};
+
+				if (activeUser.balanceIndexes === null) {
+					activeUser.balanceIndexes = [];
+				}
 				activeUser.balanceIndexes.push(newBI);
 				activeUser.userData.balanceIdx = newBI.value;
 
 				setActiveUser(activeUser.userData.userID, false); // Sets the active user, which in turn updates the active user data and charts
 				updateUsersTableRow(); // Updates the values in the row in the user overview table corresponding to the active user
 
+				activeUser.userData.showPersonalizedBIFeedback = false;
+
+				if (currentCustomFeedbackMsgID !== null) {
+					for (var i=0; i<feedbackCustomLog.length; i++) {
+						if (feedbackCustomLog[i].msgID === currentCustomFeedbackMsgID && feedbackCustomLog[i].timeEnd === null) {
+							feedbackCustomLog[i].timeEnd = data.data["timestamp"];
+						}
+					}
+				}
+
+				// Resets the form and displays BI section on custom feedback page if no BI values were set before
+				$('#balanceIdxToDatePicker').val("");
+				$('#balanceIdxInputField').focus();
+
+				generateFeedbackLog();
 			} else {
 				showToast("#toastRegisterDataPage", false, data.status_message, 3000); // Shows toast with error msg
 			}
@@ -191,6 +233,8 @@ function writeNewBI(formData, update) {
 			$('#balanceIdxToDatePicker').val("");
 			$('#balanceIdxInputField').val("");
 			$('#balanceIdxInputField').focus();
+
+			hideLoader(); // Hides the loading widget
 		},
 		error: function(data, status) {
 			hideLoader(); // Hides the loading widget
@@ -208,7 +252,34 @@ function writeNewAI(formData, update) {
 	// Calls different API depending on whether the data is 
 	// stored as a new entry, or updating an existing entry
 	var requestType = (update ? "PUT" : "POST"); 
+
+	var customSittingFeedbackOnBit = (activeUser.userData.showPersonalizedAISittingFeedback) ? 1 : 0;
+	var customWalkingFeedbackOnBit = (activeUser.userData.showPersonalizedAIWalkingFeedback) ? 1 : 0;
+	formData += "&customSittingFeedbackOn=" + customSittingFeedbackOnBit + "&customWalkingFeedbackOn=" + customWalkingFeedbackOnBit;
 	
+	var currentCustomSittingFeedbackMsgID = null;
+	var currentCustomWalkingFeedbackMsgID = null;
+	// Find current custom BI feedback msg (if any)
+	if (activeUser.feedbackCustom !== null) {
+		for (var i=0; i<feedbackCustomLog.length; i++) {
+			if (feedbackCustomLog[i].timeEnd === null) {
+				for (var j=0; j<activeUser.feedbackCustom.length; j++) {
+					if (feedbackCustomLog[i].msgID === activeUser.feedbackCustom[j].msgID && activeUser.feedbackCustom[j].category === 0 && activeUser.feedbackCustom[j].AIFeedbackType === 0) {
+						currentCustomSittingFeedbackMsgID = feedbackCustomLog[i].msgID;
+						formData += "&currentCustomSittingFeedbackMsgID=" + feedbackCustomLog[i].msgID;
+						break;
+					}
+					if (feedbackCustomLog[i].msgID === activeUser.feedbackCustom[j].msgID && activeUser.feedbackCustom[j].category === 0 && activeUser.feedbackCustom[j].AIFeedbackType === 1) {
+						currentCustomWalkingFeedbackMsgID = feedbackCustomLog[i].msgID;
+						formData += "&currentCustomWalkingFeedbackMsgID=" + feedbackCustomLog[i].msgID;
+						break;
+					}
+				}
+			}
+			if (currentCustomSittingFeedbackMsgID !== null && currentCustomWalkingFeedbackMsgID !== null) break;
+		}
+	}
+
 	$.ajax({
 		type: requestType,
 		beforeSend: function (request) {
@@ -217,7 +288,6 @@ function writeNewAI(formData, update) {
 		url: "../api/activityIdx.php",
 		data: formData,
 		success: function(data, status) { // If the API request is successful
-			hideLoader(); // Hides the loading widget
 			if (data.data) {
 				showToast("#toastRegisterDataPage", true, data.status_message, 3000); // Shows toast with success msg
 
@@ -226,14 +296,44 @@ function writeNewAI(formData, update) {
 					dateTo: $('#activityIdxToDatePicker').val(),
 					value: parseFloat($('#activityIdxInputField').val())
 				};
+				if (activeUser.activityIndexes === null) {
+					activeUser.activityIndexes = [];
+				}
 				activeUser.activityIndexes.push(newAI);
 				activeUser.userData.activityIdx = newAI.value;
 
 				setActiveUser(activeUser.userData.userID, false); // Sets the active user, which in turn updates the active user data and charts
 				updateUsersTableRow(); // Updates the values in the row in the user overview table corresponding to the active user
+
+				activeUser.userData.showPersonalizedAISittingFeedback = false;
+				activeUser.userData.showPersonalizedAIWalkingFeedback = false;
+
+				if (currentCustomSittingFeedbackMsgID !== null) {
+					for (var i=0; i<feedbackCustomLog.length; i++) {
+						if (feedbackCustomLog[i].msgID === currentCustomSittingFeedbackMsgID && feedbackCustomLog[i].timeEnd === null) {
+							feedbackCustomLog[i].timeEnd = data.data["timestamp"];
+						}
+					}
+				}
+
+				if (currentCustomWalkingFeedbackMsgID !== null) {
+					for (var i=0; i<feedbackCustomLog.length; i++) {
+						if (feedbackCustomLog[i].msgID === currentCustomWalkingFeedbackMsgID && feedbackCustomLog[i].timeEnd === null) {
+							feedbackCustomLog[i].timeEnd = data.data["timestamp"];
+						}
+					}
+				}
+
+				// Resets the form and displays AI section on custom feedback page if no AI values were set before
+				$('#activityIdxToDatePicker').val("");
+				$('#activityIdxInputField').focus();
+
+				generateFeedbackLog();
 			} else {
 				showToast("#toastRegisterDataPage", false, data.status_message, 3000); // Shows toast with error msg
 			}
+
+			hideLoader(); // Hides the loading widget
 		},
 		error: function(data, status) {
 			hideLoader(); // Hides the loading widget
@@ -281,7 +381,7 @@ function deleteUser() {
 //********************************************************************
 //               Deletes a custom feedback message
 //********************************************************************
-function deleteFeedbackMsg(msgID, category, AIFeedbackType) {
+/*function deleteFeedbackMsg(msgID, category, AIFeedbackType) {
 	var confirmDelete = confirm("Vil du slette dette rådet?");
 	if (confirmDelete) {
 		showLoader();
@@ -351,14 +451,17 @@ function deleteFeedbackMsg(msgID, category, AIFeedbackType) {
 			}
 		});
 	}
-}
+}*/
 
 //********************************************************************
 //      Call API with a submitted personalized feedback message
 //********************************************************************
-function submitCustomFeedbackMsg(formData, toastID, isAI, AIFeedbackType) {
+function submitCustomFeedbackMsg(formData, toastID, isAI, AIFeedbackType, customFeedbackOn) {
 	// Append the senior user ID to the form data
 	formData += "&userID=" + activeUser.userData.userID;
+	
+	$customFeedbackOnBit = (customFeedbackOn) ? "1" : "0";
+	formData += "&customFeedbackOn=" + $customFeedbackOnBit;
 	
 	$.ajax({
 		type: "POST",
@@ -371,19 +474,23 @@ function submitCustomFeedbackMsg(formData, toastID, isAI, AIFeedbackType) {
 			if (data.data) {
 				var balanceExerciseID = null;
 				var strengthExerciseID = null;
+				var comment = null;
 
 				// Enables flip switch and sets change listener, in case listener was removed when all AI msgs was deleted
 				if (isAI) {
 					if (AIFeedbackType === 0) {
 						$("#flipPersonalizedAISitting").flipswitch("enable");
-						$("#flipPersonalizedAISitting").on("change", AISittingFlipChanged);
+						comment = $("#personalizedAISittingFeedbackComment").val();
+						$("#personalizedAISittingFeedbackComment").val("");
 					} else {
 						$("#flipPersonalizedAIWalking").flipswitch("enable");
-						$("#flipPersonalizedAIWalking").on("change", AIWalkingFlipChanged);
+						comment = $("#personalizedAIWalkingFeedbackComment").val();
+						$("#personalizedAIWalkingFeedbackComment").val("");
 					}
 				} else {
 					$("#flipPersonalizedBI").flipswitch("enable");
-					$("#flipPersonalizedBI").on("change", BIFlipChanged);
+					comment = $("#personalizedBIFeedbackComment").val();
+					$("#personalizedBIFeedbackComment").val("");
 
 					balanceExerciseID = (!isAI) ? parseInt($("#selectPersonalizedBIFeedbackBalanceExercise").val()) : null;
 					strengthExerciseID = (!isAI) ? parseInt($("#selectPersonalizedBIFeedbackStrengthExercise").val()) : null;
@@ -398,7 +505,9 @@ function submitCustomFeedbackMsg(formData, toastID, isAI, AIFeedbackType) {
 					category: categoryBit,
 					AIFeedbackType: AIFeedbackType,
 					balanceExerciseID: balanceExerciseID,
-					strengthExerciseID: strengthExerciseID
+					strengthExerciseID: strengthExerciseID,
+					userID: activeUser.userData.userID,
+					internalComment: comment
 				};
 
 				if (activeUser.feedbackCustom) {
@@ -406,7 +515,28 @@ function submitCustomFeedbackMsg(formData, toastID, isAI, AIFeedbackType) {
 				} else {
 					activeUser.feedbackCustom = [msgObj];
 				}
-				
+
+
+				// Update log
+				if (customFeedbackOn) {
+					if (data.data['oldLogMsgID'] !== null) {
+						for (var i=0; i<feedbackCustomLog.length; i++) {
+							if (feedbackCustomLog[i].msgID === data.data['oldLogMsgID']) {
+								feedbackCustomLog[i].timeEnd = data.data['timeCreated'];
+							}
+						}
+					}
+
+					var logObj = {
+						msgID: data.data['msgID'],
+						timeStart: data.data['timeCreated'],
+						timeEnd: null
+					}
+
+					feedbackCustomLog.unshift(logObj);
+
+					generateFeedbackLog();
+				}
 
 				separateCustomFeedbackTypes(); // Places the newly generated feedback message into either the AI or BI feedback arrays
 				populateCustomFeedbackTables(); // Populates the custom feedback tables with the new message
@@ -450,6 +580,7 @@ function submitDefaultFeedbackMsg() {
 					}
 				}
 				populateDefaultFeedbackTables();
+				generateFeedbackLog();
 			} else {
 				showToast("#toastDefaultFeedbackForm", false, data.status_message, 3000); // Shows toast with error msg
 			}
@@ -560,8 +691,12 @@ function submitSettings(formData) {
 function setShowCustomFeedback(flipSwitchState, category, AIFeedbackType, affectGUI) {
 	if (affectGUI) showLoader();
 
-	var url = "../api/feedbackCustom.php?category=" + category + "&AIFeedbackType=" + AIFeedbackType 
+	var url = "../api/feedbackCustom.php?category=" + category
 		+ "&seniorUserID=" + activeUser.userData.userID + "&value=" + flipSwitchState;
+
+	if (AIFeedbackType !== null) {
+		url += "&AIFeedbackType=" + AIFeedbackType;
+	}
 
 	$.ajax({
 		url: url,
@@ -579,7 +714,7 @@ function setShowCustomFeedback(flipSwitchState, category, AIFeedbackType, affect
 			}
 		}, 
 		success: function(data, status) { // If the API request is successful
-			var toastSuccessText = (flipSwitchState === '1') ? "på" : "av";
+			var toastSuccessText = (flipSwitchState === "1") ? "på" : "av";
 			var typeStr = (category === 0) ? "AI" : "BI";
 
 			if (category === 1) { // BI
@@ -589,6 +724,26 @@ function setShowCustomFeedback(flipSwitchState, category, AIFeedbackType, affect
 			} else { // AI, walking more
 				activeUser.userData.showPersonalizedAIWalkingFeedback = (flipSwitchState === "1");
 			}
+
+			// Update log
+			if (data.data['msgID'] !== null) {
+				if (flipSwitchState === "1") {
+					var logObj = {
+					msgID: data.data['msgID'],
+					timeStart: data.data['timestamp'],
+					timeEnd: null
+				}
+				feedbackCustomLog.unshift(logObj);
+				} else {
+					for (var i=0; i<feedbackCustomLog.length; i++) {
+						if (feedbackCustomLog[i].msgID === data.data['msgID']) {
+							feedbackCustomLog[i].timeEnd = data.data['timestamp'];
+						}
+					}
+				}
+			}
+
+			generateFeedbackLog();
 
 			if (affectGUI) {
 				showToast("#toastPersonalizedFeedback", true, "Personaliserte " + typeStr + "-råd er nå " 

@@ -61,11 +61,8 @@
 				<div id="usersTableContainer">
 					
 				</div>
-
+				<br>
 				<a onclick="$.mobile.changePage('index.html#new-user-page');" data-role="button" data-icon="plus">Registrer ny bruker</a>
-				
-				<br><br>
-
 				<a onclick="$.mobile.changePage('index.html#default-feedback-page');" data-role="button" data-icon="comment">Rediger standard-råd</a>
 				<a onclick="$.mobile.changePage('index.html#send-multiple-sms-page');" data-role="button" data-icon="comment">SMS til flere brukere</a>
 				<a onclick="$.mobile.changePage('index.html#settings-page');" data-role="button" data-icon="gear">Generelle innstillinger</a>
@@ -178,6 +175,7 @@
 						<div id="btnGroupUserDetails" class="floatItem">
 							<a onclick="$.mobile.changePage('index.html#register-data-page');" data-role="button" data-icon="plus">Registrer AI/BI</a>
 							<a onclick="$.mobile.changePage('index.html#personalized-feedback-page');" data-role="button" data-icon="comment">Skriv personalisert råd</a>
+							<a onclick="$.mobile.changePage('index.html#feedbackLogPage');" data-role="button" data-icon="clock">Logg over tilbakemeldinger</a>
 							<a onclick="$.mobile.changePage('index.html#send-sms-page');" data-role="button" data-icon="comment">Send SMS</a>
 							<a onclick="$.mobile.changePage('index.html#edit-data-page');" data-role="button" data-icon="edit">Rediger opplysninger</a>
 							<!--<a onclick="" data-role="button">Se brukerens visning</a>
@@ -222,7 +220,7 @@
 
 			<div data-role="content">
 
-				<h1>Register BI:</h1>
+				<h1>Registrer BI:</h1>
 
 				<form id="balanceIdxForm" method="post">
 					<div class="ui-grid-b">
@@ -246,7 +244,7 @@
 				</form>
 
 				<br><br>
-				<h1>Register AI:</h1>
+				<h1>Registrer AI:</h1>
 
 				<form id="activityIdxForm" method="post">
 					<div class="ui-grid-b">
@@ -262,7 +260,7 @@
 
 						<div class="ui-block-c">
 							<label for="activityIdxInputField">AI:</label>
-							<input type="number" name="activityIdx" id="activityIdxInputField" min="0" max="5" step="0.5" required>
+							<input type="number" name="activityIdx" id="activityIdxInputField" min="0" max="5" step="1" required>
 						</div>
 					</div>
 
@@ -311,6 +309,68 @@
 				<a onclick="updateAI(false);" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-a">Nei, avbryt</a>
 			</div>
 		</div>--> <!-- /confirm overwrite ai dialog -->
+
+
+		<!--********************************************************
+								FEEDBACK LOG PAGE
+			******************************************************** -->
+		<div data-role="page" id="feedbackLogPage">
+			<div data-role="header" data-add-back-btn="true" data-back-btn-text="Tilbake">
+				<h1>Feedback-logg</h1>
+				<div data-type="horizontal" data-role="controlgroup" class="ui-btn-right">
+					<a href="#" onclick="logout()" class="ui-btn ui-icon-power ui-btn-icon-left">Logg ut</a>
+				</div>
+			</div><!-- /header -->
+
+			<div data-role="content">
+				<h1>BI-råd</h1>
+				<table id="BIFeedbackLogTable" data-role="table" class="ui-responsive table-stripe ui-shadow feedbackLogTable">
+					<thead>
+						<tr>
+							<th data-priority="1">Fra</th>
+							<th data-priority="1">Til</th>
+							<th data-priority="4">Personalisert</th>
+							<th data-priority="3">BI-verdi</th>
+							<th data-priority="2">Tekst</th>
+							<th data-priority="5">Balanseøvelse</th>
+							<th data-priority="5">Styrkeøvelse</th>
+							<th data-priority="6">Kommentar</th>
+						</tr>
+					</thead>
+					<tbody></tbody>
+				</table>
+
+				<h1>AI-tips om å sitte mindre</h1>
+				<table id="AISittingFeedbackLogTable"data-role="table" class="ui-responsive table-stripe ui-shadow feedbackLogTable">
+					<thead>
+						<tr>
+							<th data-priority="1">Fra</th>
+							<th data-priority="1">Til</th>
+							<th data-priority="4">Personalisert</th>
+							<th data-priority="3">BI-verdi</th>
+							<th data-priority="2">Tekst</th>
+							<th data-priority="5">Kommentar</th>
+						</tr>
+					</thead>
+					<tbody></tbody>
+				</table>
+
+				<h1>AI-tips om å gå mer</h1>
+				<table id="AIWalkingFeedbackLogTable" data-role="table" class="ui-responsive table-stripe ui-shadow feedbackLogTable">
+					<thead>
+						<tr>
+							<th data-priority="1">Fra</th>
+							<th data-priority="1">Til</th>
+							<th data-priority="4">Personalisert</th>
+							<th data-priority="3">BI-verdi</th>
+							<th data-priority="2">Tekst</th>
+							<th data-priority="5">Kommentar</th>
+						</tr>
+					</thead>
+					<tbody></tbody>
+				</table>
+			</div><!-- /content -->
+		</div><!-- /feedbackLogPage -->
 
 
 		<!--********************************************************
@@ -786,62 +846,66 @@
 
 				<h2>BI-råd:</h2>
 
-				<div class="ui-field-contain">
-					<label for="flipPersonalizedBI">Personaliserte BI-råd:</label>
-					<select id="flipPersonalizedBI" data-role="flipswitch">
-						<option value="0">Av</option>
-						<option value="1">På</option>
-					</select>
-				<div>
+				<h3 id="customFeedbackBIError"></h3>
 
-				<br><br>
-				
-				<div id="personalizedBIFeedbackMsgsContainer" class="personalizedFeedbackMsgsContainer">
-					<table id="tablePersonalizedBIFeedbackMsgs" data-role="table" class="ui-responsive table-stripe ui-shadow">
-						<thead>
-							<th>Dato</th>
-							<th>Tekst</th>
-							<th>Kommentar</th>
-							<th>Balanseøvelse</th>
-							<th>Styrkeøvelse</th>
-							<th>Slett</th>
-						</thead>
-						<tbody>
-						</tbody>
-					</table>
-				</div>
-
-				<br>
-
-				<form id="registerPersonalizedBIFeedbackForm" method="post">
+				<div id="customFeedbackBIContainer">
 					<div class="ui-field-contain">
-						<label for="textareaPersonalizedBIFeedback">Nytt BI-råd:</label>
-						<input type="text" name="feedbackText" id="textareaPersonalizedBIFeedback" required>
-					</div>
-					<div class="ui-field-contain">
-						<label for="personalizedBIFeedbackComment">Intern kommentar:</label>
-						<input type="text" name="comment" id="personalizedBIFeedbackComment">
-					</div>
-					<div class="ui-field-contain">
-						<label>Balanseøvelse:</label>
-						<select id="selectPersonalizedBIFeedbackBalanceExercise" name="balanceExerciseID"></select>
-					</div>
-					<div class="ui-field-contain">
-						<label>Styrkeøvelse:</label>
-						<select id="selectPersonalizedBIFeedbackStrengthExercise" name="strengthExerciseID"></select>
+						<label for="flipPersonalizedBI">Personaliserte BI-råd:</label>
+						<select id="flipPersonalizedBI" data-role="flipswitch">
+							<option value="0">Av</option>
+							<option value="1">På</option>
+						</select>
 					</div>
 
-					<input type="hidden" name="category" value="1">
-
-					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
-
-					<div id='toastPersonalizedFeedback' class="toast">
-						<div class="toast-content">
-							<img id="toastPersonalizedFeedbackImg" class="toast-icon" src="../placeholder.png"/> <span id="toastPersonalizedFeedbackText"></span>
-						</div>
-					</div>
+					<br><br>
 					
-				</form>
+					<div id="personalizedBIFeedbackMsgsContainer" class="personalizedFeedbackMsgsContainer">
+						<table id="tablePersonalizedBIFeedbackMsgs" data-role="table" class="ui-responsive table-stripe ui-shadow">
+							<thead>
+								<th>Dato</th>
+								<th>Tekst</th>
+								<th>Kommentar</th>
+								<th>Balanseøvelse</th>
+								<th>Styrkeøvelse</th>
+								<!--<th>Slett</th>-->
+							</thead>
+							<tbody>
+							</tbody>
+						</table>
+					</div>
+
+					<br>
+
+					<form id="registerPersonalizedBIFeedbackForm" method="post">
+						<div class="ui-field-contain">
+							<label for="textareaPersonalizedBIFeedback">Nytt BI-råd:</label>
+							<input type="text" name="feedbackText" id="textareaPersonalizedBIFeedback" required>
+						</div>
+						<div class="ui-field-contain">
+							<label for="personalizedBIFeedbackComment">Intern kommentar:</label>
+							<input type="text" name="comment" id="personalizedBIFeedbackComment">
+						</div>
+						<div class="ui-field-contain">
+							<label>Balanseøvelse:</label>
+							<select id="selectPersonalizedBIFeedbackBalanceExercise" name="balanceExerciseID"></select>
+						</div>
+						<div class="ui-field-contain">
+							<label>Styrkeøvelse:</label>
+							<select id="selectPersonalizedBIFeedbackStrengthExercise" name="strengthExerciseID"></select>
+						</div>
+
+						<input type="hidden" name="category" value="1">
+
+						<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
+
+						<div id='toastPersonalizedFeedback' class="toast">
+							<div class="toast-content">
+								<img id="toastPersonalizedFeedbackImg" class="toast-icon" src="../placeholder.png"/> <span id="toastPersonalizedFeedbackText"></span>
+							</div>
+						</div>
+						
+					</form>
+				</div>
 
 				<br><br>
 				<hr>
@@ -849,46 +913,50 @@
 
 				<h2>AI-tips om å sitte mindre:</h2>
 
-				<div class="ui-field-contain">
-					<label for="flipPersonalizedAISitting">Personaliserte AI-tips (sitte mindre):</label>
-					<select id="flipPersonalizedAISitting" data-role="flipswitch">
-						<option value="0">Av</option>
-						<option value="1">På</option>
-					</select>
-				<div>
+				<h3 id="customFeedbackAIError"></h3>
 
-				<br><br><br>
+				<div id="customFeedbackAISittingContainer">
+					<div class="ui-field-contain">
+						<label for="flipPersonalizedAISitting">Personaliserte AI-tips (sitte mindre):</label>
+						<select id="flipPersonalizedAISitting" data-role="flipswitch">
+							<option value="0">Av</option>
+							<option value="1">På</option>
+						</select>
+					<div>
 
-				<div id="personalizedAIFeedbackMsgsSittingContainer" class="personalizedFeedbackMsgsContainer">
-					<table id="tablePersonalizedAIFeedbackMsgsSitting" data-role="table" class="ui-responsive table-stripe ui-shadow">
-						<thead>
-							<th>Dato</th>
-							<th>Tekst</th>
-							<th>Kommentar</th>
-							<th>Slett</th>
-						</thead>
-						<tbody>
-						</tbody>
-					</table>
+					<br><br><br>
+
+					<div id="personalizedAIFeedbackMsgsSittingContainer" class="personalizedFeedbackMsgsContainer">
+						<table id="tablePersonalizedAIFeedbackMsgsSitting" data-role="table" class="ui-responsive table-stripe ui-shadow">
+							<thead>
+								<th>Dato</th>
+								<th>Tekst</th>
+								<th>Kommentar</th>
+								<!--<th>Slett</th>-->
+							</thead>
+							<tbody>
+							</tbody>
+						</table>
+					</div>
+
+					<br>
+
+					<form id="registerPersonalizedAIFeedbackSittingForm" method="post">
+						<div class="ui-field-contain">
+							<label for="textareaPersonalizedAISittingFeedback">Nytt AI-tips:</label>
+							<input type="text" name="feedbackText" id="textareaPersonalizedAISittingFeedback" required>
+						</div>
+						<div class="ui-field-contain">
+							<label for="personalizedAISittingFeedbackComment">Intern kommentar:</label>
+							<input type="text" name="comment" id="personalizedAISittingFeedbackComment">
+						</div>
+
+						<input type="hidden" name="AIFeedbackType" value="0">
+						<input type="hidden" name="category" value="0">
+
+						<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
+					</form>
 				</div>
-
-				<br>
-
-				<form id="registerPersonalizedAIFeedbackSittingForm" method="post">
-					<div class="ui-field-contain">
-						<label for="textareaPersonalizedAISittingFeedback">Nytt AI-tips:</label>
-						<input type="text" name="feedbackText" id="textareaPersonalizedAISittingFeedback" required>
-					</div>
-					<div class="ui-field-contain">
-						<label for="personalizedAISittingFeedbackComment">Intern kommentar:</label>
-						<input type="text" name="comment" id="personalizedAISittingFeedbackComment">
-					</div>
-
-					<input type="hidden" name="AIFeedbackType" value="0">
-					<input type="hidden" name="category" value="0">
-
-					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
-				</form>
 
 
 				<br><br>
@@ -896,47 +964,49 @@
 				<br><br>
 
 				<h2>AI-tips om å gå mer:</h2>
+				
+				<div id="customFeedbackAIWalkingContainer">
+					<div class="ui-field-contain">
+						<label for="flipPersonalizedAIWalking">Personaliserte AI-tips (gå mer):</label>
+						<select id="flipPersonalizedAIWalking" data-role="flipswitch">
+							<option value="0">Av</option>
+							<option value="1">På</option>
+						</select>
+					<div>
 
-				<div class="ui-field-contain">
-					<label for="flipPersonalizedAIWalking">Personaliserte AI-tips (gå mer):</label>
-					<select id="flipPersonalizedAIWalking" data-role="flipswitch">
-						<option value="0">Av</option>
-						<option value="1">På</option>
-					</select>
-				<div>
+					<br><br><br>
 
-				<br><br><br>
+					<div id="personalizedAIFeedbackMsgsWalkingContainer" class="personalizedFeedbackMsgsContainer">
+						<table id="tablePersonalizedAIFeedbackMsgsWalking" data-role="table" class="ui-responsive table-stripe ui-shadow">
+							<thead>
+								<th>Dato</th>
+								<th>Tekst</th>
+								<th>Kommentar</th>
+								<!--<th>Slett</th>-->
+							</thead>
+							<tbody>
+							</tbody>
+						</table>
+					</div>
 
-				<div id="personalizedAIFeedbackMsgsWalkingContainer" class="personalizedFeedbackMsgsContainer">
-					<table id="tablePersonalizedAIFeedbackMsgsWalking" data-role="table" class="ui-responsive table-stripe ui-shadow">
-						<thead>
-							<th>Dato</th>
-							<th>Tekst</th>
-							<th>Kommentar</th>
-							<th>Slett</th>
-						</thead>
-						<tbody>
-						</tbody>
-					</table>
+					<br>
+
+					<form id="registerPersonalizedAIFeedbackWalkingForm" method="post">
+						<div class="ui-field-contain">
+							<label for="textareaPersonalizedAIWalkingFeedback">Nytt AI-tips:</label>
+							<input type="text" name="feedbackText" id="textareaPersonalizedAIWalkingFeedback" required>
+						</div>
+						<div class="ui-field-contain">
+							<label for="personalizedAIWalkingFeedbackComment">Intern kommentar:</label>
+							<input type="text" name="comment" id="personalizedAIWalkingFeedbackComment">
+						</div>
+
+						<input type="hidden" name="AIFeedbackType" value="1">
+						<input type="hidden" name="category" value="0">
+
+						<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
+					</form>
 				</div>
-
-				<br>
-
-				<form id="registerPersonalizedAIFeedbackWalkingForm" method="post">
-					<div class="ui-field-contain">
-						<label for="textareaPersonalizedAIWalkingFeedback">Nytt AI-tips:</label>
-						<input type="text" name="feedbackText" id="textareaPersonalizedAIWalkingFeedback" required>
-					</div>
-					<div class="ui-field-contain">
-						<label for="personalizedAIWalkingFeedbackComment">Intern kommentar:</label>
-						<input type="text" name="comment" id="personalizedAIWalkingFeedbackComment">
-					</div>
-
-					<input type="hidden" name="AIFeedbackType" value="1">
-					<input type="hidden" name="category" value="0">
-
-					<input type="submit" value="Lagre" data-icon="check" data-iconpos="right" data-theme="b">
-				</form>	
 			</div><!-- /content -->
 		</div><!-- /personalized-feedback-page -->
 

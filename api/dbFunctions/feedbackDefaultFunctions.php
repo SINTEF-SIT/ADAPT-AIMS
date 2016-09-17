@@ -51,7 +51,7 @@
 	function getAllFeedbackDefault() {
 		include('inc/db.inc.php');
 
-		if ($stmt = $conn->prepare("SELECT * FROM FeedbackMsgDefault;")) {
+		if ($stmt = $conn->prepare("SELECT * FROM FeedbackMsgDefault ORDER BY timeCreated ASC;")) {
 			$stmt->execute();
 			$result = $stmt->get_result();
 			$stmt->close();

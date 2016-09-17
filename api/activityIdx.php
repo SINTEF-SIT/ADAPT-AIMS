@@ -2,6 +2,7 @@
 	include('inc/deliver_response.inc.php');
 	include('inc/jwt.inc.php');
 	include('dbFunctions/activityIdxFunctions.php');
+	include('dbFunctions/feedbackCustomFunctions.php');
 
 	$tokenUserID = validateToken();
 
@@ -31,7 +32,26 @@
 					$dbWriteSuccess = postActivityIdx($tokenUserID);
 
 					if ($dbWriteSuccess) {
-						deliver_response(200, "Verdien " . $_POST["activityIdx"] . " for bruker-ID=" . $_POST["userID"] . " på dato " . $_POST["dateFrom"] . " ble lagret i databasen.", true);
+						// Turn custom feedback messages of this category off
+						if ($_POST["customSittingFeedbackOn"] === '1') {
+							putFeedbackCustom($tokenUserID, $_POST["userID"], 0, 0, 0);
+							if (isset($_POST["currentCustomSittingFeedbackMsgID"])) {
+								logCustomFeedback($_POST["currentCustomSittingFeedbackMsgID"], false);
+							}
+						}
+
+						if ($_POST["customWalkingFeedbackOn"] === '1') {
+							putFeedbackCustom($tokenUserID, $_POST["userID"], 0, 1, 0);
+							if (isset($_POST["currentCustomWalkingFeedbackMsgID"])) {
+								logCustomFeedback($_POST["currentCustomWalkingFeedbackMsgID"], false);
+							}
+						}
+
+						$res = array(
+							"timestamp" => date("Y-m-d H:i:s"),
+						);
+
+						deliver_response(200, "Verdien " . $_POST["activityIdx"] . " for bruker-ID=" . $_POST["userID"] . " på dato " . $_POST["dateFrom"] . " ble lagret i databasen.", $res);
 					} else {
 						deliver_response(200, "Det ble ikke opprettet forbindelse med databasen.", false);
 					}

@@ -15,6 +15,7 @@ var token; // The JWT used for communicating with the API
 var exerciseGroups; // Exercise groups and their exercises that can be recommended to the senior users
 var feedbackDefault; // The default AI and BI feedback messages, with links to exercises
 var feedbackDefaultAll; // feedbackDefault + older messages
+var feedbackCustomLog; // Log of all custom feedback messages displayed to senior users
 var settings; // General settings and text strings used in the system
 
 // If expert user tries to submit a new BI/AI with a date that already has an BI/AI
@@ -148,36 +149,18 @@ function setActiveUser(userID, changePage) {
 	$('#personalizedAIFeedbackMsgsSittingContainer').hide();
 	$('#personalizedAIFeedbackMsgsWalkingContainer').hide();
 
+	// Removed any error messages on the custom feedback page
+	$("#customFeedbackBIError").html("");
+	$("#customFeedbackAISittingError").html("");
+	$("#customFeedbackAIWalkingError").html("");
+
 	if (changePage) { // If the function is called from the main page: redirect to the user detail page
 		$.mobile.changePage("index.html#user-detail-page");
 	}
 
-
 	activeUser = getSeniorUser(userID); // Stores the data about the selected user in the activeUser variable
 
-
-	// Sets default values for datepickers on register data page
-	$("#balanceIdxToDatePicker").val(moment().format('YYYY-MM-DD')); // Sets current date
-	$("#activityIdxToDatePicker").val(moment().format('YYYY-MM-DD')); // Sets current date
-
-	if (activeUser.balanceIndexes !== null) {
-		$('#balanceIdxFromDatePicker').attr('readonly', 'readonly');
-		$('#balanceIdxFromDatePicker').val(activeUser.balanceIndexes[activeUser.balanceIndexes.length-1].dateTo);
-	} else {
-		$('#balanceIdxFromDatePicker').val(moment().subtract(7, 'days').format('YYYY-MM-DD')); // 7 days ago
-	}
-	if (activeUser.activityIndexes !== null) {
-		$('#activityIdxFromDatePicker').attr('readonly', 'readonly');
-		$('#activityIdxFromDatePicker').val(activeUser.activityIndexes[activeUser.activityIndexes.length-1].dateTo);
-
-	} else {
-		$('#balanceIdxFromDatePicker').val(moment().subtract(7, 'days').format('YYYY-MM-DD')); // 7 days ago
-	}
-	
-	// Adds change listeners to the flip switches. Functions are found in eventListeners.js
-	$("#flipPersonalizedBI").on("change", BIFlipChanged);
-	$("#flipPersonalizedAISitting").on("change", AISittingFlipChanged);
-	$("#flipPersonalizedAIWalking").on("change", AIWalkingFlipChanged);
+	populateRegisterDataAndRegisterCustomFeedbackPages();
 
 	populateCustomFeedbackTables(); // Populated custom feedback tables in DOM
 
@@ -212,7 +195,7 @@ function setActiveUser(userID, changePage) {
 		var BISection = -1;
 		if (activeUser.userData.balanceIdx >= settings.BIThresholdLower && activeUser.userData.balanceIdx < settings.BIThresholdUpper) {
 			BISection = 0;
-		} else if (activeUser.userData.balanceIdx > settings.BIThresholdUpper) {
+		} else if (activeUser.userData.balanceIdx >= settings.BIThresholdUpper) {
 			BISection = 1;
 		}
 
@@ -222,6 +205,8 @@ function setActiveUser(userID, changePage) {
 	}
 
 	updateDOM(); // Populates the user detail and edit user data pages with data from activeUser
+
+	generateFeedbackLog(); // Displays a log of all feedback messages displayed to the senior user
 }
 
 /*
@@ -413,6 +398,21 @@ function getSeniorUser(userID) {
 	for (var i=0; i<seniorUsers.length; i++) {
 		if (seniorUsers[i].userData.userID === userID) {
 			return seniorUsers[i];
+		}
+	}
+	return null;
+}
+
+
+//********************************************************************
+//		Returns a custom feedback message based on the message ID
+//********************************************************************
+function findCustomFeedbackMsg(msgID) {
+	if (activeUser !== null && activeUser.feedbackCustom !== null) {
+		for (var i=0; i<activeUser.feedbackCustom.length; i++) {
+			if (activeUser.feedbackCustom[i].msgID === msgID) {
+				return activeUser.feedbackCustom[i];
+			}
 		}
 	}
 	return null;

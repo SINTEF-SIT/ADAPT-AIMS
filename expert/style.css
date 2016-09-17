@@ -133,7 +133,7 @@
 @media (min-width: 560px) { 
 	.feedbackTable tr td {
 		text-align: center;
-	} 
+	}
 }
 
 
@@ -156,4 +156,8 @@
 
 .ui-grid-b > div {
 	padding-right: 20px;
+}
+
+.feedbackLogTable {
+	margin-bottom: 80px;
 }

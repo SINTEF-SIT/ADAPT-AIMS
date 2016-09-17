@@ -144,9 +144,9 @@ function populateCustomFeedbackTables() {
 			+ "<td>" + comment + "</td>"
 			+ "<td>" + getExerciseTitle(activeUser.feedbackCustomBI[i].balanceExerciseID) + "</td>"
 			+ "<td>" + getExerciseTitle(activeUser.feedbackCustomBI[i].strengthExerciseID) + "</td>"
-			+ "<td><button data-role='button' data-inline='true' data-mini='true'"
-			+ "onclick='deleteFeedbackMsg(" + activeUser.feedbackCustomBI[i].msgID + ",1,null)'>Slett</button>" 
-			+ "</td></tr>";
+			/*+ "<td><button data-role='button' data-inline='true' data-mini='true'"
+			+ "onclick='deleteFeedbackMsg(" + activeUser.feedbackCustomBI[i].msgID + ",1,null)'>Slett</button></td>" */
+			+ "</tr>";
 		}
 		$('#tablePersonalizedBIFeedbackMsgs tbody').html(htmlBI); // Inserts the generated HTML
 		$("#personalizedBIFeedbackMsgsContainer").trigger("create"); // Re-apply jQuery Mobile styles to table
@@ -169,9 +169,9 @@ function populateCustomFeedbackTables() {
 			+ "<td>" + timeCreated.format('YYYY-MM-DD HH:mm') + "</td>"
 			+ "<td>" + activeUser.feedbackCustomAISitting[i].feedbackText + "</td>"
 			+ "<td>" + comment + "</td>"
-			+ "<td><button data-role='button' data-inline='true' data-mini='true'"
-			+ "onclick='deleteFeedbackMsg(" + activeUser.feedbackCustomAISitting[i].msgID + ",0,0)'>Slett</button>" 
-			+ "</td></tr>";
+			/*+ "<td><button data-role='button' data-inline='true' data-mini='true'"
+			+ "onclick='deleteFeedbackMsg(" + activeUser.feedbackCustomAISitting[i].msgID + ",0,0)'>Slett</button></td>"*/
+			+ "</tr>";
 		}
 		$('#tablePersonalizedAIFeedbackMsgsSitting tbody').html(htmlAISitting); // Inserts the generated HTML
 		$("#personalizedAIFeedbackMsgsSittingContainer").trigger("create"); // Re-apply jQuery Mobile styles to table
@@ -194,9 +194,9 @@ function populateCustomFeedbackTables() {
 			+ "<td>" + timeCreated.format('YYYY-MM-DD HH:mm') + "</td>"
 			+ "<td>" + activeUser.feedbackCustomAIWalking[i].feedbackText + "</td>"
 			+ "<td>" + comment + "</td>"
-			+ "<td><button data-role='button' data-inline='true' data-mini='true'"
-			+ "onclick='deleteFeedbackMsg(" + activeUser.feedbackCustomAIWalking[i].msgID + ",0,1)'>Slett</button>" 
-			+ "</td></tr>";
+			/*+ "<td><button data-role='button' data-inline='true' data-mini='true'"
+			+ "onclick='deleteFeedbackMsg(" + activeUser.feedbackCustomAIWalking[i].msgID + ",0,1)'>Slett</button></td>"*/
+			+ "</tr>";
 		}
 		$('#tablePersonalizedAIFeedbackMsgsWalking tbody').html(htmlAIWalking); // Inserts the generated HTML
 		$("#personalizedAIFeedbackMsgsWalkingContainer").trigger("create"); // Re-apply jQuery Mobile styles to table
@@ -204,6 +204,48 @@ function populateCustomFeedbackTables() {
 	} else {
 		$('#personalizedAIFeedbackMsgsWalkingContainer').hide(); // Hides table
 	}
+}
+
+
+//*********************************************************************
+//		Sets default values for datepickers on register data page
+//			and writes error messages to custom feedback page
+//							if no AI/BI is set yet
+//*********************************************************************
+function populateRegisterDataAndRegisterCustomFeedbackPages() {
+	$("#balanceIdxToDatePicker").val(moment().format('YYYY-MM-DD')); // Sets current date
+	$("#activityIdxToDatePicker").val(moment().format('YYYY-MM-DD')); // Sets current date
+
+	if (activeUser.balanceIndexes !== null) {
+		$('#balanceIdxFromDatePicker').attr('readonly', 'readonly');
+		$('#balanceIdxFromDatePicker').val(activeUser.balanceIndexes[activeUser.balanceIndexes.length-1].dateTo);
+
+		$("#customFeedbackBIError").html("");
+		$("#customFeedbackBIContainer").show();
+	} else {
+		$('#balanceIdxFromDatePicker').removeAttr('readonly');
+		$('#balanceIdxFromDatePicker').val(moment().subtract(7, 'days').format('YYYY-MM-DD')); // 7 days ago
+		
+		$("#customFeedbackBIError").html("Du må registrere en BI-verdi for denne brukeren før du kan gi personalisert BI-tilbakemelding.");
+		$("#customFeedbackBIContainer").hide();
+	}
+	if (activeUser.activityIndexes !== null) {
+		$('#activityIdxFromDatePicker').attr('readonly', 'readonly');
+		$('#activityIdxFromDatePicker').val(activeUser.activityIndexes[activeUser.activityIndexes.length-1].dateTo);
+		
+		$("#customFeedbackAIError").html("");
+		$("#customFeedbackAISittingContainer").show();
+		$("#customFeedbackAIWalkingContainer").show();
+	} else {
+		$('#activityIdxFromDatePicker').removeAttr('readonly');
+		$('#activityIdxFromDatePicker').val(moment().subtract(7, 'days').format('YYYY-MM-DD')); // 7 days ago
+		
+		$("#customFeedbackAIError").html("Du må registrere en AI-verdi for denne brukeren før du kan gi personalisert AI-tilbakemelding.");
+		$("#customFeedbackAISittingContainer").hide();
+		$("#customFeedbackAIWalkingContainer").hide();
+	}
+	$('#balanceIdxInputField').val("");
+	$('#activityIdxInputField').val("");
 }
 
 
@@ -355,6 +397,302 @@ function updateDOM() {
 
 		// SMS receiving phone number
 		$("#SMSReceiverField").val(userData.phoneNumber);
+	}
+}
+
+
+//********************************************************************
+//				Generates a log of all feedback messages that
+//					has been displayed to the senior user
+//********************************************************************
+function generateFeedbackLog() {
+	if (activeUser.balanceIndexes !== null) {
+		// BI
+		BIFeedbackLog = generateFeedbackLogPart(activeUser.balanceIndexes, 1, null, activeUser.userData.userID);
+
+		var htmlBITable =  "";
+		for (var i=0; i<BIFeedbackLog.length; i++) {
+
+			var toDate = "";
+			if (BIFeedbackLog[i].toDate !== null) {
+				toDate = BIFeedbackLog[i].toDate;
+				toDate = toDate.tz('Europe/Oslo').format("DD.MM.YYYY HH:mm");
+			}
+
+			var customMsgStr = BIFeedbackLog[i].isDefaultFeedback ? "" : "Ja";
+			var balanceExerciseTitle = getExerciseTitle(BIFeedbackLog[i].balanceExerciseID);
+			var strengthExerciseTitle = getExerciseTitle(BIFeedbackLog[i].strengthExerciseID);
+
+			var stylingStart = (BIFeedbackLog[i].isDefaultFeedback) ? "" : "<i>";
+			var stylingEnd = (BIFeedbackLog[i].isDefaultFeedback) ? "" : "</i>";
+
+			htmlBITable += "<tr>";
+			htmlBITable += "<td>" + stylingStart + BIFeedbackLog[i].fromDate.tz('Europe/Oslo').format("DD.MM.YYYY  HH:mm") + stylingEnd + "</td>";
+			htmlBITable += "<td>" + stylingStart + toDate + stylingEnd + "</td>";
+			htmlBITable += "<td>" + stylingStart + customMsgStr + stylingEnd + "</td>";
+			htmlBITable += "<td>" + stylingStart + BIFeedbackLog[i].idx + stylingEnd + "</td>";
+			htmlBITable += "<td>" + stylingStart + BIFeedbackLog[i].feedbackText + stylingEnd + "</td>";
+			htmlBITable += "<td>" + stylingStart + balanceExerciseTitle + stylingEnd + "</td>";
+			htmlBITable += "<td>" + stylingStart + strengthExerciseTitle + stylingEnd + "</td>"
+			htmlBITable += "<td>" + stylingStart + BIFeedbackLog[i].internalComment + stylingEnd + "</td>";
+		}
+		$("#BIFeedbackLogTable").show();
+		$("#BIFeedbackLogTable tbody").html(htmlBITable);
+	} else {
+		$("#BIFeedbackLogTable").hide();
+	}
+
+	if (activeUser.activityIndexes !== null) {
+		// AI, sitting less
+		AISittingFeedbackLog = generateFeedbackLogPart(activeUser.activityIndexes, 0, 0, activeUser.userData.userID);
+
+		if (AISittingFeedbackLog.length > 0) {
+			var htmlAISittingTable =  "";
+			for (var i=0; i<AISittingFeedbackLog.length; i++) {
+
+				var toDate = "";
+				if (AISittingFeedbackLog[i].toDate !== null) {
+					toDate = AISittingFeedbackLog[i].toDate;
+					toDate = toDate.tz('Europe/Oslo').format("DD.MM.YYYY HH:mm");
+				}
+
+				var customMsgStr = AISittingFeedbackLog[i].isDefaultFeedback ? "" : "Ja";
+
+				var stylingStart = (AISittingFeedbackLog[i].isDefaultFeedback) ? "" : "<i>";
+				var stylingEnd = (AISittingFeedbackLog[i].isDefaultFeedback) ? "" : "</i>";
+
+				htmlAISittingTable += "<tr>";
+				htmlAISittingTable += "<td>" + stylingStart + AISittingFeedbackLog[i].fromDate.tz('Europe/Oslo').format("DD.MM.YYYY HH:mm") + stylingEnd + "</td>";
+				htmlAISittingTable += "<td>" + stylingStart + toDate + stylingEnd + "</td>";
+				htmlAISittingTable += "<td>" + stylingStart + customMsgStr + stylingEnd + "</td>";
+				htmlAISittingTable += "<td>" + stylingStart + AISittingFeedbackLog[i].idx + stylingEnd + "</td>";
+				htmlAISittingTable += "<td>" + stylingStart + AISittingFeedbackLog[i].feedbackText + stylingEnd + "</td>"
+				htmlAISittingTable += "<td>" + stylingStart + AISittingFeedbackLog[i].internalComment + stylingEnd + "</td>";
+			}
+
+			$("#AISittingFeedbackLogTable").show();
+			$("#AISittingFeedbackLogTable tbody").html(htmlAISittingTable);
+		} else {
+			$("#AISittingFeedbackLogTable").hide();
+		}
+
+		// AI, walking more
+		AIWalkingFeedbackLog = generateFeedbackLogPart(activeUser.activityIndexes, 0, 1, activeUser.userData.userID);
+
+		if (AIWalkingFeedbackLog.length > 0) {
+			var htmlAIWalkingTable =  "";
+			for (var i=0; i<AIWalkingFeedbackLog.length; i++) {
+
+				var toDate = "";
+				if (AIWalkingFeedbackLog[i].toDate !== null) {
+					toDate = AIWalkingFeedbackLog[i].toDate;
+					toDate = toDate.tz('Europe/Oslo').format("DD.MM.YYYY  HH:mm");
+				}
+
+				var customMsgStr = AIWalkingFeedbackLog[i].isDefaultFeedback ? "" : "Ja";
+
+				var stylingStart = (AIWalkingFeedbackLog[i].isDefaultFeedback) ? "" : "<i>";
+				var stylingEnd = (AIWalkingFeedbackLog[i].isDefaultFeedback) ? "" : "</i>";
+
+				htmlAIWalkingTable += "<tr>";
+				htmlAIWalkingTable += "<td>" + stylingStart + AIWalkingFeedbackLog[i].fromDate.tz('Europe/Oslo').format("DD.MM.YYYY  HH:mm") + stylingEnd + "</td>";
+				htmlAIWalkingTable += "<td>" + stylingStart + toDate + stylingEnd + "</td>";
+				htmlAIWalkingTable += "<td>" + stylingStart + customMsgStr + stylingEnd + "</td>";
+				htmlAIWalkingTable += "<td>" + stylingStart + AIWalkingFeedbackLog[i].idx + stylingEnd + "</td>";
+				htmlAIWalkingTable += "<td>" + stylingStart + AIWalkingFeedbackLog[i].feedbackText + stylingEnd + "</td>"
+				htmlAIWalkingTable += "<td>" + stylingStart + AIWalkingFeedbackLog[i].internalComment + stylingEnd + "</td>";
+			}
+
+			$("#AIWalkingFeedbackLogTable").show();
+			$("#AIWalkingFeedbackLogTable tbody").html(htmlAIWalkingTable);
+		} else {
+			$("#AIWalkingFeedbackLogTable").hide();
+		}
+
+	} else {
+		$("#AISittingFeedbackLogTable").hide();
+		$("#AIWalkingFeedbackLogTable").hide();
+	}
+}
+
+
+//********************************************************************
+//	Generates a log of all feedback messages of a specific category
+//					given to a specific senior user
+//********************************************************************
+function generateFeedbackLogPart(indexes, category, AIFeedbackType, userID) {
+	if (indexes !== null) {
+		var feedback = [];
+
+		for (var i=0; i<indexes.length; i++) {
+			var idx = indexes[i];
+			
+			var idxLogValue = -1;
+			if (category === 0) { // AI
+				idxLogValue = idx.value;
+			} else { // BI
+				if (idx.value >= settings.BIThresholdLower && idx.value < settings.BIThresholdUpper) {
+					idxLogValue = 0;
+				} else if (idx.value >= settings.BIThresholdUpper) {
+					idxLogValue = 1;
+				}
+			}
+
+			var customFeedbackForPeriod = [];
+			var idxDate = moment.tz(idx.timeUpdated, "UTC");
+			var nextIdxDate = null;
+			if (i+1 !== indexes.length) {
+				nextIdxDate = moment.tz(indexes[i+1].timeUpdated, "UTC");
+			}
+
+			for (var j=0; j<feedbackDefaultAll.length; j++) { // Find matching default feedback msgs within time period
+				var defaultMsgTimeCreated = moment.tz(feedbackDefaultAll[j].timeCreated, "UTC");
+				
+				if (feedbackDefaultAll[j].category === category
+					&& feedbackDefaultAll[j].AIFeedbackType === AIFeedbackType
+					&& feedbackDefaultAll[j].idx === idxLogValue
+					&& defaultMsgTimeCreated.isSameOrAfter(idxDate)
+					&& defaultMsgTimeCreated.isSameOrBefore(nextIdxDate)) {
+
+					var feedbackObj = {
+						feedbackText: feedbackDefaultAll[j].feedbackText,
+						isDefaultFeedback: true,
+						idx: idx.value,
+						balanceExerciseID: feedbackDefaultAll[j].balanceExerciseID,
+						strengthExerciseID: feedbackDefaultAll[j].strengthExerciseID,
+						fromDate: defaultMsgTimeCreated,
+						toDate: null,
+						internalComment: ''
+					};
+					customFeedbackForPeriod.push(feedbackObj);
+				}
+			}
+
+			// Find the first matching default feedback msg before the idx time period
+			for (var j=feedbackDefaultAll.length-1; j>=0; j--) {
+				var defaultMsgTimeCreated = moment.tz(feedbackDefaultAll[j].timeCreated, "UTC");
+
+				if (feedbackDefaultAll[j].category === category
+					&& feedbackDefaultAll[j].AIFeedbackType === AIFeedbackType 
+					&& feedbackDefaultAll[j].idx === idxLogValue 
+					&& moment(defaultMsgTimeCreated).isSameOrBefore(idxDate)) {
+
+					var feedbackObj = {
+						feedbackText: feedbackDefaultAll[j].feedbackText,
+						isDefaultFeedback: true,
+						idx: idx.value,
+						balanceExerciseID: feedbackDefaultAll[j].balanceExerciseID,
+						strengthExerciseID: feedbackDefaultAll[j].strengthExerciseID,
+						fromDate: idxDate,
+						toDate: null,
+						internalComment: ''
+					};
+					customFeedbackForPeriod.splice(0, 0, feedbackObj); // Insert at start of array
+					break;
+				}
+			}
+
+			for (var j=0; j<customFeedbackForPeriod.length; j++) {
+				feedback.push(customFeedbackForPeriod[j]);
+			}
+		}
+
+		// Set toDate equal to fromDate of next msg
+		for (var i=0; i<feedback.length; i++) {
+			if (i+1 !== feedback.length) {
+				feedback[i].toDate = feedback[i+1].fromDate;
+			}
+		}
+
+		// Insert custom feedback msgs
+		for (var i=feedbackCustomLog.length-1; i>=0; i--) { // Reverse loop, as the array is sorted by date descending
+			var customFeedbackMsg = findCustomFeedbackMsg(feedbackCustomLog[i].msgID);
+
+			if (customFeedbackMsg !== null && customFeedbackMsg.userID === userID) {
+				if (customFeedbackMsg.category === category && customFeedbackMsg.AIFeedbackType === AIFeedbackType) {
+					var customMsgTimeFrom = moment.tz(feedbackCustomLog[i].timeStart, "UTC");
+					var customMsgTimeEnd = null;
+					if (feedbackCustomLog[i].timeEnd !== null) {
+						customMsgTimeEnd = moment.tz(feedbackCustomLog[i].timeEnd, "UTC");
+					}
+
+					var internalComment = (customFeedbackMsg.internalComment !== null) ? customFeedbackMsg.internalComment : "";
+
+					var feedbackObj = {
+						feedbackText: customFeedbackMsg.feedbackText,
+						isDefaultFeedback: false,
+						idx: feedback[feedback.length-1].idx,
+						balanceExerciseID: customFeedbackMsg.balanceExerciseID,
+						strengthExerciseID: customFeedbackMsg.strengthExerciseID,
+						fromDate: customMsgTimeFrom,
+						toDate: customMsgTimeEnd,
+						internalComment: internalComment
+					};
+
+					if (feedbackCustomLog[i].timeEnd === null) {
+
+						// Remove last msg if from date is equal to end date
+						if (feedback[feedback.length-1].fromDate.valueOf() === customMsgTimeFrom.valueOf()) {
+							feedback.splice(feedback.length-1, 1); // Removes element from array
+						} else {
+							feedback[feedback.length-1].toDate = customMsgTimeFrom;
+						}
+						
+						feedback.push(feedbackObj);
+						break;
+					} else {
+						var customMsgTimeEnd = moment.tz(feedbackCustomLog[i].timeEnd, "UTC");
+
+						for (var j=0; j<feedback.length; j++) {
+							if (customMsgTimeFrom.isSameOrAfter(feedback[j].fromDate) && 
+								(feedback[j].toDate === null || customMsgTimeEnd.isSameOrBefore(feedback[j].toDate))) {
+
+								feedbackObj.idx = feedback[j].idx;
+
+								var tempMsg = feedback[j];
+								var tempToDate = feedback[j].toDate;
+
+								if (j+1 === feedback.length) {
+									feedback.push(feedbackObj);
+								} else {
+									feedback.splice(j+1, 0, feedbackObj);
+								}
+								feedback[j].toDate = customMsgTimeFrom;
+								
+								// Removes msg from array if from and to dates are equal
+								if (feedback[j].toDate && feedback[j].fromDate.valueOf() === feedback[j].toDate.valueOf()) {
+									feedback.splice(j, 1); // Removes element from array
+								} else {
+									j++;
+								}
+								
+								if (tempToDate === null || customMsgTimeEnd.valueOf() !== tempToDate.valueOf()) {
+									var feedbackObjClone = {
+										feedbackText: tempMsg.feedbackText,
+										isDefaultFeedback: tempMsg.isDefaultFeedback,
+										idx: tempMsg.idx,
+										balanceExerciseID: tempMsg.balanceExerciseID,
+										strengthExerciseID: tempMsg.strengthExerciseID,
+										fromDate: customMsgTimeEnd,
+										toDate: tempToDate,
+										internalComment: tempMsg.internalComment
+									};
+									
+									if (j+1 === feedback.length) {
+										feedback.push(feedbackObjClone);
+									} else {
+										feedback.splice(j+1, 0, feedbackObjClone);
+									}
+
+									j++;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return feedback;
 	}
 }
 

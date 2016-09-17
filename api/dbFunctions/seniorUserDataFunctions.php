@@ -101,7 +101,7 @@
 			$seniorUserID = (int) mysqli_insert_id($conn);
 			$stmt1->close();
 
-			if ($stmt2 = $conn->prepare("INSERT INTO SeniorUsers (userID, address, zipCode, city, email, phoneNumber, birthDate, isMale, weight, height, usesWalkingAid, livingIndependently, numFalls3Mths, numFalls12Mths, comment, AIChartLineValue, dateJoinedAdapt, active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, NOW(), b'1')")) {
+			if ($stmt2 = $conn->prepare("INSERT INTO SeniorUsers (userID, address, zipCode, city, email, phoneNumber, birthDate, isMale, weight, height, usesWalkingAid, livingIndependently, numFalls3Mths, numFalls12Mths, comment, AIChartLineValue, dateJoinedAdapt, active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, UTC_TIMESTAMP(), b'1')")) {
 				$stmt2->bind_param("issssssiiiiiiisd", $seniorUserID, $address, $zipCode, $city, $email, $phone, encrypt($_POST["birthDate"]), $_POST["isMale"], $weight, $height, $usesWalkingAid, $livingIndependently, $falls3Mths, $falls12Mths, $comment, $AIChartLineValue);
 				$stmt2->execute();
 				$stmt2->close();

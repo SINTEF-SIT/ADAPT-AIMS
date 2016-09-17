@@ -59,6 +59,7 @@
 						$feedbackDefaultAll = getAllFeedbackDefault();
 						$exerciseGroups = getExerciseGroups();
 						$settings = getSettings();
+						$feedbackCustomLog = getFeedbackCustomLog();
 
 						$res = [
 							"seniorUsers" => $seniorUsers,
@@ -66,6 +67,7 @@
 							"feedbackDefaultAll" => $feedbackDefaultAll,
 							"exerciseGroups" => $exerciseGroups,
 							"settings" => $settings,
+							"feedbackCustomLog" => $feedbackCustomLog,
 						];
 						deliver_response(200, "Data found", $res);
 					}

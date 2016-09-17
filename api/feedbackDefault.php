@@ -2,6 +2,7 @@
 	include('inc/deliver_response.inc.php');
 	include('inc/jwt.inc.php');
 	include('dbFunctions/feedbackDefaultFunctions.php');
+	include('dbFunctions/feedbackCustomFunctions.php');
 
 	$tokenUserID = validateToken();
 
@@ -68,6 +69,10 @@
 										$successCounter++;
 										$newRecord = getSingleFeedbackDefault($newMsgID);
 										$res[] = array("oldRecord" => $oldRecord, "newRecord" => $newRecord);
+
+										detactivateCustomFeedbackForAll($category, null);
+										setEndTimeCustomFeedbackLog($category, null);
+
 									}
 								}
 							}
@@ -80,6 +85,9 @@
 									$successCounter++;
 									$newRecord = getSingleFeedbackDefault($newMsgID);
 									$res[] = array("oldRecord" => $oldRecord, "newRecord" => $newRecord);
+
+									detactivateCustomFeedbackForAll($category, $AIFeedbackType);
+									setEndTimeCustomFeedbackLog($category, $AIFeedbackType);
 								}
 							}
 						}
