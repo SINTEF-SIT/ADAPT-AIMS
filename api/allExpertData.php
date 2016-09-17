@@ -18,59 +18,55 @@
 
 		switch ($method) {
 			case 'GET':
-				if ($tokenExpertUserID === 0) { // if user is admin
-					$seniorUsersOverview = getAllSeniorUserOverviewData();
+				$seniorUsersOverview = null;
+				$seniorUsers = [];
+
+				// Get a summary of user data for all senior users an expert user has access to
+				$seniorUsersOverview = getSeniorUserOverview($tokenExpertUserID);
+
+				if (empty($seniorUsersOverview)) {
+					deliver_response(200, "No results found.", NULL);
 				} else {
-					$seniorUsersOverview = null;
-					$seniorUsers = [];
+					foreach ($seniorUsersOverview as $seniorUserOverview) {
+						$seniorUserID = $seniorUserOverview['userID'];
+						
+						$seniorUserDetails = getSeniorUserData($tokenExpertUserID, $seniorUserID);
+						$balanceIndexes = getBalanceIdx($tokenExpertUserID, $seniorUserID);
+						$activityIndexes = getActivityIdx($tokenExpertUserID, $seniorUserID);
+						$feedbackCustom = getFeedbackCustom($tokenExpertUserID, $seniorUserID);
 
-					// Get a summary of user data for all senior users an expert user has access to
-					$seniorUsersOverview = getSeniorUserOverview($tokenExpertUserID);
-
-					if (empty($seniorUsersOverview)) {
-						deliver_response(200, "No results found.", NULL);
-					} else {
-						foreach ($seniorUsersOverview as $seniorUserOverview) {
-							$seniorUserID = $seniorUserOverview['userID'];
-							
-							$seniorUserDetails = getSeniorUserData($tokenExpertUserID, $seniorUserID);
-							$balanceIndexes = getBalanceIdx($tokenExpertUserID, $seniorUserID);
-							$activityIndexes = getActivityIdx($tokenExpertUserID, $seniorUserID);
-							$feedbackCustom = getFeedbackCustom($tokenExpertUserID, $seniorUserID);
-
-							$seniorUser = [
-								"userData" => $seniorUserDetails,
-								"balanceIndexes" => $balanceIndexes,
-								"activityIndexes" => $activityIndexes,
-								"feedbackCustom" => $feedbackCustom,
-							];
-							array_push($seniorUsers, $seniorUser);
-						}
-
-						$feedbackDefault = [];
-						for ($i=0; $i<=5; $i++) { // Loop to get all default feedback messages of category 0 (AI)
-							array_push($feedbackDefault, getFeedbackDefault(0, $i, 0));
-							array_push($feedbackDefault, getFeedbackDefault(0, $i, 1));
-						}
-						for ($i=-1; $i<=1; $i++) { // Loop to get all default feedback messages of category 1 (BI)
-							array_push($feedbackDefault, getFeedbackDefault(1, $i, null));
-						}
-
-						$feedbackDefaultAll = getAllFeedbackDefault();
-						$exerciseGroups = getExerciseGroups();
-						$settings = getSettings();
-						$feedbackCustomLog = getFeedbackCustomLog();
-
-						$res = [
-							"seniorUsers" => $seniorUsers,
-							"feedbackDefault" => $feedbackDefault,
-							"feedbackDefaultAll" => $feedbackDefaultAll,
-							"exerciseGroups" => $exerciseGroups,
-							"settings" => $settings,
-							"feedbackCustomLog" => $feedbackCustomLog,
+						$seniorUser = [
+							"userData" => $seniorUserDetails,
+							"balanceIndexes" => $balanceIndexes,
+							"activityIndexes" => $activityIndexes,
+							"feedbackCustom" => $feedbackCustom,
 						];
-						deliver_response(200, "Data found", $res);
+						array_push($seniorUsers, $seniorUser);
 					}
+
+					$feedbackDefault = [];
+					for ($i=0; $i<=5; $i++) { // Loop to get all default feedback messages of category 0 (AI)
+						array_push($feedbackDefault, getFeedbackDefault(0, $i, 0));
+						array_push($feedbackDefault, getFeedbackDefault(0, $i, 1));
+					}
+					for ($i=-1; $i<=1; $i++) { // Loop to get all default feedback messages of category 1 (BI)
+						array_push($feedbackDefault, getFeedbackDefault(1, $i, null));
+					}
+
+					$feedbackDefaultAll = getAllFeedbackDefault();
+					$exerciseGroups = getExerciseGroups();
+					$settings = getSettings();
+					$feedbackCustomLog = getFeedbackCustomLog();
+
+					$res = [
+						"seniorUsers" => $seniorUsers,
+						"feedbackDefault" => $feedbackDefault,
+						"feedbackDefaultAll" => $feedbackDefaultAll,
+						"exerciseGroups" => $exerciseGroups,
+						"settings" => $settings,
+						"feedbackCustomLog" => $feedbackCustomLog,
+					];
+					deliver_response(200, "Data found", $res);
 				}
 				break;
 			default:

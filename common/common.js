@@ -12,11 +12,11 @@ function showToast(formID, success, msg, duration) {
 
 	if (success) {
 		$(formID).removeClass("toast-error").addClass("toast-success"); // Replaces toast-error class (if set) with toast-success class
-		$(formID + 'Img').attr("src","../expert/img/check.png"); // Sets source of img tag inside toast to check icon
+		$(formID + 'Img').attr("src","../img/check.png"); // Sets source of img tag inside toast to check icon
 		if (!msg) msg = "Suksess!"; // Sets default text if not provided in paramterer
 	} else {
 		$(formID).removeClass("toast-success").addClass("toast-error"); // Replaces toast-success class (if set) with toast-error class
-		$(formID + 'Img').attr("src","../expert/img/error.png"); // Sets source of img tag inside toast to error icon
+		$(formID + 'Img').attr("src","../img/error.png"); // Sets source of img tag inside toast to error icon
 		if (!msg) msg = "Det har oppstått en feil."; // Sets default text if not provided in paramterer
 	}
 

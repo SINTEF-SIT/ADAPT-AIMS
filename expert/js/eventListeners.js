@@ -358,12 +358,25 @@ function initEventListenersDocumentReady() {
 	//            Submit form for sending multiple SMS messages
 	//********************************************************************
 	$("#sendBulkSMSForm").submit(function(e){
-		showLoader(); // Shows the loading widget
 		if ($("#bulkSMSContentField").val().length <= 1224) {
-			var formData = $("#sendBulkSMSForm").serialize(); // Serialize the form data
-			formData = formData.replace(/%5B%5D/g, "[]");
 
-			sendBulkSMS(formData);
+			// Check that at least on recipient is selected
+			var recipientFound = false;
+			for (var i=0; i<seniorUsers.length; i++) {
+				if ($("#SMSRecipientCheckbox-" + i).is(':checked')) {
+					recipientFound = true;
+					break;
+				}
+			}
+
+			if (recipientFound) {
+				var formData = $("#sendBulkSMSForm").serialize(); // Serialize the form data
+				formData = formData.replace(/%5B%5D/g, "[]");
+
+				sendBulkSMS(formData);
+			} else {
+				showToast("#toastSendBulkSMS", false, "Velg minst én mottaker!", 3000); // Shows toast with error msg
+			}
 		} else {
 			showToast("#toastSendBulkSMS", false, "Meldingen er for lang!", 3000); // Shows toast with error msg
 		}

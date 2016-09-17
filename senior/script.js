@@ -152,6 +152,14 @@ $(document).ready(function() {
 				var balanceChartDataJSON = data.data.balanceIndexes;
 				var activityChartDataJSON = data.data.activityIndexes;
 
+				if (balanceChartDataJSON === null && activityChartDataJSON === null) {
+					$("#BIImgWell").append("<p style='font-size: 26px'>Det er ikke registrert noe ennå.<br>Se innom igjen senere!</p>");
+					$("#BIImgHeader").hide();
+					$("#BIImgTooltipBtn").hide();
+					$("#allExercisesHeader").hide();
+
+				}
+
 				if (activityChartDataJSON === null || balanceChartDataJSON === null) {
 					if (activityChartDataJSON) {
 						drawAIChart(activityChartDataJSON, null, null);
