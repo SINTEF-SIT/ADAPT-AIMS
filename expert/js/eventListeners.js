@@ -129,7 +129,7 @@ function initEventListenersDocumentReady() {
 		} else {
 			showToast("#toastRegisterDataPage", false, "Til-dato må være etter fra-dato!", 3000); // Shows toast with error msg
 		}
-
+		refreshUI();
 		return false; // Returns false to stop the default form behaviour
 	});
 
@@ -178,7 +178,7 @@ function initEventListenersDocumentReady() {
 		} else {
 			showToast("#toastRegisterDataPage", false, "Til-dato må være etter fra-dato!", 3000); // Shows toast with error msg
 		}
-
+		refreshUI();
 		return false; // Returns false to stop the default form behaviour
 	});
 	

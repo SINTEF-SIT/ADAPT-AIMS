@@ -40,7 +40,15 @@
 		include('inc/db.inc.php');
 
 		if (checkExpertSeniorLink($conn, $expertUserID, $_POST["userID"])) {
+
+            
 			if ($stmt = $conn->prepare("INSERT INTO BalanceIndexes (userID, timeUpdated, dateFrom, dateTo, value) VALUES (?, UTC_TIMESTAMP(), ?, ?, ?);")) {
+			    // Delete any conflicting balanceindex that overlaps in any way with the new balance index values.
+                if($delstmt = $conn->prepare("DELETE FROM BalanceIndexes WHERE (((dateFrom BETWEEN ? AND ?) OR (dateTo BETWEEN ? AND ?)) OR (? BETWEEN dateFrom and dateTo)) AND userID = ?")) {
+                    $delstmt->bind_param("sssssi", $_POST["dateFrom"], $_POST["dateTo"], $_POST["dateFrom"], $_POST["dateTo"], $_POST["dateFrom"], $_POST["userID"]);
+                    $delstmt->execute();
+                    $delstmt->close();
+                }
 				$stmt->bind_param("issd", $_POST["userID"], $_POST["dateFrom"], $_POST["dateTo"], $_POST["balanceIdx"]);
 				$stmt->execute();
 

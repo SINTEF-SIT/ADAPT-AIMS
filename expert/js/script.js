@@ -43,6 +43,10 @@ Date.prototype.toDateInputValue = (function() {
 
 
 
+function refreshUI() {
+	getData();
+}
+
 
 //********************************************************************
 //    Runs when the DOM is ready for JavaScript code to execute. 

@@ -1,6 +1,8 @@
 <?php
-	
-	$conn = mysqli_connect('127.0.0.1','root','','adapt');
+	include('inc/deliver_response.inc.php');
+
+
+	$conn = mysqli_connect('localhost','adapt','Adapt1337db','adapt');
 
 	/* check connection */
 	if (mysqli_connect_errno()) {
@@ -19,26 +21,7 @@
 	//********************* FUNCTIONS: *********************
 	//******************************************************
 
-	if (!function_exists('encrypt')) {
-		function encrypt($string) {
-			$string = rtrim(base64_encode(mcrypt_encrypt(MCRYPT_RIJNDAEL_256, md5('adapt2016'), $string, MCRYPT_MODE_ECB)));
-			return $string;
-		}
-	}
 
-	if (!function_exists('decrypt')) {
-		function decrypt($string) {
-			$string = rtrim(mcrypt_decrypt(MCRYPT_RIJNDAEL_256, md5('adapt2016'), base64_decode($string), MCRYPT_MODE_ECB));
-			return $string;
-		}
-	}
-
-	if (!function_exists('hashword')) {
-		function hashword($string) {
-			$string = crypt($string, '$1$' . md5('adapt2016') . '$');
-			return $string;
-		}
-	}
 
 	if (!function_exists('checkExpertSeniorLink')) {
 		function checkExpertSeniorLink($conn, $expertUserID, $seniorUserID) {

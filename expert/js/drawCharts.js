@@ -166,7 +166,7 @@ function drawAIChart(startTime, endTime) {
 				title: {
 					enabled: false
 				},
-				max: 5, // The ceiling value of the y-axis
+				max: 168, // The ceiling value of the y-axis
 				min: 0, // The floor of the y-axis
 				alternateGridColor: '#DEE0E3',
 				tickInterval: 1, // How frequent a tick is displayed on the axis

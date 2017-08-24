@@ -228,7 +228,6 @@ function writeNewBI(formData, update) {
 			}
 
 			// Resets the form
-			$('#balanceIdxFromDatePicker').attr('readonly', 'readonly'); // Disables the from datepicker in case this was the first BI registered
 			$("#balanceIdxFromDatePicker").val($('#balanceIdxToDatePicker').val());
 			$('#balanceIdxToDatePicker').val("");
 			$('#balanceIdxInputField').val("");

@@ -489,9 +489,13 @@ function drawAIChart(activityChartDataJSON, startTime, endTime) {
 		},
 		yAxis: {
 			title: {
-				enabled: false
+				text: "Ukentlig gåtid i timer",
+                rotation: 0
 			},
-			max: 5, // The ceiling of the y-axis. Needs to be updated if the range of valid values changes!
+            labels: {
+                enabled: true
+            },
+			max: 20, // The ceiling of the y-axis. Needs to be updated if the range of valid values changes!
 			min: 0, // The floor of the y-axis. 
 			alternateGridColor: '#DEE0E3',
 			tickInterval: 1, // How frequent a tick is displayed on the axis

@@ -217,27 +217,23 @@ function populateRegisterDataAndRegisterCustomFeedbackPages() {
 	$("#activityIdxToDatePicker").val(moment().format('YYYY-MM-DD')); // Sets current date
 
 	if (activeUser.balanceIndexes !== null) {
-		$('#balanceIdxFromDatePicker').attr('readonly', 'readonly');
 		$('#balanceIdxFromDatePicker').val(activeUser.balanceIndexes[activeUser.balanceIndexes.length-1].dateTo);
 
 		$("#customFeedbackBIError").html("");
 		$("#customFeedbackBIContainer").show();
 	} else {
-		$('#balanceIdxFromDatePicker').removeAttr('readonly');
 		$('#balanceIdxFromDatePicker').val(moment().subtract(7, 'days').format('YYYY-MM-DD')); // 7 days ago
 		
 		$("#customFeedbackBIError").html("Du må registrere en BI-verdi for denne brukeren før du kan gi personalisert BI-tilbakemelding.");
 		$("#customFeedbackBIContainer").hide();
 	}
 	if (activeUser.activityIndexes !== null) {
-		$('#activityIdxFromDatePicker').attr('readonly', 'readonly');
 		$('#activityIdxFromDatePicker').val(activeUser.activityIndexes[activeUser.activityIndexes.length-1].dateTo);
 		
 		$("#customFeedbackAIError").html("");
 		$("#customFeedbackAISittingContainer").show();
 		$("#customFeedbackAIWalkingContainer").show();
 	} else {
-		$('#activityIdxFromDatePicker').removeAttr('readonly');
 		$('#activityIdxFromDatePicker').val(moment().subtract(7, 'days').format('YYYY-MM-DD')); // 7 days ago
 		
 		$("#customFeedbackAIError").html("Du må registrere en AI-verdi for denne brukeren før du kan gi personalisert AI-tilbakemelding.");
@@ -246,6 +242,10 @@ function populateRegisterDataAndRegisterCustomFeedbackPages() {
 	}
 	$('#balanceIdxInputField').val("");
 	$('#activityIdxInputField').val("");
+	
+	//Because an error
+	$("balanceIdxToDatePicker").removeAttr("readonly");
+	
 }
 
 
